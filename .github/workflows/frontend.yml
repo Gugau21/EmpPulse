@@ -1,4 +1,4 @@
-name: Lint Frontend Code Base
+name: Lint frontend Code Base
 
 on:
   push:
@@ -9,9 +9,10 @@ on:
     branches: [ "main" ]
     paths:
       - "frontend/**"
+  workflow_dispatch:
 
 jobs:
-  lint:
+  lint_frontend:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,19 +22,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Lint Code Base
+      - name: Lint Frontend Code Base
         uses: github/super-linter/slim@v4
         env:
           VALIDATE_ALL_CODEBASE: true
           DEFAULT_BRANCH: "main"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILTER_REGEX_EXCLUDE: .*docs/.*
+          FILTER_REGEX_INCLUDE: .*frontend/.*
 
-  build:
+  build_frontend:
 
     runs-on: ubuntu-latest
-
-    needs: lint
 
     steps:
     - name: Checkout code
