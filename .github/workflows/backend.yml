@@ -3,11 +3,11 @@ on:
   push:
     branches: [ "*" ]
     paths:
-      - "backend/"
+      - "backend/**"
   pull_request:
     branches: [ "main" ]
     paths:
-      - "backend/"
+      - "backend/**"
   workflow_dispatch:
 
 jobs:
