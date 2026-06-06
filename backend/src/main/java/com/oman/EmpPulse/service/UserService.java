@@ -5,6 +5,7 @@ import com.oman.EmpPulse.dto.response.*;
 import com.oman.EmpPulse.entity.*;
 import com.oman.EmpPulse.repository.*;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,6 @@ public class UserService {
 
   private final UserRepository userRepository;
   private final AdminRepository adminRepository;
-  private final AdminDepartmentRepository adminDepartmentRepository;
   private final EmployeeRepository employeeRepository;
   private final DepartmentRepository departmentRepository;
   private final PasswordEncoder passwordEncoder;
@@ -26,18 +26,17 @@ public class UserService {
   public UserService(
       UserRepository userRepository,
       AdminRepository adminRepository,
-      AdminDepartmentRepository adminDepartmentRepository,
       EmployeeRepository employeeRepository,
       DepartmentRepository departmentRepository,
       PasswordEncoder passwordEncoder) {
     this.userRepository = userRepository;
     this.adminRepository = adminRepository;
-    this.adminDepartmentRepository = adminDepartmentRepository;
     this.employeeRepository = employeeRepository;
     this.departmentRepository = departmentRepository;
     this.passwordEncoder = passwordEncoder;
   }
 
+  @Transactional(readOnly = true)
   public MeResponse buildMeResponse(Long userId) {
     User user =
         userRepository
@@ -48,10 +47,7 @@ public class UserService {
     Optional<Admin> adminOpt = adminRepository.findByUserId(userId);
     if (adminOpt.isPresent()) {
       Admin admin = adminOpt.get();
-      List<Long> deptIds =
-          adminDepartmentRepository.findByAdminId(admin.getId()).stream()
-              .map(AdminDepartment::getDepartmentId)
-              .toList();
+      List<Long> deptIds = admin.getDepartments().stream().map(Department::getId).toList();
       adminProfile = new AdminProfileResponse(admin.getId(), deptIds);
     }
 
@@ -142,8 +138,15 @@ public class UserService {
     if (wantsAdmin) {
       Admin admin = new Admin(user.getId());
       adminRepository.save(admin);
-      for (Long deptId : req.getAdminDepartmentIds()) {
-        adminDepartmentRepository.save(new AdminDepartment(admin.getId(), deptId));
+
+      List<Long> deptIds = req.getAdminDepartmentIds();
+      List<Department> departments = departmentRepository.findAllById(deptIds);
+      if (departments.size() != new HashSet<>(deptIds).size()) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found");
+      }
+      // Department owns the @ManyToMany relationship
+      for (Department department : departments) {
+        department.getAdmins().add(admin);
       }
     }
   }

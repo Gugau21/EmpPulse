@@ -1,6 +1,8 @@
 package com.oman.EmpPulse.entity;
 
 import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "\"Department\"")
@@ -15,6 +17,13 @@ public class Department {
 
   @Column(name = "default_hours")
   private Long defaultHours;
+
+  @ManyToMany
+  @JoinTable(
+      name = "\"Admin_Department\"",
+      joinColumns = @JoinColumn(name = "department_id"),
+      inverseJoinColumns = @JoinColumn(name = "admin_id"))
+  private Set<Admin> admins = new HashSet<>();
 
   public Department() {}
 
@@ -40,5 +49,13 @@ public class Department {
 
   public void setDefaultHours(Long defaultHours) {
     this.defaultHours = defaultHours;
+  }
+
+  public Set<Admin> getAdmins() {
+    return admins;
+  }
+
+  public void setAdmins(Set<Admin> admins) {
+    this.admins = admins;
   }
 }

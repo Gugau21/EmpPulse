@@ -19,23 +19,21 @@ public class DepartmentService {
 
   private final DepartmentRepository departmentRepository;
   private final AdminRepository adminRepository;
-  private final AdminDepartmentRepository adminDepartmentRepository;
   private final EmployeeRepository employeeRepository;
   private final ServiceUtils serviceUtils;
 
   public DepartmentService(
       DepartmentRepository departmentRepository,
       AdminRepository adminRepository,
-      AdminDepartmentRepository adminDepartmentRepository,
       EmployeeRepository employeeRepository,
       ServiceUtils serviceUtils) {
     this.departmentRepository = departmentRepository;
     this.adminRepository = adminRepository;
-    this.adminDepartmentRepository = adminDepartmentRepository;
     this.employeeRepository = employeeRepository;
     this.serviceUtils = serviceUtils;
   }
 
+  @Transactional(readOnly = true)
   public DepartmentResponse getDepartment(Long departmentId) {
     Department department =
         departmentRepository
@@ -45,38 +43,40 @@ public class DepartmentService {
     return toDepartmentResponse(department);
   }
 
+  @Transactional(readOnly = true)
   public boolean isAdminOfDepartment(Long userId, Long departmentId) {
     return adminRepository
         .findByUserId(userId)
-        .map(
-            admin ->
-                adminDepartmentRepository.findByAdminId(admin.getId()).stream()
-                    .anyMatch(ad -> ad.getDepartmentId().equals(departmentId)))
+        .map(admin -> admin.getDepartments().stream().anyMatch(d -> d.getId().equals(departmentId)))
         .orElse(false);
   }
 
   @Transactional
   public void deleteDepartment(Long departmentId) {
-    if (!departmentRepository.existsById(departmentId)) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found");
-    }
+    Department department =
+        departmentRepository
+            .findById(departmentId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
     if (employeeRepository.existsByDepartmentId(departmentId)) {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Cannot delete department: employees are assigned");
     }
-    if (!adminDepartmentRepository.findByDepartmentId(departmentId).isEmpty()) {
+    if (!department.getAdmins().isEmpty()) {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Cannot delete department: administrators are assigned");
     }
-    departmentRepository.deleteById(departmentId);
+    departmentRepository.delete(department);
   }
 
+  @Transactional(readOnly = true)
   public DepartmentListResponse getAllDepartments() {
     List<DepartmentResponse> items =
         departmentRepository.findAll().stream().map(this::toDepartmentResponse).toList();
     return new DepartmentListResponse(items);
   }
 
+  @Transactional(readOnly = true)
   public DepartmentListResponse getDepartmentsForAdmin(Long userId) {
     List<Long> deptIds = serviceUtils.getDeptIdsForAdminUser(userId);
     List<DepartmentResponse> items =
@@ -91,16 +91,12 @@ public class DepartmentService {
     }
 
     Department department = new Department(req.getName());
-    departmentRepository.save(department);
 
     if (req.getAdminIds() != null) {
-      for (Long adminId : req.getAdminIds()) {
-        if (!adminRepository.existsById(adminId)) {
-          throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found: " + adminId);
-        }
-        adminDepartmentRepository.save(new AdminDepartment(adminId, department.getId()));
-      }
+      department.setAdmins(loadAdmins(req.getAdminIds()));
     }
+
+    departmentRepository.save(department);
   }
 
   @Transactional
@@ -112,66 +108,44 @@ public class DepartmentService {
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
 
     if (req.getName() != null) {
-      if (!req.getName().equals(department.getName())
-          && departmentRepository.existsByName(req.getName())) {
-        throw new ResponseStatusException(HttpStatus.CONFLICT, "Department name already in use");
-      }
+      validateNameAvailable(req.getName(), department.getName());
       department.setName(req.getName());
-      departmentRepository.save(department);
     }
 
     if (req.getAdminIds() != null) {
-      List<Long> currentAdminIds =
-          adminDepartmentRepository.findByDepartmentId(departmentId).stream()
-              .map(AdminDepartment::getAdminId)
-              .toList();
-      Set<Long> newAdminIdSet = new HashSet<>(req.getAdminIds());
-      Set<Long> currentAdminIdSet = new HashSet<>(currentAdminIds);
+      validateAdminDetach(department.getAdmins(), req.getAdminIds());
+      department.setAdmins(loadAdmins(req.getAdminIds()));
+    }
+  }
 
-      for (Long adminId : currentAdminIds) {
-        if (!newAdminIdSet.contains(adminId)) {
-          long deptCount = adminDepartmentRepository.findByAdminId(adminId).size();
-          if (deptCount <= 1) {
-            throw new ResponseStatusException(
-                HttpStatus.CONFLICT,
-                "Cannot detach admin " + adminId + ": must oversee more than 1 department");
-          }
-        }
-      }
+  private void validateNameAvailable(String newName, String currentName) {
+    if (!newName.equals(currentName) && departmentRepository.existsByName(newName)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Department name already in use");
+    }
+  }
 
-      for (Long adminId : req.getAdminIds()) {
-        if (!adminRepository.existsById(adminId)) {
-          throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found: " + adminId);
-        }
-      }
-
-      for (Long adminId : currentAdminIds) {
-        if (!newAdminIdSet.contains(adminId)) {
-          adminDepartmentRepository.deleteById(new AdminDepartmentId(adminId, departmentId));
-        }
-      }
-
-      for (Long adminId : req.getAdminIds()) {
-        if (!currentAdminIdSet.contains(adminId)) {
-          adminDepartmentRepository.save(new AdminDepartment(adminId, departmentId));
-        }
+  private void validateAdminDetach(Set<Admin> currentAdmins, List<Long> newAdminIds) {
+    Set<Long> newAdminIdSet = new HashSet<>(newAdminIds);
+    for (Admin admin : currentAdmins) {
+      if (!newAdminIdSet.contains(admin.getId()) && admin.getDepartments().size() <= 1) {
+        throw new ResponseStatusException(
+            HttpStatus.CONFLICT,
+            "Cannot detach admin " + admin.getId() + ": must oversee more than 1 department");
       }
     }
   }
 
+  private Set<Admin> loadAdmins(List<Long> adminIds) {
+    List<Admin> admins = adminRepository.findAllById(adminIds);
+    if (admins.size() != new HashSet<>(adminIds).size()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found");
+    }
+    return new HashSet<>(admins);
+  }
+
   private DepartmentResponse toDepartmentResponse(Department department) {
-    List<AdminDepartment> assignments =
-        adminDepartmentRepository.findByDepartmentId(department.getId());
     List<AdminSummaryResponse> admins =
-        assignments.stream()
-            .map(
-                ad ->
-                    adminRepository
-                        .findById(ad.getAdminId())
-                        .orElseThrow(
-                            () ->
-                                new ResponseStatusException(
-                                    HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency")))
+        department.getAdmins().stream()
             .map(serviceUtils::toAdminSummaryResponse)
             .filter(Objects::nonNull)
             .toList();

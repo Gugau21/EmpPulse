@@ -3,9 +3,8 @@ package com.oman.EmpPulse.service;
 import com.oman.EmpPulse.dto.response.AdminSummaryResponse;
 import com.oman.EmpPulse.dto.response.UserSummaryResponse;
 import com.oman.EmpPulse.entity.Admin;
-import com.oman.EmpPulse.entity.AdminDepartment;
+import com.oman.EmpPulse.entity.Department;
 import com.oman.EmpPulse.entity.User;
-import com.oman.EmpPulse.repository.AdminDepartmentRepository;
 import com.oman.EmpPulse.repository.AdminRepository;
 import com.oman.EmpPulse.repository.UserRepository;
 import java.util.List;
@@ -17,15 +16,10 @@ import org.springframework.web.server.ResponseStatusException;
 public class ServiceUtils {
 
   private final AdminRepository adminRepository;
-  private final AdminDepartmentRepository adminDepartmentRepository;
   private final UserRepository userRepository;
 
-  public ServiceUtils(
-      AdminRepository adminRepository,
-      AdminDepartmentRepository adminDepartmentRepository,
-      UserRepository userRepository) {
+  public ServiceUtils(AdminRepository adminRepository, UserRepository userRepository) {
     this.adminRepository = adminRepository;
-    this.adminDepartmentRepository = adminDepartmentRepository;
     this.userRepository = userRepository;
   }
 
@@ -34,9 +28,7 @@ public class ServiceUtils {
         adminRepository
             .findByUserId(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
-    return adminDepartmentRepository.findByAdminId(admin.getId()).stream()
-        .map(AdminDepartment::getDepartmentId)
-        .toList();
+    return admin.getDepartments().stream().map(Department::getId).toList();
   }
 
   /** Returns null when the admin's user has been soft-deleted, so callers can filter it out. */
@@ -51,10 +43,7 @@ public class ServiceUtils {
     if (user.isDeleted()) {
       return null;
     }
-    List<Long> deptIds =
-        adminDepartmentRepository.findByAdminId(admin.getId()).stream()
-            .map(AdminDepartment::getDepartmentId)
-            .toList();
+    List<Long> deptIds = admin.getDepartments().stream().map(Department::getId).toList();
     return new AdminSummaryResponse(
         admin.getId(),
         new UserSummaryResponse(user.getId(), user.getName(), user.getSurname(), user.getEmail()),

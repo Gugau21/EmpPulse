@@ -6,6 +6,7 @@ import com.oman.EmpPulse.repository.AdminRepository;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AdminService {
@@ -18,6 +19,7 @@ public class AdminService {
     this.serviceUtils = serviceUtils;
   }
 
+  @Transactional(readOnly = true)
   public AdminListResponse getAllAdmins() {
     List<AdminSummaryResponse> items =
         adminRepository.findAll().stream()
