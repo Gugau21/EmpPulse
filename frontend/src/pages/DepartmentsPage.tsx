@@ -1,29 +1,34 @@
-import React, { useState } from 'react';
-import type { ModalType, Department } from '../types';
-import trashIcon from '../assets/trash-icon.png.webp';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react'
+import type { Department, OpenModal } from '../types'
+import trashIcon from '../assets/trash-icon.png.webp'
+import { useAuth } from '../context/useAuth'
 
 interface Props {
-  departments: Department[];
-  loading?: boolean;
-  openModal: (modal: ModalType, dept?: Department) => void;
-  onSelectDepartment: (dept: Department) => void;
+  departments: Department[]
+  loading?: boolean
+  openModal: OpenModal
+  onSelectDepartment: (dept: Department) => void
 }
 
-const DepartmentsScreen: React.FC<Props> = ({ departments, loading = false, openModal, onSelectDepartment }) => {
-  const { currentUser, userRole } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
+const DepartmentsScreen: React.FC<Props> = ({
+  departments,
+  loading = false,
+  openModal,
+  onSelectDepartment
+}) => {
+  const { currentUser, userRole } = useAuth()
+  const [searchTerm, setSearchTerm] = useState('')
 
-  const isOwner = userRole === 'OWNER';
+  const isOwner = userRole === 'OWNER'
 
   // Admins may only see the departments they administer.
   const visibleDepartments = isOwner
     ? departments
-    : departments.filter(dept => currentUser?.adminProfile?.departmentIds.includes(dept.id));
+    : departments.filter(dept => currentUser?.adminProfile?.departmentIds.includes(dept.id))
 
   const filteredDepartments = visibleDepartments.filter(dept =>
     dept.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  )
 
   return (
     <div className="screen-container">
@@ -43,35 +48,40 @@ const DepartmentsScreen: React.FC<Props> = ({ departments, loading = false, open
 
       <div className="card-box list-box">
         {loading && (
-          <div className="employee-row"><span className="emp-name">Loading departments…</span></div>
+          <div className="employee-row">
+            <span className="emp-name">Loading departments…</span>
+          </div>
         )}
         {!loading && filteredDepartments.length === 0 && (
-          <div className="employee-row"><span className="emp-name">No departments yet.</span></div>
-        )}
-        {!loading && filteredDepartments.map((dept) => (
-          <div
-            key={dept.id}
-            className="employee-row hover-slide-container clickable"
-            onClick={() => onSelectDepartment(dept)}
-          >
-            <div className="dept-info-stack">
-              <span className="emp-name">{dept.name}</span>
-            </div>
-
-            {isOwner && (
-              <button
-                className="slide-bin-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openModal('DELETE_DEPARTMENT', dept);
-                }}
-                title="Delete Department"
-              >
-                <img src={trashIcon} alt="Delete" width={30} height={30} />
-              </button>
-            )}
+          <div className="employee-row">
+            <span className="emp-name">No departments yet.</span>
           </div>
-        ))}
+        )}
+        {!loading &&
+          filteredDepartments.map(dept => (
+            <div
+              key={dept.id}
+              className="employee-row hover-slide-container clickable"
+              onClick={() => onSelectDepartment(dept)}
+            >
+              <div className="dept-info-stack">
+                <span className="emp-name">{dept.name}</span>
+              </div>
+
+              {isOwner && (
+                <button
+                  className="slide-bin-btn"
+                  onClick={e => {
+                    e.stopPropagation()
+                    openModal('DELETE_DEPARTMENT', dept)
+                  }}
+                  title="Delete Department"
+                >
+                  <img src={trashIcon} alt="Delete" width={30} height={30} />
+                </button>
+              )}
+            </div>
+          ))}
       </div>
 
       {isOwner && (
@@ -82,7 +92,7 @@ const DepartmentsScreen: React.FC<Props> = ({ departments, loading = false, open
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default DepartmentsScreen;
+export default DepartmentsScreen

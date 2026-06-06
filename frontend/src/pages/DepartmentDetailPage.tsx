@@ -1,14 +1,14 @@
-import React from 'react';
-import type { Department, ModalType } from '../types';
-import { useAuth } from '../context/AuthContext';
-import blackTriangleIcon from '../assets/black_triangle.png';
-import EditIcon from '../assets/edit_icon.png';
+import React from 'react'
+import type { Department, OpenModal } from '../types'
+import { useAuth } from '../context/useAuth'
+import blackTriangleIcon from '../assets/black_triangle.png'
+import EditIcon from '../assets/edit_icon.png'
 
 interface Props {
-  department: Department | null;
-  loading?: boolean;
-  openModal: (modal: ModalType, dept?: Department) => void;
-  onBack: () => void;
+  department: Department | null
+  loading?: boolean
+  openModal: OpenModal
+  onBack: () => void
 }
 
 // NOTE: The default working-hours feature is not wired to the API yet, so the
@@ -17,52 +17,54 @@ interface Props {
 //   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
 // ];
 
-const DepartmentDetailScreen: React.FC<Props> = ({ department, loading = false, openModal, onBack }) => {
-  const { userRole } = useAuth();
+const DepartmentDetailScreen: React.FC<Props> = ({
+  department,
+  loading = false,
+  openModal,
+  onBack
+}) => {
+  const { userRole } = useAuth()
   if (loading && !department) {
     return (
       <div className="screen-container">
         <p>Loading department…</p>
       </div>
-    );
+    )
   }
 
   if (!department) {
     return (
       <div className="screen-container">
         <p>No department context selected.</p>
-        <button className="btn-pill-secondary" onClick={onBack}>🡄 Back</button>
+        <button className="btn-pill-secondary" onClick={onBack}>
+          🡄 Back
+        </button>
       </div>
-    );
+    )
   }
 
-  const isOwner = userRole === 'OWNER';
+  const isOwner = userRole === 'OWNER'
 
   return (
     <div className="screen-container department-detail-screen">
       <header className="page-header">
         <div className="department-detail-title">
-          <button className="btn-pill-secondary" onClick={onBack}><img 
-            src={blackTriangleIcon} 
-            alt="Back to departments list"
-          /></button>
+          <button className="btn-pill-secondary" onClick={onBack}>
+            <img src={blackTriangleIcon} alt="Back to departments list" />
+          </button>
           <div className="department-detail-title_row">
             <h2>{department.name}</h2>
             {isOwner && (
-              <button 
-                className="btn-edit-action" 
+              <button
+                className="btn-edit-action"
                 onClick={() => openModal('EDIT_DEPARTMENT', department)}
                 style={{ marginLeft: '12px' }}
               >
-                <img 
-                  src={EditIcon} 
-                  alt="Edit department name"
-              />
+                <img src={EditIcon} alt="Edit department name" />
               </button>
             )}
           </div>
         </div>
-        
       </header>
 
       <div className="department-detail-grid">
@@ -73,7 +75,7 @@ const DepartmentDetailScreen: React.FC<Props> = ({ department, loading = false, 
             {department.admins.length === 0 && (
               <div className="admin-block-item">No administrators assigned.</div>
             )}
-            {department.admins.map((admin) => (
+            {department.admins.map(admin => (
               <div key={admin.id} className="admin-block-item">
                 {admin.user.name} {admin.user.surname}
               </div>
@@ -81,10 +83,7 @@ const DepartmentDetailScreen: React.FC<Props> = ({ department, loading = false, 
           </div>
           {isOwner && (
             <div className="detail-action-row">
-              <button
-                className="primary-btn"
-                onClick={() => openModal('EDIT_ADMINS', department)}
-              >
+              <button className="primary-btn" onClick={() => openModal('EDIT_ADMINS', department)}>
                 edit admins
               </button>
             </div>
@@ -130,7 +129,7 @@ const DepartmentDetailScreen: React.FC<Props> = ({ department, loading = false, 
         */}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default DepartmentDetailScreen;
+export default DepartmentDetailScreen

@@ -1,15 +1,21 @@
-import React from 'react';
-import type { ModalType } from '../../types';
+import React from 'react'
+import type { ModalType } from '../../types'
 
 interface Props {
-  activeModal: ModalType;
-  closeModal: () => void;
-  confirmModal: () => void;
-  confirmError?: string | null;
-  onConfirmErrorClear?: () => void;
+  activeModal: ModalType
+  closeModal: () => void
+  confirmModal: () => void
+  confirmError?: string | null
+  onConfirmErrorClear?: () => void
 }
 
-const ConfirmModal: React.FC<Props> = ({ activeModal, closeModal, confirmModal, confirmError, onConfirmErrorClear }) => (
+const ConfirmModal: React.FC<Props> = ({
+  activeModal,
+  closeModal,
+  confirmModal,
+  confirmError,
+  onConfirmErrorClear
+}) => (
   <div className="modal-confirm">
     <h3>
       {activeModal === 'DELETE_EMPLOYEE' && 'Do you really want to delete employee?'}
@@ -21,10 +27,20 @@ const ConfirmModal: React.FC<Props> = ({ activeModal, closeModal, confirmModal, 
     </h3>
     {confirmError && <p className="form-error">{confirmError}</p>}
     <div className="modal-buttons">
-      <button className="btn-secondary" onClick={() => { onConfirmErrorClear?.(); confirmModal(); }}>YES</button>
-      <button className="btn-outline-primary" onClick={closeModal}>NO</button>
+      <button
+        className="btn-secondary"
+        onClick={() => {
+          onConfirmErrorClear?.()
+          confirmModal()
+        }}
+      >
+        YES
+      </button>
+      <button className="btn-outline-primary" onClick={closeModal}>
+        NO
+      </button>
     </div>
   </div>
-);
+)
 
-export default ConfirmModal;
+export default ConfirmModal

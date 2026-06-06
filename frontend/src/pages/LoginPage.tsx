@@ -1,31 +1,31 @@
-import React, { useState } from 'react';
-import type { MeUser } from '../types';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from 'react'
+import type { MeUser } from '../types'
+import { useAuth } from '../context/useAuth'
 
 interface Props {
-  onLoginSuccess: (user: MeUser) => void;
+  onLoginSuccess: (user: MeUser) => void
 }
 
 const LoginPage: React.FC<Props> = ({ onLoginSuccess }) => {
-  const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { login } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: { preventDefault(): void }) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+    e.preventDefault()
+    setError('')
+    setLoading(true)
     try {
-      const user = await login(email, password);
-      onLoginSuccess(user);
+      const user = await login(email, password)
+      onLoginSuccess(user)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : 'Login failed')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="auth-layout">
@@ -38,12 +38,7 @@ const LoginPage: React.FC<Props> = ({ onLoginSuccess }) => {
         <form onSubmit={handleSubmit} className="auth-form">
           <label className="auth-input-label">
             Email
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
           </label>
 
           <label className="auth-input-label">
@@ -51,7 +46,7 @@ const LoginPage: React.FC<Props> = ({ onLoginSuccess }) => {
             <input
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
             />
           </label>
@@ -62,7 +57,7 @@ const LoginPage: React.FC<Props> = ({ onLoginSuccess }) => {
         </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

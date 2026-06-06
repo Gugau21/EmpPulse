@@ -1,116 +1,131 @@
 # EmpPulse
 
+Full-stack employee management app: a React + Vite frontend, a Spring Boot (Java 21)
+backend, and a PostgreSQL database, all served behind nginx via Docker Compose.
+
 ## Prerequisites
 
-| Tool | Version | Notes |
+| Tool | Version | Used for |
 |---|---|---|
-| JDK | 21 | see install instructions below |
-| Docker | any | see install instructions below |
-| Node.js | 20+ | only for standalone frontend dev |
+| Docker + Compose v2 | any | running the whole stack |
+| Node.js | 20+ | frontend lint / standalone dev (optional) |
 
-### Linux
+The backend (Java 21 + Maven) is built **inside** its Docker image, so you do **not**
+need a local JDK or Maven to run the project.
+
+### Installing Docker + Compose v2 and Node.js
+
+**Linux (Debian/Ubuntu):**
 
 ```bash
-sudo apt install openjdk-21-jdk docker.io
-sudo usermod -aG docker $USER  # then restart your terminal
-```
+# Docker engine
+sudo apt update && sudo apt install -y docker.io
+sudo usermod -aG docker $USER   # then restart your terminal/session
 
-**Docker Compose v2** (if not bundled):
-```bash
+# Docker Compose v2 (if `docker compose version` fails)
 DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
 mkdir -p $DOCKER_CONFIG/cli-plugins
 curl -SL https://github.com/docker/compose/releases/download/v2.35.1/docker-compose-linux-x86_64 \
   -o $DOCKER_CONFIG/cli-plugins/docker-compose
 chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
+
+# Node.js 20+ (via nvm)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+# restart your terminal, then:
+nvm install 20
 ```
 
-### Windows
-
-Install via [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) (run in PowerShell):
+**Windows (PowerShell, via [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/)):**
 
 ```powershell
-winget install Microsoft.OpenJDK.21
-winget install Docker.DockerDesktop
+winget install Docker.DockerDesktop   # Compose v2 is bundled
+winget install OpenJS.NodeJS.LTS
 ```
 
-After installing Docker Desktop, **restart your PC**, then launch Docker Desktop from the Start menu and wait for "Engine running" before running any `docker` commands.
+After installing Docker Desktop, **restart your PC**, launch Docker Desktop, and wait
+for "Engine running" before running any `docker` commands.
+
+Verify both are ready:
+
+```bash
+docker compose version   # should print v2.x
+node --version           # should print v20.x or newer
+```
+
+> Note: `cp .env.example .env` only copies a config file — it does **not** install
+> Docker or Node. Install those first with the commands above.
 
 ---
 
-## Full version (backend + frontend + database)
+## 1. Install dependencies
 
-Builds the React frontend, packages it into the Spring Boot jar, and runs everything via Docker.
+Install frontend tooling (only needed if you want to lint or run the frontend
+standalone — Docker installs them itself during the build):
 
 ```bash
-# 1. Build the jar (downloads Node 22 and builds the frontend automatically)
-./mvnw clean package -DskipTests     # Linux/macOS
-.\mvnw clean package -DskipTests     # Windows (PowerShell)
+cd frontend
+npm install
+cd ..
+```
 
-# 2. Start all services
+The backend has no local install step; Maven fetches its dependencies during the
+Docker build.
+
+---
+
+## 2. Lint
+
+Frontend only:
+
+```bash
+cd frontend
+npm run lint          # ESLint
+npm run format:check  # Prettier (check only)
+npm run format        # Prettier (auto-fix)
+cd ..
+```
+
+---
+
+## 3. Build
+
+Builds all images — the backend jar, the frontend production bundle, and the nginx
+layer:
+
+```bash
+docker compose build
+```
+
+---
+
+## 4. Start
+
+```bash
+docker compose up        # add -d to run in the background
+```
+
+App → http://localhost (nginx on port 80, proxies `/api` to the backend)
+
+Build and start in one step:
+
+```bash
 docker compose up --build
 ```
 
-App → http://localhost:8080  
-Default login: `owner@emppulse.com` / `admin`
+Stop everything:
 
-To stop:
 ```bash
 docker compose down
 ```
 
 ---
 
-## Frontend only (dev mode)
+## Frontend-only dev mode (optional)
 
-Runs the Vite dev server with hot reload. Requires the backend to be running separately for API calls to work.
+For hot-reload while working on the UI. Requires the backend running (e.g. via
+`docker compose up backend db`); Vite proxies `/api` to `http://localhost:8080`.
 
 ```bash
-# Start the database
-docker compose up -d db
-
-# Start the backend (in a separate terminal)
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/emppulse_db ./mvnw spring-boot:run   # Linux
-$env:SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5433/emppulse_db"; .\mvnw spring-boot:run  # Windows
-
-# Start the frontend dev server (in a separate terminal)
 cd frontend
-npm install
-npm run dev
+npm run dev      # → http://localhost:5173
 ```
-
-Frontend → http://localhost:5173  
-Backend → http://localhost:8080
-
----
-
-## Windows — without Docker
-
-If you prefer not to use Docker, install PostgreSQL natively instead:
-
-```powershell
-winget install Microsoft.OpenJDK.21
-winget install OpenJS.NodeJS.LTS
-winget install PostgreSQL.PostgreSQL
-```
-
-Create the database once (open **psql** or pgAdmin after PostgreSQL installs):
-
-```sql
-CREATE USER "user" WITH PASSWORD 'password';
-CREATE DATABASE emppulse_db OWNER "user";
-```
-
-Then start the backend and frontend in two separate terminals:
-
-```powershell
-# Terminal 1 — backend
-.\mvnw spring-boot:run "-Dspring.datasource.url=jdbc:postgresql://localhost:5432/emppulse_db"
-
-# Terminal 2 — frontend
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend → http://localhost:5173  
-Backend → http://localhost:8080

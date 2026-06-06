@@ -1,28 +1,31 @@
-import React from 'react';
-import type { ScreenType } from '../types';
-import { useAuth } from '../context/AuthContext';
+import React from 'react'
+import type { ScreenType } from '../types'
+import { useAuth } from '../context/useAuth'
 
 interface Props {
-  currentScreen: ScreenType;
-  setScreen: (screen: ScreenType) => void;
+  currentScreen: ScreenType
+  setScreen: (screen: ScreenType) => void
 }
 
 const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
-  const { currentUser, userRole: role } = useAuth();
+  const { currentUser, userRole: role } = useAuth()
 
   // Hide navigation items based on user role to prevent access to unauthorized screens.
-  const showEmployees     = role === 'OWNER' || role === 'ADMIN';
-  const showRequestMgr    = role === 'OWNER' || role === 'ADMIN';
-  const showDepartments   = role === 'OWNER' || role === 'ADMIN';
-  const showMyRequests    = role === 'ADMIN' || role === 'WORKER';
+  const showEmployees = role === 'OWNER' || role === 'ADMIN'
+  const showRequestMgr = role === 'OWNER' || role === 'ADMIN'
+  const showDepartments = role === 'OWNER' || role === 'ADMIN'
+  const showMyRequests = role === 'ADMIN' || role === 'WORKER'
 
-  const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : '';
-  const displayRole = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Administrator' : 'Employee';
+  const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : ''
+  const displayRole = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Administrator' : 'Employee'
 
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
-        <h1 className="brand-logo clickable" onClick={() => setScreen(role === 'WORKER' ? 'my-requests' : 'employees')}>
+        <h1
+          className="brand-logo clickable"
+          onClick={() => setScreen(role === 'WORKER' ? 'my-requests' : 'employees')}
+        >
           EmpPulse
         </h1>
         <nav className="sidebar-nav">
@@ -74,7 +77,16 @@ const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
         <div className="sidebar-controls">
           <div className="theme-toggle">
             <div className="toggle-thumb">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+              </svg>
             </div>
           </div>
           <div className="lang-toggles">
@@ -84,7 +96,7 @@ const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
         </div>
       </div>
     </aside>
-  );
-};
+  )
+}
 
-export default Sidebar;
+export default Sidebar

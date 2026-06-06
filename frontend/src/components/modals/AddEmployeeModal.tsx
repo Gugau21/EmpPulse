@@ -1,66 +1,67 @@
-import React, { useState } from 'react';
-import type { ModalType, Department } from '../../types';
-import { useAuth } from '../../context/AuthContext';
-import { useCreateUser } from '../../hooks/useCreateUser';
+import React, { useState } from 'react'
+import type { Department, OpenModal } from '../../types'
+import { useAuth } from '../../context/useAuth'
+import { useCreateUser } from '../../hooks/useCreateUser'
+import { IdentityFields, RoleSection } from '../helpers/employeeFormParts'
 
 interface Props {
-  activeModal: ModalType;
-  closeModal: () => void;
-  departments: Department[];
-  openModal: (modal: ModalType, payload?: any) => void;
+  closeModal: () => void
+  departments: Department[]
+  openModal: OpenModal
 }
 
-const AddEmployeeModal: React.FC<Props> = ({ activeModal, closeModal, departments, openModal }) => {
-  const { userRole } = useAuth();
+const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal }) => {
+  const { userRole } = useAuth()
   // An admin can only ever create plain employees (no admin accounts, no role choice).
-  const isAdminCreator = userRole === 'ADMIN';
+  const isAdminCreator = userRole === 'ADMIN'
 
-  const [isEmployeeChecked, setIsEmployeeChecked] = useState(true);
-  const [isAdminChecked, setIsAdminChecked] = useState(true);
+  const [isEmployeeChecked, setIsEmployeeChecked] = useState(true)
+  // An admin creator can't assign the admin role, so it starts (and stays) off;
+  // otherwise the admin role defaults on. The modal remounts per open, so this
+  // initial value is sufficient — no effect needed to keep it in sync.
+  const [isAdminChecked, setIsAdminChecked] = useState(!isAdminCreator)
 
-  // When an admin opens the create form, force employee-only (no admin role).
-  React.useEffect(() => {
-    if (activeModal === 'ADD_EMPLOYEE' && isAdminCreator) {
-      setIsEmployeeChecked(true);
-      setIsAdminChecked(false);
-    }
-  }, [activeModal, isAdminCreator]);
-
-  const [newName, setNewName] = useState('');
-  const [newSurname, setNewSurname] = useState('');
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  const [newName, setNewName] = useState('')
+  const [newSurname, setNewSurname] = useState('')
+  const [newEmail, setNewEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   // Department selections (null = none chosen yet)
-  const [employeeDeptId, setEmployeeDeptId] = useState<number | null>(null);
-  const [adminDeptId, setAdminDeptId] = useState<number | null>(null);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const createUser = useCreateUser();
+  const [employeeDeptId, setEmployeeDeptId] = useState<number | null>(null)
+  const [adminDeptId, setAdminDeptId] = useState<number | null>(null)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const createUser = useCreateUser()
 
   const resetCreateUserForm = () => {
-    setNewName(''); setNewSurname(''); setNewEmail(''); setNewPassword('');
-    setEmployeeDeptId(null); setAdminDeptId(null);
-    setCreateError(null);
-  };
+    setNewName('')
+    setNewSurname('')
+    setNewEmail('')
+    setNewPassword('')
+    setEmployeeDeptId(null)
+    setAdminDeptId(null)
+    setCreateError(null)
+  }
 
   const handleCreateUser = () => {
-    setCreateError(null);
+    setCreateError(null)
     if (!newName.trim() || !newSurname.trim() || !newEmail.trim() || !newPassword) {
-      setCreateError('Name, surname, email and password are required.');
-      return;
+      setCreateError('Name, surname, email and password are required.')
+      return
     }
     // A user with no role is meaningless — must be employee and/or admin.
     if (!isEmployeeChecked && !isAdminChecked) {
-      setCreateError('User must be assigned at least one role: Employee or Administrator.');
-      return;
+      setCreateError('User must be assigned at least one role: Employee or Administrator.')
+      return
     }
     // A department must be chosen for every selected role — creating without one is not allowed.
     if (isEmployeeChecked && employeeDeptId === null) {
-      setCreateError('Please select a department for the employee role before creating the user.');
-      return;
+      setCreateError('Please select a department for the employee role before creating the user.')
+      return
     }
     if (isAdminChecked && adminDeptId === null) {
-      setCreateError('Please select a department for the administrator role before creating the user.');
-      return;
+      setCreateError(
+        'Please select a department for the administrator role before creating the user.'
+      )
+      return
     }
 
     createUser.mutate(
@@ -69,126 +70,80 @@ const AddEmployeeModal: React.FC<Props> = ({ activeModal, closeModal, department
         surname: newSurname.trim(),
         email: newEmail.trim(),
         password: newPassword,
-        ...(isEmployeeChecked ? { employeeDepartmentId: employeeDeptId, yearlyVacationBalance: 0 } : {}),
+        ...(isEmployeeChecked
+          ? { employeeDepartmentId: employeeDeptId, yearlyVacationBalance: 0 }
+          : {}),
         // undefined = no admin role; array = admin assigned to the chosen department
-        adminDepartmentIds: isAdminChecked && adminDeptId !== null ? [adminDeptId] : undefined,
+        adminDepartmentIds: isAdminChecked && adminDeptId !== null ? [adminDeptId] : undefined
       },
       {
         onSuccess: () => {
-          resetCreateUserForm();
-          closeModal();
-        },
-      },
-    );
-  };
+          resetCreateUserForm()
+          closeModal()
+        }
+      }
+    )
+  }
 
   return (
     <div className="modal-form">
       <h2>Add employee</h2>
 
-      <label>First name<input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} /></label>
-      <label>Surname<input type="text" value={newSurname} onChange={(e) => setNewSurname(e.target.value)} /></label>
-      <label>Email<input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} /></label>
-      <label>Password<input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></label>
+      <IdentityFields
+        name={newName}
+        onName={setNewName}
+        surname={newSurname}
+        onSurname={setNewSurname}
+        email={newEmail}
+        onEmail={setNewEmail}
+        password={newPassword}
+        onPassword={setNewPassword}
+      />
 
-      {/* 1. EMPLOYEE CHECKBOX (Fixed with inline styles) */}
-      {!isAdminCreator && (
-        <div 
-          onClick={() => setIsEmployeeChecked(!isEmployeeChecked)}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px', marginBottom: '8px', cursor: 'pointer', userSelect: 'none' }}
-        >
-          <h3 style={{ fontSize: '18px', fontWeight: 600, margin: 0, color: '#000' }}>Employee</h3>
-          <div style={{
-            width: '24px', height: '24px', border: '2px solid #5932EA', borderRadius: '4px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#5932EA', fontSize: '16px', fontWeight: 'bold', transition: 'all 0.1s ease'
-          }}>
-            {isEmployeeChecked ? '✕' : ''}
-          </div>
-        </div>
-      )}
-
-      {isEmployeeChecked && (
-        <label className="field-tight">Department
-          <select
-            value={employeeDeptId ?? ''}
-            onChange={(e) => setEmployeeDeptId(e.target.value ? Number(e.target.value) : null)}
-          >
-            <option value="" disabled>select department</option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
-        </label>
-      )}
-
-      {/* 2. ADMINISTRATOR CHECKBOX (Fixed with inline styles) */}
-      {!isAdminCreator && (
-        <>
-          <div 
-            onClick={() => setIsAdminChecked(!isAdminChecked)}
-            style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '20px', marginBottom: '8px', cursor: 'pointer', userSelect: 'none' }}
-          >
-            <h3 style={{ fontSize: '18px', fontWeight: 600, margin: 0, color: '#000' }}>Administrator</h3>
-            <div style={{
-              width: '24px', height: '24px', border: '2px solid #5932EA', borderRadius: '4px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#5932EA', fontSize: '16px', fontWeight: 'bold', transition: 'all 0.1s ease'
-            }}>
-              {isAdminChecked ? '✕' : ''}
-            </div>
-          </div>
-
-          {isAdminChecked && (
-            <label>Administrator of
-              <select
-                value={adminDeptId ?? ''}
-                onChange={(e) => setAdminDeptId(e.target.value ? Number(e.target.value) : null)}
-              >
-                <option value="" disabled>select department</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
-            </label>
-          )}
-        </>
-      )}
+      {/* Admin creators may only create plain employees: hide the role toggles. */}
+      <RoleSection
+        employeeChecked={isEmployeeChecked}
+        onToggleEmployee={() => setIsEmployeeChecked(!isEmployeeChecked)}
+        employeeDeptId={employeeDeptId}
+        onEmployeeDept={setEmployeeDeptId}
+        showEmployeeToggle={!isAdminCreator}
+        showAdmin={!isAdminCreator}
+        adminChecked={isAdminChecked}
+        onToggleAdmin={() => setIsAdminChecked(!isAdminChecked)}
+        adminDeptId={adminDeptId}
+        onAdminDept={setAdminDeptId}
+        departments={departments}
+      />
 
       {departments.length === 0 && (
-        <p className="form-error">No departments exist yet. Create a department before adding users.</p>
+        <p className="form-error">
+          No departments exist yet. Create a department before adding users.
+        </p>
       )}
 
       {(createError || createUser.error) && (
         <p className="form-error">{createError ?? createUser.error?.message}</p>
       )}
 
-      {/* 3. BOTTOM BUTTONS (Fixed with inline styles to be perfectly split and purple) */}
-      <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
-        <button 
-          onClick={handleCreateUser} 
+      <div className="modal-actions">
+        <button
+          className="btn-modal-action"
+          onClick={handleCreateUser}
           disabled={createUser.isPending || departments.length === 0}
-          style={{
-            flex: 1, backgroundColor: '#5932EA', color: 'white', border: 'none',
-            padding: '14px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-            cursor: 'pointer', textAlign: 'center', lineHeight: '1.2'
-          }}
         >
           + add without default working hours
         </button>
-        <button 
-          onClick={() => { openModal('ADD_WORKING_HOURS'); }}
-          style={{
-            flex: 1, backgroundColor: '#5932EA', color: 'white', border: 'none',
-            padding: '14px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-            cursor: 'pointer', textAlign: 'center', lineHeight: '1.2'
+        <button
+          className="btn-modal-action"
+          onClick={() => {
+            openModal('ADD_WORKING_HOURS')
           }}
         >
           + add default working hours
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AddEmployeeModal;
+export default AddEmployeeModal

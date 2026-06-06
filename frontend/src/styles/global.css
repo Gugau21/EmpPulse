@@ -8,13 +8,16 @@
 }
 
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: Poppins, sans-serif;
   font-weight: 500;
   background-color: #000;
 }
 
 /* Force form elements to inherit Poppins instead of system fonts */
-input, button, textarea, select {
+input,
+button,
+textarea,
+select {
   font-family: inherit;
 }
 
@@ -24,7 +27,7 @@ input, button, textarea, select {
   min-height: 100vh;
   max-width: 100%;
   margin: 0 auto;
-  background-color: #FAFAFD;
+  background-color: #fafafd;
   color: #1a1a1a;
 }
 
@@ -38,14 +41,14 @@ input, button, textarea, select {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-right: 1px solid #E5E7EB;
+  border-right: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 
 /* Logo */
 .brand-logo {
   font-size: 30px;
-  font-weight: Bold;
+  font-weight: bold;
   margin-bottom: 40px;
   color: #000;
 }
@@ -61,27 +64,27 @@ input, button, textarea, select {
   text-align: left;
   padding: 12px 16px;
   border-radius: 8px;
-  color: #8C95A5;
+  color: #8c95a5;
   font-weight: 500;
   font-size: 15px;
-  background-color: #F3F4F6;
+  background-color: #f3f4f6;
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .nav-item:hover {
-  background-color: #E5E7EB;
+  background-color: #e5e7eb;
 }
 
 .nav-item.active {
-  background-color: #5932EA;
+  background-color: #5932ea;
   color: #fff;
 }
 
 /* User profile card at the bottom of the sidebar */
 .user-profile {
-  background-color: #5932EA;
+  background-color: #5932ea;
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;
@@ -94,7 +97,7 @@ input, button, textarea, select {
 .user-avatar {
   width: 34px;
   height: 34px;
-  background-color: #D1D5DB;
+  background-color: #d1d5db;
   border-radius: 50%;
 }
 
@@ -104,13 +107,13 @@ input, button, textarea, select {
 }
 
 .user-name {
-  font-family: 'Poppins', sans-serif;
+  font-family: Poppins, sans-serif;
   font-weight: 500;
   font-size: 13px;
 }
 
 .user-role {
-  font-family: 'Poppins', sans-serif;
+  font-family: Poppins, sans-serif;
   font-size: 11px;
   opacity: 0.8;
 }
@@ -126,7 +129,7 @@ input, button, textarea, select {
 .theme-toggle {
   width: 48px;
   height: 26px;
-  background-color: #E5E7EB;
+  background-color: #e5e7eb;
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -137,7 +140,7 @@ input, button, textarea, select {
 .toggle-thumb {
   width: 20px;
   height: 20px;
-  background-color: #5932EA;
+  background-color: #5932ea;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -174,7 +177,7 @@ input, button, textarea, select {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
-  font-family: 'Poppins', sans-serif;
+  font-family: Poppins, sans-serif;
   font-weight: 500;
   letter-spacing: -0.5px;
 }
@@ -191,7 +194,7 @@ input, button, textarea, select {
 }
 
 .search-bar {
-  background-color: #EEE;
+  background-color: #eee;
   padding: 8px 16px;
   border-radius: 8px;
   display: flex;
@@ -202,13 +205,13 @@ input, button, textarea, select {
   border: none;
   background: transparent;
   outline: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: Poppins, sans-serif;
   font-size: 14px;
   width: 130px;
 }
 
 .filter-dropdown {
-  background-color: #EEE;
+  background-color: #eee;
   padding: 8px 16px;
   border-radius: 8px;
   display: flex;
@@ -228,7 +231,7 @@ input, button, textarea, select {
 
 .department-title {
   font-size: 25px;
-  font-family: 'Poppins', sans-serif;
+  font-family: Poppins, sans-serif;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -274,7 +277,7 @@ input, button, textarea, select {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #E8E8E8;
+  background-color: #e8e8e8;
   padding: 16px 20px;
   border-radius: 12px;
   position: relative;
@@ -287,7 +290,7 @@ input, button, textarea, select {
 }
 
 .employee-row.clickable:hover {
-  background-color: #DFDFDF;
+  background-color: #dfdfdf;
 }
 
 .emp-name {
@@ -329,7 +332,7 @@ input, button, textarea, select {
 
 .hover-slide-container:hover {
   padding-right: 60px;
-  background-color: #DFDFDF;
+  background-color: #dfdfdf;
 }
 
 .hover-slide-container:hover .slide-bin-btn {
@@ -339,16 +342,16 @@ input, button, textarea, select {
 /* Dashed border variants for unassigned / pending items */
 .dashed-row {
   background-color: transparent;
-  border: 2px dashed #A0A0A0;
+  border: 2px dashed #a0a0a0;
 }
 
 .dashed-active-row {
-  background-color: #F8F9FA;
-  border: 2px dashed #6C757D;
+  background-color: #f8f9fa;
+  border: 2px dashed #6c757d;
 }
 
 .dashed-wrapper {
-  border: 2px dashed #8C95A5;
+  border: 2px dashed #8c95a5;
   padding: 16px;
 }
 
@@ -366,17 +369,17 @@ input, button, textarea, select {
 }
 
 .badge-personal {
-  background-color: #FFF3CD;
+  background-color: #fff3cd;
   color: #856404;
 }
 
 .badge-sick {
-  background-color: #F8D7DA;
-  color: #721C24;
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 .badge-vacation {
-  background-color: #D4EDDA;
+  background-color: #d4edda;
   color: #155724;
 }
 
@@ -396,16 +399,16 @@ input, button, textarea, select {
 }
 
 .status-pending {
-  color: #6C757D;
+  color: #6c757d;
 }
 
 .status-approved {
-  color: #28A745;
+  color: #28a745;
 }
 
 .status-rejected,
 .status-cancelled {
-  color: #DC3545;
+  color: #dc3545;
 }
 
 /* ============================================================
@@ -423,7 +426,7 @@ input, button, textarea, select {
 /* Purple banner with name, email, stats */
 .profile-banner {
   flex: 1;
-  background-color: #5932EA;
+  background-color: #5932ea;
   border-radius: 16px;
   padding: 24px;
   color: white;
@@ -445,7 +448,7 @@ input, button, textarea, select {
 
 .btn-pill-action {
   background-color: #fff;
-  color: #5932EA;
+  color: #5932ea;
   border: none;
   padding: 6px 16px;
   border-radius: 16px;
@@ -455,8 +458,8 @@ input, button, textarea, select {
 }
 
 .btn-edit-action {
-  background-color: #ffffff;
-  color: #5932EA;
+  background-color: #fff;
+  color: #5932ea;
   border: none;
   padding: 6px 16px;
   border-radius: 5px;
@@ -510,8 +513,8 @@ input, button, textarea, select {
 }
 
 .balance-badge-card {
-  background-color: #F8F9FA;
-  border: 1px solid #E5E7EB;
+  background-color: #f8f9fa;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 12px;
   font-size: 13px;
@@ -520,7 +523,7 @@ input, button, textarea, select {
 }
 
 .btn-logout-pill {
-  background-color: #5932EA;
+  background-color: #5932ea;
   color: white;
   border: none;
   padding: 6px 16px;
@@ -542,14 +545,14 @@ input, button, textarea, select {
   font-size: 13px;
   margin-bottom: 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #EEE;
+  border-bottom: 1px solid #eee;
 }
 
 .table-row-grid {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
   font-size: 14px;
-  background-color: #E8E8E8;
+  background-color: #e8e8e8;
   margin-bottom: 8px;
   padding: 12px 16px;
   border-radius: 8px;
@@ -563,7 +566,7 @@ input, button, textarea, select {
 }
 
 .btn-tiny-pill {
-  background-color: #A0A0A0;
+  background-color: #a0a0a0;
   color: white;
   border: none;
   padding: 4px 16px;
@@ -587,7 +590,7 @@ input, button, textarea, select {
 }
 
 .primary-btn {
-  background-color: #5932EA;
+  background-color: #5932ea;
   color: white;
   border: none;
   padding: 14px 32px;
@@ -674,7 +677,7 @@ input, button, textarea, select {
 }
 
 .btn-secondary {
-  background-color: #E5E7EB;
+  background-color: #e5e7eb;
   border: none;
   padding: 8px 24px;
   border-radius: 6px;
@@ -684,8 +687,8 @@ input, button, textarea, select {
 
 .btn-outline-primary {
   background-color: transparent;
-  border: 1px solid #5932EA;
-  color: #5932EA;
+  border: 1px solid #5932ea;
+  color: #5932ea;
   padding: 8px 24px;
   border-radius: 6px;
   font-weight: 500;
@@ -713,18 +716,81 @@ input, button, textarea, select {
 .modal-form input,
 .modal-form select,
 .modal-form textarea {
-  border: 1px solid #DDD;
-  background-color: #F8F9FA;
+  border: 1px solid #ddd;
+  background-color: #f8f9fa;
   padding: 10px 12px;
   border-radius: 6px;
   font-size: 14px;
   outline: none;
 }
 
+/* Role toggle (Employee / Administrator) used by the add/edit employee modals */
+.role-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.role-checkbox h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #000;
+}
+
+.role-checkbox-box {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #5932ea;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5932ea;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.1s ease;
+}
+
+/* Purple action buttons in the add/edit employee modals */
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.modal-actions.single {
+  justify-content: center;
+}
+
+.btn-modal-action {
+  background-color: #5932ea;
+  color: white;
+  border: none;
+  padding: 14px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.2;
+  flex: 1;
+}
+
+.btn-modal-action.fixed-width {
+  flex: none;
+  width: 220px;
+  font-size: 15px;
+}
+
 /* "Add unassigned employee" modal employee card */
 .unassigned-card {
-  background-color: #F8F9FA;
-  border: 1px solid #EEE;
+  background-color: #f8f9fa;
+  border: 1px solid #eee;
   padding: 16px;
   border-radius: 8px;
   margin-bottom: 16px;
@@ -732,7 +798,7 @@ input, button, textarea, select {
 
 /* Remaining vacation days hint shown inside leave forms */
 .balance-hint {
-  background-color: #5932EA;
+  background-color: #5932ea;
   color: white;
   font-size: 11px;
   text-align: center;
@@ -743,7 +809,7 @@ input, button, textarea, select {
 
 /* Request detail summary shown in the accept-request modal */
 .request-summary-box {
-  background-color: #F8F9FA;
+  background-color: #f8f9fa;
   padding: 16px;
   border-radius: 8px;
   margin-bottom: 20px;
@@ -754,7 +820,7 @@ input, button, textarea, select {
 }
 
 .reason-box {
-  background-color: #E8E8E8;
+  background-color: #e8e8e8;
   padding: 10px;
   border-radius: 6px;
   font-weight: 500;
@@ -766,7 +832,7 @@ input, button, textarea, select {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #E8E8E8;
+  background-color: #e8e8e8;
   padding: 8px 12px;
   border-radius: 6px;
   margin-bottom: 8px;
@@ -798,7 +864,7 @@ input, button, textarea, select {
 }
 
 .admin-block-item {
-  background-color: #E8E8E8;
+  background-color: #e8e8e8;
   padding: 14px 20px;
   border-radius: 10px;
   font-size: 15px;
@@ -817,7 +883,7 @@ input, button, textarea, select {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  border-bottom: 1px solid #F0F0F0;
+  border-bottom: 1px solid #f0f0f0;
   padding-bottom: 12px;
 }
 
@@ -843,10 +909,10 @@ input, button, textarea, select {
 .shift-pill-row {
   display: flex;
   align-items: center;
-  background-color: #F8F9FA;
+  background-color: #f8f9fa;
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   font-size: 13px;
 }
 
@@ -864,20 +930,20 @@ input, button, textarea, select {
 /* --- Expanded Modal Additions --- */
 .admin-name-pill {
   flex: 1;
-  background-color: #FAFAFD;
+  background-color: #fafafd;
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid #DDD;
+  border: 1px solid #ddd;
   font-size: 13px;
   font-weight: 500;
   margin: 0 8px;
 }
 
 .btn-pill-secondary {
-  background-color: #E5E7EB;
+  background-color: #e5e7eb;
   border: none;
   border-radius: 5px;
-  padding: 7px 7px;
+  padding: 7px;
   cursor: pointer;
   color: #333;
   rotate: -90deg;
@@ -901,7 +967,7 @@ input, button, textarea, select {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #FAFAFD;
+  background-color: #fafafd;
 }
 
 /* Rounded white container card with inner padding and drop shadow */
@@ -913,7 +979,7 @@ input, button, textarea, select {
   border-radius: 16px;
   box-shadow: 0 10px 30px rgb(0 0 0 / 5%);
   text-align: center;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
 }
 
 /* Main brand identifier */
@@ -934,8 +1000,8 @@ input, button, textarea, select {
 
 /* Conditional alert banner for validation errors */
 .auth-error-msg {
-  background-color: #F8D7DA;
-  color: #721C24;
+  background-color: #f8d7da;
+  color: #721c24;
   padding: 10px;
   border-radius: 6px;
   font-size: 13px;
@@ -962,12 +1028,12 @@ input, button, textarea, select {
 
 /* Styled input fields matching the app's standard forms */
 .auth-input-label input {
-  border: 1px solid #DDD;
+  border: 1px solid #ddd;
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 14px;
   outline: none;
-  background-color: #FAFAFD;
+  background-color: #fafafd;
 }
 
 /* Expanded primary submission button */
@@ -978,7 +1044,7 @@ input, button, textarea, select {
 /* ============================================================
    DEPARTMENT DETAIL SCREEN HEADER
    ============================================================ */
-.department-detail-title_row {
+.department-detail-title-row {
   display: flex;
   align-items: center;
   gap: 16px; /* This adds a nice 16px space between the buttons and the title */

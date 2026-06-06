@@ -1,40 +1,39 @@
-import React, { useState } from 'react';
-import type { ModalType, Employee, LeaveRequest } from '../types';
-import trashIcon from '../assets/trash-icon.png.webp';
-import blackTriangleIcon from '../assets/black_triangle.png';
-import { useEmployeesList } from '../hooks/useEmployeesList';
+import React, { useState } from 'react'
+import type { Employee, OpenModal } from '../types'
+import trashIcon from '../assets/trash-icon.png.webp'
+import blackTriangleIcon from '../assets/black_triangle.png'
+import { useEmployeesList } from '../hooks/useEmployeesList'
 
 interface Props {
-  openModal: (modal: ModalType, emp?: Employee, requestObj?: LeaveRequest) => void;
-  openEmployeeProfile: (emp: Employee) => void;
+  openModal: OpenModal
+  openEmployeeProfile: (emp: Employee) => void
 }
 
 // Employees with no department are not shown — this page only lists department members.
 function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
-  const groups = new Map<string, Employee[]>();
+  const groups = new Map<string, Employee[]>()
   for (const emp of employees) {
-    if (!emp.department) continue;
-    const existing = groups.get(emp.department);
-    if (existing) existing.push(emp);
-    else groups.set(emp.department, [emp]);
+    if (!emp.department) continue
+    const existing = groups.get(emp.department)
+    if (existing) existing.push(emp)
+    else groups.set(emp.department, [emp])
   }
-  return groups;
+  return groups
 }
 
 const EmployeesPage: React.FC<Props> = ({ openModal, openEmployeeProfile }) => {
-  const { data: employees = [], isLoading } = useEmployeesList();
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  const [search, setSearch] = useState('');
+  const { data: employees = [], isLoading } = useEmployeesList()
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const [search, setSearch] = useState('')
 
-  const query = search.trim().toLowerCase();
+  const query = search.trim().toLowerCase()
   const filtered = query
-    ? employees.filter((emp) => (emp.surname ?? '').toLowerCase().startsWith(query))
-    : employees;
+    ? employees.filter(emp => (emp.surname ?? '').toLowerCase().startsWith(query))
+    : employees
 
-  const groups = groupByDepartment(filtered);
+  const groups = groupByDepartment(filtered)
 
-  const toggle = (dept: string) =>
-    setCollapsed((prev) => ({ ...prev, [dept]: !prev[dept] }));
+  const toggle = (dept: string) => setCollapsed(prev => ({ ...prev, [dept]: !prev[dept] }))
 
   return (
     <div className="screen-container">
@@ -46,17 +45,19 @@ const EmployeesPage: React.FC<Props> = ({ openModal, openEmployeeProfile }) => {
               type="text"
               placeholder="Search by surname"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
             />
           </div>
-          <div className="filter-dropdown"><span>Filter by</span>...</div>
+          <div className="filter-dropdown">
+            <span>Filter by</span>...
+          </div>
         </div>
       </header>
 
       {isLoading && <p className="muted">Loading employees…</p>}
 
       {[...groups.entries()].map(([dept, deptEmployees]) => {
-        const expanded = !collapsed[dept];
+        const expanded = !collapsed[dept]
         return (
           <div className="accordion-section" key={dept}>
             <h3 className="department-title" onClick={() => toggle(dept)}>
@@ -76,7 +77,9 @@ const EmployeesPage: React.FC<Props> = ({ openModal, openEmployeeProfile }) => {
                     className="employee-row hover-slide-container"
                     onClick={() => openEmployeeProfile(emp)}
                   >
-                    <span className="emp-name">{[emp.name, emp.surname].filter(Boolean).join(' ')}</span>
+                    <span className="emp-name">
+                      {[emp.name, emp.surname].filter(Boolean).join(' ')}
+                    </span>
                     <div className="emp-meta">
                       {/*
                         HIDDEN FOR NOW: leave status badge + "until" date.
@@ -92,7 +95,10 @@ const EmployeesPage: React.FC<Props> = ({ openModal, openEmployeeProfile }) => {
                       */}
                       <button
                         className="slide-bin-btn"
-                        onClick={(e) => { e.stopPropagation(); openModal('DELETE_EMPLOYEE', emp); }}
+                        onClick={e => {
+                          e.stopPropagation()
+                          openModal('DELETE_EMPLOYEE', emp)
+                        }}
                         title="Remove from department"
                       >
                         <img src={trashIcon} alt="Delete" width={30} height={30} />
@@ -103,14 +109,16 @@ const EmployeesPage: React.FC<Props> = ({ openModal, openEmployeeProfile }) => {
               </div>
             )}
           </div>
-        );
+        )
       })}
 
       <div className="center-action">
-        <button className="primary-btn" onClick={() => openModal('ADD_EMPLOYEE')}>+ add employee</button>
+        <button className="primary-btn" onClick={() => openModal('ADD_EMPLOYEE')}>
+          + add employee
+        </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default EmployeesPage;
+export default EmployeesPage
