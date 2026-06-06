@@ -1,14 +1,13 @@
 name: Lint backend Code Base
-
 on:
   push:
     branches: [ "*" ]
     paths:
-      - "backend/**"
+      - "backend/"
   pull_request:
     branches: [ "main" ]
     paths:
-      - "backend/**"
+      - "backend/"
   workflow_dispatch:
 
 jobs:
@@ -17,27 +16,48 @@ jobs:
     permissions:
       contents: read
       statuses: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Lint Backend Code Base
-        uses: github/super-linter/slim@v4
-        env:
-          VALIDATE_ALL_CODEBASE: true
-          DEFAULT_BRANCH: "main"
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILTER_REGEX_INCLUDE: .*backend/.*
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Download tools
+        run: |
+          curl -fsSL -o /tmp/gjf.jar \
+            https://github.com/google/google-java-format/releases/download/v1.22.0/google-java-format-1.22.0-all-deps.jar
+          curl -fsSL -o /tmp/checkstyle.jar \
+            https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.17.0/checkstyle-10.17.0-all.jar
+          # Download google_checks.xml from the EXACT same tag as the JAR above
+          curl -fsSL -o /tmp/google_checks.xml \
+            https://raw.githubusercontent.com/checkstyle/checkstyle/checkstyle-10.17.0/src/main/resources/google_checks.xml
+          # Inject SuppressionFilter pointing to your suppressions file
+          sed -i 's|<module name="Checker">|<module name="Checker"><module name="SuppressionFilter"><property name="file" value="${config_loc}/checkstyle-suppressions.xml"/><property name="optional" value="false"/></module>|' /tmp/google_checks.xml
+
+      - name: Check formatting (google-java-format)
+        run: |
+          mapfile -d '' files < <(find backend -name "*.java" -print0)
+          if [ "${#files[@]}" -eq 0 ]; then echo "No .java files found."; exit 0; fi
+          java -jar /tmp/gjf.jar --dry-run --set-exit-if-changed "${files[@]}"
+
+      - name: Lint (Checkstyle — Google rules)
+        run: |
+          files=$(find backend -name "*.java")
+          if [ -z "$files" ]; then echo "No .java files found."; exit 0; fi
+          echo "$files" | xargs java \
+            -Dconfig_loc=$GITHUB_WORKSPACE/backend \
+            -jar /tmp/checkstyle.jar \
+            -c /tmp/google_checks.xml
+
 
   build_backend:
-
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Build the Docker image
-      run: docker build backend --file backend/Dockerfile
-
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build the Docker image
+        run: docker build backend --file backend/Dockerfile
