@@ -1,7 +1,6 @@
 package com.oman.EmpPulse.security;
 
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 
 public final class AuthUtils {
   private AuthUtils() {}
@@ -16,13 +15,6 @@ public final class AuthUtils {
 
   public static boolean isAdmin(Authentication authentication) {
     return hasAuthority(authentication, "ADMIN");
-  }
-
-  public static String getRole(Authentication authentication) {
-    return authentication.getAuthorities().stream()
-        .findFirst()
-        .map(GrantedAuthority::getAuthority)
-        .orElseThrow();
   }
 
   private static boolean hasAuthority(Authentication authentication, String authority) {

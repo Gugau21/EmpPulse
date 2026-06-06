@@ -3,7 +3,6 @@ package com.oman.EmpPulse.config;
 import com.oman.EmpPulse.entity.Admin;
 import com.oman.EmpPulse.entity.User;
 import com.oman.EmpPulse.entity.UserLanguage;
-import com.oman.EmpPulse.entity.UserRole;
 import com.oman.EmpPulse.entity.UserTheme;
 import com.oman.EmpPulse.repository.AdminRepository;
 import com.oman.EmpPulse.repository.UserRepository;
@@ -19,10 +18,10 @@ public class AppStartupRunner implements CommandLineRunner {
   private final AdminRepository adminRepository;
   private final PasswordEncoder passwordEncoder;
 
-  @Value("${app.owner.email}")
+  @Value("${APP_OWNER_EMAIL}")
   private String ownerEmail;
 
-  @Value("${app.owner.password}")
+  @Value("${APP_OWNER_PASSWORD}")
   private String ownerPassword;
 
   public AppStartupRunner(
@@ -36,7 +35,7 @@ public class AppStartupRunner implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    seedUser("System", "Owner", ownerEmail, ownerPassword, UserRole.OWNER, false);
+    seedUser("System", "Owner", ownerEmail, ownerPassword, true, false);
   }
 
   private void seedUser(
@@ -44,7 +43,7 @@ public class AppStartupRunner implements CommandLineRunner {
       String surname,
       String email,
       String password,
-      UserRole role,
+      boolean isOwner,
       boolean createAdminEntity) {
     if (userRepository.findByEmail(email).isPresent()) return;
     User user = new User();
@@ -54,11 +53,11 @@ public class AppStartupRunner implements CommandLineRunner {
     user.setPassHash(passwordEncoder.encode(password));
     user.setTheme(UserTheme.LIGHT);
     user.setLanguage(UserLanguage.ENG);
-    user.setRole(role);
+    user.setOwner(isOwner);
     userRepository.save(user);
     if (createAdminEntity) {
       adminRepository.save(new Admin(user.getId()));
     }
-    System.out.println("Seeded " + role + ": " + email);
+    System.out.println("Seeded owner: " + email);
   }
 }

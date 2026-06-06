@@ -77,7 +77,7 @@ public class UserService {
             user.getName(),
             user.getSurname(),
             user.getEmail(),
-            UserRole.OWNER.equals(user.getRole()),
+            user.isOwner(),
             new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name()),
             employeeProfile,
             adminProfile);
@@ -93,7 +93,7 @@ public class UserService {
             .filter(u -> !u.isDeleted())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-    if (UserRole.OWNER.equals(user.getRole())) {
+    if (user.isOwner()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Owner cannot be deleted");
     }
 
@@ -102,10 +102,10 @@ public class UserService {
   }
 
   @Transactional
-  public void createUser(UserCreateRequest req, String callerRole) {
+  public void createUser(UserCreateRequest req, boolean callerIsOwner) {
     boolean wantsAdmin = req.getAdminDepartmentIds() != null;
 
-    if ("ADMIN".equals(callerRole) && wantsAdmin) {
+    if (!callerIsOwner && wantsAdmin) {
       throw new ResponseStatusException(
           HttpStatus.FORBIDDEN, "Admins can only create employee accounts");
     }
@@ -114,8 +114,6 @@ public class UserService {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
     }
 
-    UserRole role = wantsAdmin ? UserRole.ADMIN : UserRole.EMPLOYEE;
-
     User user =
         new User(
             req.getName(),
@@ -123,11 +121,10 @@ public class UserService {
             req.getEmail(),
             passwordEncoder.encode(req.getPassword()),
             UserTheme.LIGHT,
-            UserLanguage.ENG,
-            role);
+            UserLanguage.ENG);
     userRepository.save(user);
 
-    if (req.getYearlyVacationBalance() != null) {
+    if (req.getEmployeeDepartmentId() != null) {
       Employee employee =
           new Employee(
               user.getId(), req.getEmployeeDepartmentId(),

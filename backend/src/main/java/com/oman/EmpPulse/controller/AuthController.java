@@ -7,13 +7,11 @@ import com.oman.EmpPulse.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -52,7 +50,7 @@ public class AuthController {
 
     UsernamePasswordAuthenticationToken auth =
         new UsernamePasswordAuthenticationToken(
-            user.getId(), null, List.of(new SimpleGrantedAuthority(user.getRole().name())));
+            user.getId(), null, authService.getAuthorities(user));
     SecurityContext context = SecurityContextHolder.createEmptyContext();
     context.setAuthentication(auth);
     SecurityContextHolder.setContext(context);

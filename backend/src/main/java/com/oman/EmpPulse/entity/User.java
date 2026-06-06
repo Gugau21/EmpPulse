@@ -33,10 +33,8 @@ public class User {
   @ColumnTransformer(write = "?::language")
   private UserLanguage language;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  @ColumnTransformer(write = "?::role")
-  private UserRole role;
+  @Column(name = "is_owner", nullable = false)
+  private boolean isOwner;
 
   @Column(name = "is_deleted", nullable = false)
   private boolean isDeleted;
@@ -49,15 +47,13 @@ public class User {
       String email,
       String passHash,
       UserTheme theme,
-      UserLanguage language,
-      UserRole role) {
+      UserLanguage language) {
     this.name = name;
     this.surname = surname;
     this.email = email;
     this.passHash = passHash;
     this.theme = theme;
     this.language = language;
-    this.role = role;
   }
 
   public Long getId() {
@@ -116,12 +112,12 @@ public class User {
     this.language = language;
   }
 
-  public UserRole getRole() {
-    return role;
+  public boolean isOwner() {
+    return isOwner;
   }
 
-  public void setRole(UserRole role) {
-    this.role = role;
+  public void setOwner(boolean isOwner) {
+    this.isOwner = isOwner;
   }
 
   public boolean isDeleted() {
