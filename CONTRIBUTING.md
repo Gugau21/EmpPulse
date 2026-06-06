@@ -87,3 +87,25 @@ When the change is large or touches multiple concerns, add a blank line after th
 - Return no schedule when department hours are also unset
 - Add unit tests for both fallback cases
 ```
+
+---
+
+## Pull Requests
+
+PRs are merged into `main` through the **GitHub UI** using **Create a merge commit** — we do not run merges locally in the terminal. **Squash and merge** and **Rebase and merge** are disabled for this repository.
+
+GitHub's default merge message (`Merge pull request #112 from org/feat/...`) doesn't follow our conventions — edit it in the merge dialog so the merge commit obeys the same [Commits](#commits) rules, with `Merge` as the imperative verb:
+
+```
+[EM-<number>] Merge <feature-summary> 
+```
+
+Examples:
+
+```
+[EM-78] Merge default week hours inheritance
+[EM-42] Merge logged-hours overlap validation
+[none] Merge gitignore update
+```
+
+Add a bullet body (per the Commits rules) only when conflicts were resolved during the merge, noting how they were handled.
