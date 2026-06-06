@@ -79,9 +79,12 @@ Frontend only:
 
 ```bash
 cd frontend
-npm run lint          # ESLint
-npm run format:check  # Prettier (check only)
-npm run format        # Prettier (auto-fix)
+npm run lint          # ESLint    (JS/TS, check only)
+npm run lint:fix      # ESLint    (JS/TS, auto-fix)
+npm run lint:css      # stylelint (CSS,   check only)
+npm run lint:css:fix  # stylelint (CSS,   auto-fix)
+npm run format        # Prettier  (all,   check only)
+npm run format:fix    # Prettier  (all,   auto-fix)
 cd ..
 ```
 
