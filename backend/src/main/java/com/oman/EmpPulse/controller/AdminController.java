@@ -9,15 +9,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/admins")
 public class AdminController {
 
-    private final AdminService adminService;
+  private final AdminService adminService;
 
-    public AdminController(AdminService adminService) {
-        this.adminService = adminService;
-    }
+  public AdminController(AdminService adminService) {
+    this.adminService = adminService;
+  }
 
-    @PreAuthorize("hasAuthority('OWNER')")
-    @GetMapping
-    public ResponseEntity<?> listAdmins() {
-        return ResponseEntity.ok(adminService.getAllAdmins());
-    }
+  @PreAuthorize("hasAuthority('OWNER')")
+  @GetMapping
+  public ResponseEntity<?> listAdmins() {
+    return ResponseEntity.ok(adminService.getAllAdmins());
+  }
 }

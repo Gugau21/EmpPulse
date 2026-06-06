@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class EmpPulseApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(EmpPulseApplication.class, args);
-	}
-
+  public static void main(String[] args) {
+    SpringApplication.run(EmpPulseApplication.class, args);
+  }
 }

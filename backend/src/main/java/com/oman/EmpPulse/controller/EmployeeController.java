@@ -11,18 +11,19 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/employees")
 public class EmployeeController {
 
-    private final EmployeeService employeeService;
+  private final EmployeeService employeeService;
 
-    public EmployeeController(EmployeeService employeeService) {
-        this.employeeService = employeeService;
-    }
+  public EmployeeController(EmployeeService employeeService) {
+    this.employeeService = employeeService;
+  }
 
-    @GetMapping
-    @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
-    public ResponseEntity<?> listEmployees(Authentication authentication) {
-        if (AuthUtils.isOwner(authentication)) {
-            return ResponseEntity.ok(employeeService.getAllEmployees());
-        }
-        return ResponseEntity.ok(employeeService.getEmployeesForAdmin(AuthUtils.getUserId(authentication)));
+  @GetMapping
+  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  public ResponseEntity<?> listEmployees(Authentication authentication) {
+    if (AuthUtils.isOwner(authentication)) {
+      return ResponseEntity.ok(employeeService.getAllEmployees());
     }
+    return ResponseEntity.ok(
+        employeeService.getEmployeesForAdmin(AuthUtils.getUserId(authentication)));
+  }
 }
