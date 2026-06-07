@@ -190,13 +190,14 @@ Due to codependency, **User** and (**Employee** or **Admin**) must be created in
 3. **User** can modify their password.
 4. **Admin** can modify **Default Week hours** of **Employee** in **Departments** they oversee.
 5. **Admin** can modify which **Department** an **Employee** is in. See rules for **Department** Modification.
-6. **Owner** can modify all parameters of **User**, **Employee** and **Admin**.
-7. If **Owner** modifies **User** password they will receive email with credentials (Same as in User Creation).
-8. **Owner** can attach **User** to **Employee** or **Admin**.
-9. If **Owner** changed **Employee** to inactive
+6. **Admin** can modify premiumVacationDays of an **Employee**
+7. **Owner** can modify all parameters of **User** (except preferences), **Employee** and **Admin**.
+8. If **Owner** modifies **User** password they will receive email with credentials (Same as in User Creation).
+9. **Owner** can attach **User** to **Employee** or **Admin**.
+10. If **Owner** changed **Employee** to inactive
     * they are deatched from **Department**;
     * **Employee**'s pending **Leave requests** are deleted.
-10. If **Owner** changed **Admin** to inactive, they are detached from all their **Departments**.
+11. If **Owner** changed **Admin** to inactive, they are detached from all their **Departments**.
 
 #### User Deletion
 

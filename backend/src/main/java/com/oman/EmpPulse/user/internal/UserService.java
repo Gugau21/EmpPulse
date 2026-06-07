@@ -11,6 +11,7 @@ import com.oman.EmpPulse.user.api.UserDirectory;
 import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.api.UserResponse;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
+import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -181,5 +182,117 @@ public class UserService implements UserDirectory {
       adminRepository.save(admin);
       departmentApi.assignAdminToDepartments(admin.getId(), req.getAdminDepartmentIds());
     }
+  }
+
+  @Transactional
+  public void updateUser(
+      Long userId, UserUpdateRequest req, Long callerUserId, boolean callerIsOwner) {
+    if (!callerIsOwner) {
+      boolean hasOwnerOnlyFields =
+          req.getName() != null
+              || req.getSurname() != null
+              || req.getEmail() != null
+              || req.getPassword() != null
+              || req.getAdminDepartmentIds() != null;
+      if (hasOwnerOnlyFields) {
+        throw new ResponseStatusException(
+            HttpStatus.FORBIDDEN,
+            "Admins can only update employee department and vacation balance");
+      }
+    }
+
+    User user =
+        userRepository
+            .findById(userId)
+            .filter(u -> !u.isDeleted())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+    updateUserSpecificInfo(user, req);
+
+    boolean hasEmployeeUpdate =
+        req.getEmployeeDepartmentId() != null || req.getYearlyVacationBalance() != null;
+    if (hasEmployeeUpdate) {
+      Optional<Employee> employeeOpt = employeeRepository.findByUserId(userId);
+      if (employeeOpt.isPresent()) {
+        updateEmployeeSpecificInfo(employeeOpt.get(), req, callerUserId, callerIsOwner);
+      } else if (callerIsOwner) {
+        attachEmployeeToUser(userId, req);
+      }
+    }
+
+    if (req.getAdminDepartmentIds() != null) {
+      Optional<Admin> adminOpt = adminRepository.findByUserId(userId);
+      if (adminOpt.isPresent()) {
+        updateAdminSpecificInfo(adminOpt.get(), req);
+      } else if (callerIsOwner) {
+        attachAdminToUser(userId, req);
+      }
+    }
+  }
+
+  private void verifyAdminOverseesDepartment(Long callerUserId, Long departmentId) {
+    Admin callerAdmin =
+        adminRepository
+            .findByUserId(callerUserId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Not an admin"));
+    boolean oversees =
+        callerAdmin.getDepartments().stream().anyMatch(d -> d.getId().equals(departmentId));
+    if (!oversees) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Admin does not oversee target department");
+    }
+  }
+
+  private void updateUserSpecificInfo(User user, UserUpdateRequest req) {
+    if (req.getName() != null) {
+      user.setName(req.getName());
+    }
+    if (req.getSurname() != null) {
+      user.setSurname(req.getSurname());
+    }
+    if (req.getEmail() != null && !req.getEmail().equals(user.getEmail())) {
+      if (userRepository.findByEmailAndIsDeletedFalse(req.getEmail()).isPresent()) {
+        throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
+      }
+      user.setEmail(req.getEmail());
+    }
+    if (req.getPassword() != null) {
+      user.setPassHash(passwordEncoder.encode(req.getPassword()));
+    }
+    userRepository.save(user);
+  }
+
+  private void updateEmployeeSpecificInfo(
+      Employee employee, UserUpdateRequest req, Long callerUserId, boolean callerIsOwner) {
+    if (!callerIsOwner && req.getEmployeeDepartmentId() != null) {
+      verifyAdminOverseesDepartment(callerUserId, req.getEmployeeDepartmentId());
+    }
+    if (req.getEmployeeDepartmentId() != null) {
+      employee.setDepartmentId(req.getEmployeeDepartmentId());
+    }
+    if (req.getYearlyVacationBalance() != null) {
+      employee.setVacationBalance(req.getYearlyVacationBalance());
+    }
+    employeeRepository.save(employee);
+  }
+
+  private void attachEmployeeToUser(Long userId, UserUpdateRequest req) {
+    Employee employee =
+        new Employee(
+            userId,
+            req.getEmployeeDepartmentId(),
+            req.getYearlyVacationBalance() != null ? req.getYearlyVacationBalance() : 0,
+            LocalDate.now());
+    employeeRepository.save(employee);
+  }
+
+  private void updateAdminSpecificInfo(Admin admin, UserUpdateRequest req) {
+    departmentApi.assignAdminToDepartments(admin.getId(), req.getAdminDepartmentIds());
+  }
+
+  private void attachAdminToUser(Long userId, UserUpdateRequest req) {
+    Admin admin = new Admin(userId);
+    adminRepository.save(admin);
+    departmentApi.assignAdminToDepartments(admin.getId(), req.getAdminDepartmentIds());
   }
 }
