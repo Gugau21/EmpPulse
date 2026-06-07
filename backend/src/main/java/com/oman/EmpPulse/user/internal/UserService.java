@@ -5,7 +5,6 @@ import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.user.api.Admin;
 import com.oman.EmpPulse.user.api.AdminProfileResponse;
 import com.oman.EmpPulse.user.api.EmployeeProfileResponse;
-import com.oman.EmpPulse.user.api.MeResponse;
 import com.oman.EmpPulse.user.api.UserCredential;
 import com.oman.EmpPulse.user.api.UserDirectory;
 import com.oman.EmpPulse.user.api.UserPreferencesResponse;
@@ -68,7 +67,32 @@ public class UserService implements UserDirectory {
 
   @Override
   @Transactional(readOnly = true)
-  public MeResponse loadProfile(Long userId) {
+  public UserResponse loadProfile(Long userId) {
+    return buildUserResponse(userId);
+  }
+
+  @Transactional(readOnly = true)
+  public UserResponse getUserProfile(Long userId, Long callerUserId, boolean callerIsOwner) {
+    if (!callerIsOwner) {
+      Optional<Employee> employeeOpt = employeeRepository.findByUserId(userId);
+      Employee employee =
+          employeeOpt.orElseThrow(
+              () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+      if (employee.getDepartmentId() == null) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+      }
+      verifyAdminOverseesDepartment(callerUserId, employee.getDepartmentId());
+    }
+
+    userRepository
+        .findById(userId)
+        .filter(u -> !u.isDeleted())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+    return buildUserResponse(userId);
+  }
+
+  private UserResponse buildUserResponse(Long userId) {
     User user =
         userRepository
             .findById(userId)
@@ -98,18 +122,15 @@ public class UserService implements UserDirectory {
               employee.getVacationBalance());
     }
 
-    UserResponse userResponse =
-        new UserResponse(
-            user.getId(),
-            user.getName(),
-            user.getSurname(),
-            user.getEmail(),
-            user.isOwner(),
-            new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name()),
-            employeeProfile,
-            adminProfile);
-
-    return new MeResponse(userResponse);
+    return new UserResponse(
+        user.getId(),
+        user.getName(),
+        user.getSurname(),
+        user.getEmail(),
+        user.isOwner(),
+        new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name()),
+        employeeProfile,
+        adminProfile);
   }
 
   @Override

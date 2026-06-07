@@ -93,7 +93,7 @@ export const authService = {
       }
     })
     const data = await res.json()
-    return data.user as MeUser
+    return data as MeUser
   },
 
   logout: async (): Promise<void> => {

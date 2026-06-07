@@ -31,6 +31,15 @@ public class UserController {
     return ResponseEntity.noContent().build();
   }
 
+  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @GetMapping("/api/users/{userId}")
+  public ResponseEntity<?> getUserProfile(
+      @PathVariable Long userId, Authentication authentication) {
+    return ResponseEntity.ok(
+        userService.getUserProfile(
+            userId, AuthUtils.getUserId(authentication), AuthUtils.isOwner(authentication)));
+  }
+
   @PreAuthorize("hasAuthority('OWNER')")
   @DeleteMapping("/api/users/{userId}")
   public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
