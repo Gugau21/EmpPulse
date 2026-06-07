@@ -8,12 +8,6 @@ CREATE TYPE "language" AS ENUM (
   'UKR'
 );
 
-CREATE TYPE "role" AS ENUM (
-  'EMPLOYEE',
-  'ADMIN',
-  'OWNER'
-);
-
 CREATE TYPE "leave_type" AS ENUM (
   'SICK',
   'VACATION',
@@ -35,7 +29,7 @@ CREATE TABLE "User" (
   "pass_hash" text NOT NULL,
   "theme" theme NOT NULL,
   "language" language NOT NULL,
-  "role" role NOT NULL,
+  "is_owner" boolean NOT NULL DEFAULT false,
   "is_deleted" boolean NOT NULL DEFAULT false
 );
 
