@@ -1,4 +1,4 @@
-package com.oman.EmpPulse.user.dto;
+package com.oman.EmpPulse.user.api;
 
 public class UserResponse {
   private Long id;
