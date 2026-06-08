@@ -132,6 +132,14 @@ export const userService = {
       errorFallback: 'Failed to delete employee.',
       errorOverrides: { 403: 'Only the owner can delete employees.' }
     })
+  },
+
+  getById: async (userId: number, signal?: AbortSignal): Promise<MeUser> => {
+    const res = await apiRequest(`/api/users/${userId}`, {
+      signal,
+      errorFallback: 'Failed to load employee details.'
+    })
+    return (await res.json()) as MeUser
   }
 }
 
@@ -224,7 +232,8 @@ export const departmentService = {
     await apiRequest(`/api/departments/${id}`, {
       method: 'PATCH',
       body: payload,
-      errorFallback: 'Failed to update department.'
+      errorFallback: 'Failed to update department.',
+      errorOverrides: { 409: 'A department with this name already exists.' }
     })
   }
 }
