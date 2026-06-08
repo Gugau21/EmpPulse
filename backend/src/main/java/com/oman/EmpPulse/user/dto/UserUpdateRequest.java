@@ -1,13 +1,20 @@
 package com.oman.EmpPulse.user.dto;
 
 import java.util.List;
+import org.openapitools.jackson.nullable.JsonNullable;
 
 public class UserUpdateRequest {
   private String name;
   private String surname;
   private String email;
   private String password;
-  private Long employeeDepartmentId;
+
+  /**
+   * {@code undefined} = field omitted, leave unchanged; {@code null} = detach from department;
+   * present with a value = move to that department.
+   */
+  private JsonNullable<Long> employeeDepartmentId = JsonNullable.undefined();
+
   private Integer yearlyVacationBalance;
   private List<PremiumVacationDayRequest> premiumVacationDays;
   private List<Long> adminDepartmentIds;
@@ -44,11 +51,11 @@ public class UserUpdateRequest {
     this.password = password;
   }
 
-  public Long getEmployeeDepartmentId() {
+  public JsonNullable<Long> getEmployeeDepartmentId() {
     return employeeDepartmentId;
   }
 
-  public void setEmployeeDepartmentId(Long employeeDepartmentId) {
+  public void setEmployeeDepartmentId(JsonNullable<Long> employeeDepartmentId) {
     this.employeeDepartmentId = employeeDepartmentId;
   }
 

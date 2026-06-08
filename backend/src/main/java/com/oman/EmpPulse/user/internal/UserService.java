@@ -201,7 +201,7 @@ public class UserService implements UserDirectory {
     if (wantsAdmin) {
       Admin admin = new Admin(user.getId());
       adminRepository.save(admin);
-      departmentApi.assignAdminToDepartments(admin.getId(), req.getAdminDepartmentIds());
+      departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
     }
   }
 
@@ -231,7 +231,7 @@ public class UserService implements UserDirectory {
     updateUserSpecificInfo(user, req);
 
     boolean hasEmployeeUpdate =
-        req.getEmployeeDepartmentId() != null || req.getYearlyVacationBalance() != null;
+        req.getEmployeeDepartmentId().isPresent() || req.getYearlyVacationBalance() != null;
     if (hasEmployeeUpdate) {
       Optional<Employee> employeeOpt = employeeRepository.findByUserId(userId);
       if (employeeOpt.isPresent()) {
@@ -245,7 +245,7 @@ public class UserService implements UserDirectory {
       Optional<Admin> adminOpt = adminRepository.findByUserId(userId);
       if (adminOpt.isPresent()) {
         updateAdminSpecificInfo(adminOpt.get(), req);
-      } else if (callerIsOwner) {
+      } else if (callerIsOwner && !req.getAdminDepartmentIds().isEmpty()) {
         attachAdminToUser(userId, req);
       }
     }
@@ -285,11 +285,10 @@ public class UserService implements UserDirectory {
 
   private void updateEmployeeSpecificInfo(
       Employee employee, UserUpdateRequest req, Long callerUserId, boolean callerIsOwner) {
-    if (!callerIsOwner && req.getEmployeeDepartmentId() != null) {
-      verifyAdminOverseesDepartment(callerUserId, req.getEmployeeDepartmentId());
-    }
-    if (req.getEmployeeDepartmentId() != null) {
-      employee.setDepartmentId(req.getEmployeeDepartmentId());
+    if (req.getEmployeeDepartmentId().isPresent()) {
+      Long newDepartmentId = req.getEmployeeDepartmentId().get(); // null = detach
+      authorizeDepartmentChange(newDepartmentId, callerUserId, callerIsOwner);
+      employee.setDepartmentId(newDepartmentId);
     }
     if (req.getYearlyVacationBalance() != null) {
       employee.setVacationBalance(req.getYearlyVacationBalance());
@@ -297,23 +296,35 @@ public class UserService implements UserDirectory {
     employeeRepository.save(employee);
   }
 
+  private void authorizeDepartmentChange(
+      Long newDepartmentId, Long callerUserId, boolean callerIsOwner) {
+    if (callerIsOwner) {
+      return;
+    }
+    if (newDepartmentId == null) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the owner can detach an employee from a department");
+    }
+    verifyAdminOverseesDepartment(callerUserId, newDepartmentId);
+  }
+
   private void attachEmployeeToUser(Long userId, UserUpdateRequest req) {
     Employee employee =
         new Employee(
             userId,
-            req.getEmployeeDepartmentId(),
+            req.getEmployeeDepartmentId().orElse(null),
             req.getYearlyVacationBalance() != null ? req.getYearlyVacationBalance() : 0,
             LocalDate.now());
     employeeRepository.save(employee);
   }
 
   private void updateAdminSpecificInfo(Admin admin, UserUpdateRequest req) {
-    departmentApi.assignAdminToDepartments(admin.getId(), req.getAdminDepartmentIds());
+    departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
   }
 
   private void attachAdminToUser(Long userId, UserUpdateRequest req) {
     Admin admin = new Admin(userId);
     adminRepository.save(admin);
-    departmentApi.assignAdminToDepartments(admin.getId(), req.getAdminDepartmentIds());
+    departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
   }
 }

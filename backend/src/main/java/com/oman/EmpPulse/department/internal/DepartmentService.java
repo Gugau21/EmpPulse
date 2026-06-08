@@ -125,11 +125,7 @@ public class DepartmentService implements DepartmentApi {
 
   @Override
   @Transactional
-  public void assignAdminToDepartments(Long adminId, Collection<Long> departmentIds) {
-    List<Department> departments = departmentRepository.findAllById(departmentIds);
-    if (departments.size() != new HashSet<>(departmentIds).size()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found");
-    }
+  public void setAdminDepartments(Long adminId, Collection<Long> departmentIds) {
     Admin admin =
         adminApi
             .findById(adminId)
@@ -137,8 +133,21 @@ public class DepartmentService implements DepartmentApi {
                 () ->
                     new ResponseStatusException(
                         HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
-    for (Department department : departments) {
-      department.getAdmins().add(admin);
+
+    Set<Long> targetIds = new HashSet<>(departmentIds);
+    List<Department> targets = departmentRepository.findAllById(targetIds);
+    if (targets.size() != targetIds.size()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found");
+    }
+
+    for (Department current : new HashSet<>(admin.getDepartments())) {
+      if (!targetIds.contains(current.getId())) {
+        current.getAdmins().remove(admin);
+      }
+    }
+
+    for (Department target : targets) {
+      target.getAdmins().add(admin);
     }
   }
 
