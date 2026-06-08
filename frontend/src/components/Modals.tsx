@@ -47,8 +47,10 @@ const Modals: React.FC<Props> = ({
 }) => {
   if (!activeModal) return null
 
+  const closeOnOverlayClick = CONFIRM_MODALS.includes(activeModal)
+
   return (
-    <div className="modal-overlay" onClick={closeModal}>
+    <div className="modal-overlay" onClick={closeOnOverlayClick ? closeModal : undefined}>
       <div className="modal-container" onClick={e => e.stopPropagation()}>
         <button className="modal-close" onClick={closeModal}>
           ✕
