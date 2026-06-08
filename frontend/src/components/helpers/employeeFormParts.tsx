@@ -176,6 +176,9 @@ interface RoleSectionProps {
   onToggleEmployee: () => void
   employeeDeptId: number | null
   onEmployeeDept: (value: number | null) => void
+  // Yearly vacation days for the employee role, kept as a string for the input.
+  vacationDays: string
+  onVacationDays: (value: string) => void
   // When false the Employee toggle is hidden (the role is forced on); the
   // department select still shows so a department can be chosen. Defaults to true.
   showEmployeeToggle?: boolean
@@ -196,6 +199,8 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
   onToggleEmployee,
   employeeDeptId,
   onEmployeeDept,
+  vacationDays,
+  onVacationDays,
   showEmployeeToggle = true,
   showAdmin,
   adminChecked,
@@ -209,13 +214,24 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
       <RoleCheckbox label="Employee" checked={employeeChecked} onToggle={onToggleEmployee} />
     )}
     {employeeChecked && (
-      <DepartmentSelect
-        label="Department"
-        className="field-tight"
-        value={employeeDeptId}
-        onChange={onEmployeeDept}
-        departments={departments}
-      />
+      <>
+        <DepartmentSelect
+          label="Department"
+          className="field-tight"
+          value={employeeDeptId}
+          onChange={onEmployeeDept}
+          departments={departments}
+        />
+        <label className="field-tight">
+          Yearly vacation days
+          <input
+            type="number"
+            min={0}
+            value={vacationDays}
+            onChange={e => onVacationDays(e.target.value)}
+          />
+        </label>
+      </>
     )}
 
     {showAdmin && (

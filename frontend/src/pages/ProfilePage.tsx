@@ -78,6 +78,10 @@ const ProfilePage: React.FC<Props> = ({ isMyProfile, employee, openModal, onBack
   const targetEmail = isMyProfile
     ? (currentUser?.email ?? '')
     : (employeeUser?.email ?? employee?.email ?? '')
+  // The vacation widget only applies to employees; non-employee users (e.g.
+  // admin-only) have no balance to show. Drives both the own- and looked-up cases.
+  const targetUser = isMyProfile ? currentUser : employeeUser
+  const employeeProfile = targetUser?.employeeProfile ?? null
 
   return (
     <div className="screen-container">
@@ -129,10 +133,14 @@ const ProfilePage: React.FC<Props> = ({ isMyProfile, employee, openModal, onBack
           </div>
         </div>
 
-        <div className="vacation-widget">
-          <h4>Vacation balance</h4>
-          <div className="balance-badge-card">Vacations day left: </div>
-        </div>
+        {employeeProfile && (
+          <div className="vacation-widget">
+            <h4>Vacation balance</h4>
+            <div className="balance-badge-card">
+              Vacations day left: {employeeProfile.yearlyVacationBalance}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="accordion-section">

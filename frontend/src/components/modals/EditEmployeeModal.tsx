@@ -63,6 +63,10 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
   const [employeeDeptId, setEmployeeDeptId] = useState<number | null>(
     user.employeeProfile?.departmentId ?? null
   )
+  // Pre-filled with the existing balance for current employees, 0 otherwise.
+  const [vacationDays, setVacationDays] = useState(
+    String(user.employeeProfile?.yearlyVacationBalance ?? 0)
+  )
   const [adminDeptIds, setAdminDeptIds] = useState<number[]>(user.adminProfile?.departmentIds ?? [])
 
   const [editError, setEditError] = useState<string | null>(null)
@@ -72,7 +76,6 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteEmployee()
 
-  const hadEmployee = user.employeeProfile !== null
   const hadAdmin = user.adminProfile !== null
 
   const submit = (payload: UserUpdatePayload) =>
@@ -121,9 +124,9 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
     if (isEmployeeChecked) {
       payload.changeEmployeeDepartment = true
       payload.employeeDepartmentId = employeeDeptId
-      // The server requires a balance when granting the employee role to a
-      // previously non-employee user; existing employees keep their own.
-      if (!hadEmployee) payload.yearlyVacationBalance = 0
+      const parsed = Number(vacationDays)
+      payload.yearlyVacationBalance =
+        vacationDays.trim() === '' || Number.isNaN(parsed) ? 0 : parsed
     }
 
     submit(payload)
@@ -134,8 +137,8 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
     return (
       <div className="modal-confirm">
         <h3>
-          Do you really want to detach all departments? The user will no longer be able to log in
-          or use the system, so the account will be deleted.
+          Do you really want to detach all departments? The user will no longer be able to log in or
+          use the system, so the account will be deleted.
         </h3>
         {err && <p className="form-error">{err.message}</p>}
         <div className="modal-buttons">
@@ -181,6 +184,9 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
         onToggleEmployee={() => setIsEmployeeChecked(!isEmployeeChecked)}
         employeeDeptId={employeeDeptId}
         onEmployeeDept={setEmployeeDeptId}
+        vacationDays={vacationDays}
+        onVacationDays={setVacationDays}
+        showEmployeeToggle={isOwner}
         showAdmin={isOwner}
         adminChecked={isAdminChecked}
         onToggleAdmin={() => setIsAdminChecked(!isAdminChecked)}

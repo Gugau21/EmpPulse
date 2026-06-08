@@ -27,6 +27,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
   const [newPassword, setNewPassword] = useState('')
   // Department selections (employee: null = none chosen yet; admin: empty = none)
   const [employeeDeptId, setEmployeeDeptId] = useState<number | null>(null)
+  const [vacationDays, setVacationDays] = useState('0')
   const [adminDeptIds, setAdminDeptIds] = useState<number[]>([])
   const [createError, setCreateError] = useState<string | null>(null)
   const createUser = useCreateUser()
@@ -37,6 +38,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
     setNewEmail('')
     setNewPassword('')
     setEmployeeDeptId(null)
+    setVacationDays('0')
     setAdminDeptIds([])
     setCreateError(null)
   }
@@ -71,7 +73,13 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         email: newEmail.trim(),
         password: newPassword,
         ...(isEmployeeChecked
-          ? { employeeDepartmentId: employeeDeptId, yearlyVacationBalance: 0 }
+          ? {
+              employeeDepartmentId: employeeDeptId,
+              yearlyVacationBalance:
+                vacationDays.trim() === '' || Number.isNaN(Number(vacationDays))
+                  ? 0
+                  : Number(vacationDays)
+            }
           : {}),
         // undefined = no admin role; array = admin assigned to the chosen departments
         adminDepartmentIds: isAdminChecked && adminDeptIds.length > 0 ? adminDeptIds : undefined
@@ -106,6 +114,8 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         onToggleEmployee={() => setIsEmployeeChecked(!isEmployeeChecked)}
         employeeDeptId={employeeDeptId}
         onEmployeeDept={setEmployeeDeptId}
+        vacationDays={vacationDays}
+        onVacationDays={setVacationDays}
         showEmployeeToggle={!isAdminCreator}
         showAdmin={!isAdminCreator}
         adminChecked={isAdminChecked}
