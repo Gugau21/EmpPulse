@@ -11,7 +11,6 @@ interface RoleCheckboxProps {
   onToggle: () => void
 }
 
-// An "✕"-in-a-box toggle with a heading label (Employee / Administrator).
 export const RoleCheckbox: React.FC<RoleCheckboxProps> = ({ label, checked, onToggle }) => (
   <div className="role-checkbox" onClick={onToggle}>
     <h3>{label}</h3>
@@ -27,7 +26,6 @@ interface DepartmentSelectProps {
   className?: string
 }
 
-// A labelled department dropdown; null value means "nothing chosen yet".
 export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   label,
   value,
@@ -53,13 +51,78 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   </label>
 )
 
+interface MultiDepartmentSelectProps {
+  label: string
+  value: number[]
+  onChange: (value: number[]) => void
+  departments: Department[]
+}
+
+// Pick several departments at once: chosen ones render as removable pills and the
+// dropdown offers only those not yet picked, disappearing once all are selected so
+// users aren't left with an empty control. Mirrors the admin picker in
+// EditAdminsModal so the "assign to many" UX stays consistent across the app.
+export const MultiDepartmentSelect: React.FC<MultiDepartmentSelectProps> = ({
+  label,
+  value,
+  onChange,
+  departments
+}) => {
+  const deptName = (id: number) => departments.find(d => d.id === id)?.name ?? `Department #${id}`
+  const available = departments.filter(d => !value.includes(d.id))
+
+  return (
+    <>
+      <div className="edit-admins-list">
+        {value.length === 0 && (
+          <div className="edit-admin-item">
+            <div className="edit-admin-pill">No departments selected.</div>
+          </div>
+        )}
+        {value.map((id, idx) => (
+          <div key={id} className="edit-admin-item">
+            <span className="index">{idx + 1})</span>
+            <div className="edit-admin-pill">{deptName(id)}</div>
+            <button
+              className="btn-remove"
+              onClick={() => onChange(value.filter(x => x !== id))}
+              title="Remove department"
+            >
+              —
+            </button>
+          </div>
+        ))}
+      </div>
+      {available.length > 0 && (
+        <label>
+          {label}
+          <select
+            value=""
+            onChange={e => {
+              const id = Number(e.target.value)
+              if (id) onChange(value.includes(id) ? value : [...value, id])
+            }}
+          >
+            <option value="" disabled>
+              add department
+            </option>
+            {available.map(d => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+    </>
+  )
+}
+
 interface IdentityFieldsProps {
   name: string
   onName: (value: string) => void
   surname: string
   onSurname: (value: string) => void
-  // Email/password are optional: omit the handlers to hide those fields (e.g.
-  // an admin editing a profile they may not change credentials on).
   email?: string
   onEmail?: (value: string) => void
   password?: string
@@ -67,8 +130,6 @@ interface IdentityFieldsProps {
   passwordPlaceholder?: string
 }
 
-// Name / surname (always) plus optional email & password inputs, shared by the
-// add and edit employee modals.
 export const IdentityFields: React.FC<IdentityFieldsProps> = ({
   name,
   onName,
@@ -122,8 +183,9 @@ interface RoleSectionProps {
   showAdmin: boolean
   adminChecked: boolean
   onToggleAdmin: () => void
-  adminDeptId: number | null
-  onAdminDept: (value: number | null) => void
+  // An admin can oversee several departments, so this is a multi-select.
+  adminDeptIds: number[]
+  onAdminDepts: (value: number[]) => void
   departments: Department[]
 }
 
@@ -138,8 +200,8 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
   showAdmin,
   adminChecked,
   onToggleAdmin,
-  adminDeptId,
-  onAdminDept,
+  adminDeptIds,
+  onAdminDepts,
   departments
 }) => (
   <>
@@ -160,10 +222,10 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
       <>
         <RoleCheckbox label="Administrator" checked={adminChecked} onToggle={onToggleAdmin} />
         {adminChecked && (
-          <DepartmentSelect
+          <MultiDepartmentSelect
             label="Administrator of"
-            value={adminDeptId}
-            onChange={onAdminDept}
+            value={adminDeptIds}
+            onChange={onAdminDepts}
             departments={departments}
           />
         )}

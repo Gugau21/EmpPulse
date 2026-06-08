@@ -25,9 +25,9 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
   const [newSurname, setNewSurname] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
-  // Department selections (null = none chosen yet)
+  // Department selections (employee: null = none chosen yet; admin: empty = none)
   const [employeeDeptId, setEmployeeDeptId] = useState<number | null>(null)
-  const [adminDeptId, setAdminDeptId] = useState<number | null>(null)
+  const [adminDeptIds, setAdminDeptIds] = useState<number[]>([])
   const [createError, setCreateError] = useState<string | null>(null)
   const createUser = useCreateUser()
 
@@ -37,7 +37,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
     setNewEmail('')
     setNewPassword('')
     setEmployeeDeptId(null)
-    setAdminDeptId(null)
+    setAdminDeptIds([])
     setCreateError(null)
   }
 
@@ -57,9 +57,9 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
       setCreateError('Please select a department for the employee role before creating the user.')
       return
     }
-    if (isAdminChecked && adminDeptId === null) {
+    if (isAdminChecked && adminDeptIds.length === 0) {
       setCreateError(
-        'Please select a department for the administrator role before creating the user.'
+        'Please select at least one department for the administrator role before creating the user.'
       )
       return
     }
@@ -73,8 +73,8 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         ...(isEmployeeChecked
           ? { employeeDepartmentId: employeeDeptId, yearlyVacationBalance: 0 }
           : {}),
-        // undefined = no admin role; array = admin assigned to the chosen department
-        adminDepartmentIds: isAdminChecked && adminDeptId !== null ? [adminDeptId] : undefined
+        // undefined = no admin role; array = admin assigned to the chosen departments
+        adminDepartmentIds: isAdminChecked && adminDeptIds.length > 0 ? adminDeptIds : undefined
       },
       {
         onSuccess: () => {
@@ -110,8 +110,8 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         showAdmin={!isAdminCreator}
         adminChecked={isAdminChecked}
         onToggleAdmin={() => setIsAdminChecked(!isAdminChecked)}
-        adminDeptId={adminDeptId}
-        onAdminDept={setAdminDeptId}
+        adminDeptIds={adminDeptIds}
+        onAdminDepts={setAdminDeptIds}
         departments={departments}
       />
 

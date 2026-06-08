@@ -116,6 +116,16 @@ export interface UserCreatePayload {
   adminDepartmentIds?: number[]
 }
 
+export interface UserUpdatePayload {
+  name?: string
+  surname?: string
+  email?: string
+  password?: string
+  employeeDepartmentId?: number | null
+  yearlyVacationBalance?: number
+  adminDepartmentIds?: number[]
+}
+
 export const userService = {
   create: async (payload: UserCreatePayload): Promise<void> => {
     await apiRequest('/api/users', {
@@ -140,6 +150,18 @@ export const userService = {
       errorFallback: 'Failed to load employee details.'
     })
     return (await res.json()) as MeUser
+  },
+
+  update: async (userId: number, payload: UserUpdatePayload): Promise<void> => {
+    await apiRequest(`/api/users/${userId}`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to update employee.',
+      errorOverrides: {
+        403: 'You do not have permission to change these fields.',
+        409: 'A user with this email already exists.'
+      }
+    })
   }
 }
 
