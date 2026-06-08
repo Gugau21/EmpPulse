@@ -1,7 +1,6 @@
 package com.oman.EmpPulse.user.dto;
 
 import java.util.List;
-import org.openapitools.jackson.nullable.JsonNullable;
 
 public class UserUpdateRequest {
   private String name;
@@ -10,11 +9,13 @@ public class UserUpdateRequest {
   private String password;
 
   /**
-   * {@code undefined} = field omitted, leave unchanged; {@code null} = detach from department;
-   * present with a value = move to that department.
+   * The employee's department change. Only applied when {@link #changeEmployeeDepartment} is true,
+   * which is how we distinguish "field omitted, leave unchanged" from "set to a value / detach". A
+   * {@code null} value with the flag set means detach from the current department.
    */
-  private JsonNullable<Long> employeeDepartmentId = JsonNullable.undefined();
+  private Long employeeDepartmentId;
 
+  private boolean changeEmployeeDepartment;
   private Integer yearlyVacationBalance;
   private List<PremiumVacationDayRequest> premiumVacationDays;
   private List<Long> adminDepartmentIds;
@@ -51,12 +52,20 @@ public class UserUpdateRequest {
     this.password = password;
   }
 
-  public JsonNullable<Long> getEmployeeDepartmentId() {
+  public Long getEmployeeDepartmentId() {
     return employeeDepartmentId;
   }
 
-  public void setEmployeeDepartmentId(JsonNullable<Long> employeeDepartmentId) {
+  public void setEmployeeDepartmentId(Long employeeDepartmentId) {
     this.employeeDepartmentId = employeeDepartmentId;
+  }
+
+  public boolean isChangeEmployeeDepartment() {
+    return changeEmployeeDepartment;
+  }
+
+  public void setChangeEmployeeDepartment(boolean changeEmployeeDepartment) {
+    this.changeEmployeeDepartment = changeEmployeeDepartment;
   }
 
   public Integer getYearlyVacationBalance() {

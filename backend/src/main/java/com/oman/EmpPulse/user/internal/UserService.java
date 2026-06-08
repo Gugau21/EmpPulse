@@ -191,6 +191,7 @@ public class UserService implements UserDirectory {
     userRepository.save(user);
 
     if (req.getEmployeeDepartmentId() != null) {
+      requireVacationBalanceForCreation(req.getYearlyVacationBalance());
       Employee employee =
           new Employee(
               user.getId(), req.getEmployeeDepartmentId(),
@@ -231,12 +232,12 @@ public class UserService implements UserDirectory {
     updateUserSpecificInfo(user, req);
 
     boolean hasEmployeeUpdate =
-        req.getEmployeeDepartmentId().isPresent() || req.getYearlyVacationBalance() != null;
+        req.isChangeEmployeeDepartment() || req.getYearlyVacationBalance() != null;
     if (hasEmployeeUpdate) {
       Optional<Employee> employeeOpt = employeeRepository.findByUserId(userId);
       if (employeeOpt.isPresent()) {
         updateEmployeeSpecificInfo(employeeOpt.get(), req, callerUserId, callerIsOwner);
-      } else if (callerIsOwner) {
+      } else if (callerIsOwner && canCreateEmployee(req)) {
         attachEmployeeToUser(userId, req);
       }
     }
@@ -285,8 +286,8 @@ public class UserService implements UserDirectory {
 
   private void updateEmployeeSpecificInfo(
       Employee employee, UserUpdateRequest req, Long callerUserId, boolean callerIsOwner) {
-    if (req.getEmployeeDepartmentId().isPresent()) {
-      Long newDepartmentId = req.getEmployeeDepartmentId().get(); // null = detach
+    if (req.isChangeEmployeeDepartment()) {
+      Long newDepartmentId = req.getEmployeeDepartmentId(); // null = detach
       authorizeDepartmentChange(newDepartmentId, callerUserId, callerIsOwner);
       employee.setDepartmentId(newDepartmentId);
     }
@@ -308,14 +309,26 @@ public class UserService implements UserDirectory {
     verifyAdminOverseesDepartment(callerUserId, newDepartmentId);
   }
 
+  private boolean canCreateEmployee(UserUpdateRequest req) {
+    if (!req.isChangeEmployeeDepartment() || req.getEmployeeDepartmentId() == null) {
+      return false;
+    }
+    requireVacationBalanceForCreation(req.getYearlyVacationBalance());
+    return true;
+  }
+
   private void attachEmployeeToUser(Long userId, UserUpdateRequest req) {
     Employee employee =
         new Employee(
-            userId,
-            req.getEmployeeDepartmentId().orElse(null),
-            req.getYearlyVacationBalance() != null ? req.getYearlyVacationBalance() : 0,
-            LocalDate.now());
+            userId, req.getEmployeeDepartmentId(), req.getYearlyVacationBalance(), LocalDate.now());
     employeeRepository.save(employee);
+  }
+
+  private void requireVacationBalanceForCreation(Integer vacationBalance) {
+    if (vacationBalance == null) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Yearly vacation balance is required when creating an employee");
+    }
   }
 
   private void updateAdminSpecificInfo(Admin admin, UserUpdateRequest req) {
