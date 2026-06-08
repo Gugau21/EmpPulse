@@ -121,6 +121,9 @@ export interface UserUpdatePayload {
   surname?: string
   email?: string
   password?: string
+  // Must be true for employeeDepartmentId to be applied; the server otherwise
+  // can't tell an omitted department from a detach (null).
+  changeEmployeeDepartment?: boolean
   employeeDepartmentId?: number | null
   yearlyVacationBalance?: number
   adminDepartmentIds?: number[]

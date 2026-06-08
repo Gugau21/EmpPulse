@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import type { Department, Employee, MeUser } from '../../types'
 import { useAuth } from '../../context/useAuth'
 import { useUserDetail } from '../../hooks/useUserDetail'
-import { useUpdateUser } from '../../hooks/useEmployeeMutations'
+import { useUpdateUser, useDeleteEmployee } from '../../hooks/useEmployeeMutations'
 import type { UserUpdatePayload } from '../../services/api'
 import { IdentityFields, RoleSection } from '../helpers/employeeFormParts'
 
@@ -66,7 +66,17 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
   const [adminDeptIds, setAdminDeptIds] = useState<number[]>(user.adminProfile?.departmentIds ?? [])
 
   const [editError, setEditError] = useState<string | null>(null)
+  // When set, the edit would leave the user with no roles: we confirm, then
+  // delete rather than persist an unusable account.
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState(false)
   const updateUser = useUpdateUser()
+  const deleteUser = useDeleteEmployee()
+
+  const hadEmployee = user.employeeProfile !== null
+  const hadAdmin = user.adminProfile !== null
+
+  const submit = (payload: UserUpdatePayload) =>
+    updateUser.mutate({ userId, payload }, { onSuccess: () => closeModal() })
 
   const handleEditUser = () => {
     setEditError(null)
@@ -77,6 +87,12 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
     }
     if (isOwner && isAdminChecked && adminDeptIds.length === 0) {
       setEditError('Please select at least one department for the administrator role.')
+      return
+    }
+
+    // Both roles off leaves the account unusable — delete it instead of saving.
+    if (!isEmployeeChecked && !isAdminChecked) {
+      setConfirmDeleteUser(true)
       return
     }
 
@@ -92,13 +108,50 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
       payload.surname = newSurname.trim()
       if (newEmail.trim()) payload.email = newEmail.trim()
       if (newPassword) payload.password = newPassword
-      if (isAdminChecked) payload.adminDepartmentIds = adminDeptIds
-    }
-    if (isEmployeeChecked && employeeDeptId !== null) {
-      payload.employeeDepartmentId = employeeDeptId
+
+      // [] detaches the admin from every department; an omitted key leaves a
+      // never-admin user untouched.
+      if (isAdminChecked) {
+        payload.adminDepartmentIds = adminDeptIds
+      } else if (hadAdmin) {
+        payload.adminDepartmentIds = []
+      }
     }
 
-    updateUser.mutate({ userId, payload }, { onSuccess: () => closeModal() })
+    if (isEmployeeChecked) {
+      payload.changeEmployeeDepartment = true
+      payload.employeeDepartmentId = employeeDeptId
+      // The server requires a balance when granting the employee role to a
+      // previously non-employee user; existing employees keep their own.
+      if (!hadEmployee) payload.yearlyVacationBalance = 0
+    }
+
+    submit(payload)
+  }
+
+  if (confirmDeleteUser) {
+    const err = deleteUser.error ?? updateUser.error
+    return (
+      <div className="modal-confirm">
+        <h3>
+          Do you really want to detach all departments? The user will no longer be able to log in
+          or use the system, so the account will be deleted.
+        </h3>
+        {err && <p className="form-error">{err.message}</p>}
+        <div className="modal-buttons">
+          <button
+            className="btn-secondary"
+            onClick={() => deleteUser.mutate(userId, { onSuccess: () => closeModal() })}
+            disabled={deleteUser.isPending}
+          >
+            YES
+          </button>
+          <button className="btn-outline-primary" onClick={() => setConfirmDeleteUser(false)}>
+            NO
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
