@@ -14,3 +14,9 @@ export const employeeKeys = {
   all: ['employees'] as const,
   lists: () => [...employeeKeys.all, 'list'] as const
 }
+
+export const userKeys = {
+  all: ['users'] as const,
+  details: () => [...userKeys.all, 'detail'] as const,
+  detail: (id: number) => [...userKeys.details(), id] as const
+}

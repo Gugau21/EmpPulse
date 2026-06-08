@@ -21,9 +21,9 @@ public interface UserDirectory {
    * (departments for admins, assigned department for employees).
    *
    * @param userId the user ID
-   * @return a populated MeResponse; throws 404 if the user does not exist
+   * @return a populated UserResponse; throws 404 if the user does not exist
    */
-  MeResponse loadProfile(Long userId);
+  UserResponse loadProfile(Long userId);
 
   /**
    * Ensures an owner account exists with the given email and password, creating it if needed..

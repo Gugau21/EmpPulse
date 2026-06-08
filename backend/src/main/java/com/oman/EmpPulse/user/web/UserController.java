@@ -2,6 +2,7 @@ package com.oman.EmpPulse.user.web;
 
 import com.oman.EmpPulse.shared.security.AuthUtils;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
+import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import com.oman.EmpPulse.user.internal.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,10 +31,30 @@ public class UserController {
     return ResponseEntity.noContent().build();
   }
 
+  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @GetMapping("/api/users/{userId}")
+  public ResponseEntity<?> getUserProfile(
+      @PathVariable Long userId, Authentication authentication) {
+    return ResponseEntity.ok(
+        userService.getUserProfile(
+            userId, AuthUtils.getUserId(authentication), AuthUtils.isOwner(authentication)));
+  }
+
   @PreAuthorize("hasAuthority('OWNER')")
   @DeleteMapping("/api/users/{userId}")
   public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
     userService.softDeleteUser(userId);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @PatchMapping("/api/users/{userId}")
+  public ResponseEntity<?> updateUser(
+      @PathVariable Long userId,
+      @RequestBody UserUpdateRequest req,
+      Authentication authentication) {
+    userService.updateUser(
+        userId, req, AuthUtils.getUserId(authentication), AuthUtils.isOwner(authentication));
     return ResponseEntity.noContent().build();
   }
 }

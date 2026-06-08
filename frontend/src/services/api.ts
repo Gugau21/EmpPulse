@@ -93,7 +93,7 @@ export const authService = {
       }
     })
     const data = await res.json()
-    return data.user as MeUser
+    return data as MeUser
   },
 
   logout: async (): Promise<void> => {
@@ -116,6 +116,19 @@ export interface UserCreatePayload {
   adminDepartmentIds?: number[]
 }
 
+export interface UserUpdatePayload {
+  name?: string
+  surname?: string
+  email?: string
+  password?: string
+  // Must be true for employeeDepartmentId to be applied; the server otherwise
+  // can't tell an omitted department from a detach (null).
+  changeEmployeeDepartment?: boolean
+  employeeDepartmentId?: number | null
+  yearlyVacationBalance?: number
+  adminDepartmentIds?: number[]
+}
+
 export const userService = {
   create: async (payload: UserCreatePayload): Promise<void> => {
     await apiRequest('/api/users', {
@@ -131,6 +144,26 @@ export const userService = {
       method: 'DELETE',
       errorFallback: 'Failed to delete employee.',
       errorOverrides: { 403: 'Only the owner can delete employees.' }
+    })
+  },
+
+  getById: async (userId: number, signal?: AbortSignal): Promise<MeUser> => {
+    const res = await apiRequest(`/api/users/${userId}`, {
+      signal,
+      errorFallback: 'Failed to load employee details.'
+    })
+    return (await res.json()) as MeUser
+  },
+
+  update: async (userId: number, payload: UserUpdatePayload): Promise<void> => {
+    await apiRequest(`/api/users/${userId}`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to update employee.',
+      errorOverrides: {
+        403: 'You do not have permission to change these fields.',
+        409: 'A user with this email already exists.'
+      }
     })
   }
 }
@@ -224,7 +257,8 @@ export const departmentService = {
     await apiRequest(`/api/departments/${id}`, {
       method: 'PATCH',
       body: payload,
-      errorFallback: 'Failed to update department.'
+      errorFallback: 'Failed to update department.',
+      errorOverrides: { 409: 'A department with this name already exists.' }
     })
   }
 }

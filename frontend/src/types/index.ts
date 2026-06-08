@@ -52,10 +52,10 @@ export interface MeUser {
   owner: boolean
   preferences: { theme: string; language: string }
   employeeProfile: {
-    id: number
+    employeeId: number
     departmentId: number | null
     departmentName: string | null
-    vacationBalance: number
+    yearlyVacationBalance: number
   } | null
   adminProfile: { id: number; departmentIds: number[] } | null
 }

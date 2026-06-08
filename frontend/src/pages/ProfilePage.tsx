@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import type { Employee, OpenModal } from '../types'
 import { MOCK_LOGGED_HOURS, MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
+import { useUserDetail } from '../hooks/useUserDetail'
 import blackTriangleIcon from '../assets/black_triangle.png'
 
 interface Props {
@@ -68,12 +69,19 @@ const ProfilePage: React.FC<Props> = ({ isMyProfile, employee, openModal, onBack
   const [loggedExpanded, setLoggedExpanded] = useState(true)
   const [unpaidExpanded, setUnpaidExpanded] = useState(true)
 
+  const employeeId = !isMyProfile && employee?.id ? Number(employee.id) : null
+  const { data: employeeUser } = useUserDetail(employeeId)
+
   const targetName = isMyProfile
     ? [currentUser?.name, currentUser?.surname].filter(Boolean).join(' ')
     : [employee?.name, employee?.surname].filter(Boolean).join(' ') || 'Fallback Name'
   const targetEmail = isMyProfile
     ? (currentUser?.email ?? '')
-    : employee?.email || 'fallback_email@emppulse.com'
+    : (employeeUser?.email ?? employee?.email ?? '')
+  // The vacation widget only applies to employees; non-employee users (e.g.
+  // admin-only) have no balance to show. Drives both the own- and looked-up cases.
+  const targetUser = isMyProfile ? currentUser : employeeUser
+  const employeeProfile = targetUser?.employeeProfile ?? null
 
   return (
     <div className="screen-container">
@@ -125,10 +133,14 @@ const ProfilePage: React.FC<Props> = ({ isMyProfile, employee, openModal, onBack
           </div>
         </div>
 
-        <div className="vacation-widget">
-          <h4>Vacation balance</h4>
-          <div className="balance-badge-card">Vacations day left: </div>
-        </div>
+        {employeeProfile && (
+          <div className="vacation-widget">
+            <h4>Vacation balance</h4>
+            <div className="balance-badge-card">
+              Vacations day left: {employeeProfile.yearlyVacationBalance}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="accordion-section">

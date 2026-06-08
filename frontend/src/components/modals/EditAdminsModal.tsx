@@ -87,24 +87,26 @@ const EditAdminsModal: React.FC<Props> = ({ closeModal, selectedDepartment }) =>
         ))}
       </div>
 
-      <label>
-        <select
-          value=""
-          onChange={e => {
-            const id = Number(e.target.value)
-            if (id) setEditAdminIds(prev => (prev.includes(id) ? prev : [...prev, id]))
-          }}
-        >
-          <option value="" disabled>
-            add administrator
-          </option>
-          {availableAdmins.map(a => (
-            <option key={a.id} value={a.id}>
-              {a.user.name} {a.user.surname}
+      {availableAdmins.length > 0 && (
+        <label>
+          <select
+            value=""
+            onChange={e => {
+              const id = Number(e.target.value)
+              if (id) setEditAdminIds(prev => (prev.includes(id) ? prev : [...prev, id]))
+            }}
+          >
+            <option value="" disabled>
+              add administrator
             </option>
-          ))}
-        </select>
-      </label>
+            {availableAdmins.map(a => (
+              <option key={a.id} value={a.id}>
+                {a.user.name} {a.user.surname}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       {(adminsError || updateDept.error) && (
         <p className="form-error">{adminsError ?? updateDept.error?.message}</p>
