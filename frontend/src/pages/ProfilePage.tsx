@@ -5,6 +5,7 @@ import type { OutletContext } from '../components/AppLayout'
 import { MOCK_LOGGED_HOURS, MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
+import { landingPath } from '../utils/guards'
 import blackTriangleIcon from '../assets/black_triangle.png'
 
 // Feature flag: the logged/unpaid hours tables are hidden until that data is
@@ -70,10 +71,16 @@ const ProfilePage: React.FC = () => {
   const [loggedExpanded, setLoggedExpanded] = useState(true)
   const [unpaidExpanded, setUnpaidExpanded] = useState(true)
 
-  const employeeId = userId ? Number(userId) : null
+  // Parse userId as number, but guard against NaN (e.g., /employees/not-a-number)
+  const parsedId = userId ? Number(userId) : null
+  const employeeId = parsedId && !isNaN(parsedId) ? parsedId : null
   const { data: employeeUser } = useUserDetail(employeeId)
 
-  const onBack = () => navigate('/employees')
+  // Route back based on user role: employees go to /my-requests, others to /employees
+  const onBack = () => {
+    const backPath = landingPath(currentUser)
+    navigate(backPath)
+  }
 
   // The modals (EDIT_EMPLOYEE/LOG_HOURS) take an Employee; in employee mode we
   // rebuild one from the fetched user. EditEmployeeModal only needs the id (it

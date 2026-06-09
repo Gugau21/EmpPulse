@@ -7,8 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:8080',
-      // Health probe used by the server-status gate to detect when the backend is down.
-      '/actuator': 'http://localhost:8080'
+      '/actuator/health': 'http://localhost:8080'
     }
   }
 })

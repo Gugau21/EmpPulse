@@ -11,4 +11,3 @@ export function landingPath(user: MeUser | null): string {
   }
   return '/employees'
 }
-}

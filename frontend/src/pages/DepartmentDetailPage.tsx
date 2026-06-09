@@ -17,7 +17,10 @@ const DepartmentDetailScreen: React.FC = () => {
   const navigate = useNavigate()
   const { deptId } = useParams()
   const { isOwner } = useAuth()
-  const detailQuery = useDepartmentDetail(deptId ? Number(deptId) : null)
+  // Guard against NaN from invalid route params
+  const parsedId = deptId ? Number(deptId) : null
+  const validId = parsedId && !isNaN(parsedId) ? parsedId : null
+  const detailQuery = useDepartmentDetail(validId)
   const department = detailQuery.data ?? null
   const loading = detailQuery.isLoading
   const onBack = () => navigate('/departments')
