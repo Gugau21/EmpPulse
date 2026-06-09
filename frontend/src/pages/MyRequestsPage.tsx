@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import type { LeaveRequest, OpenModal } from '../types'
+import { useOutletContext } from 'react-router-dom'
+import type { LeaveRequest } from '../types'
+import type { OutletContext } from '../components/AppLayout'
 import trashIcon from '../assets/trash-icon.png.webp'
 import blackTriangleIcon from '../assets/black_triangle.png'
 
-interface Props {
-  openModal: OpenModal
-}
-
+// Placeholder leave records: there is no leave/requests API yet, so this page
+// renders static mock data to exercise the layout. Replace with a real query
+// (e.g. GET /api/me/leave-requests) once the leave feature is wired up.
 const myRecordsData: LeaveRequest[] = [
   {
     id: '1',
@@ -38,7 +39,8 @@ const myRecordsData: LeaveRequest[] = [
   }
 ]
 
-const MyRequestsScreen: React.FC<Props> = ({ openModal }) => {
+const MyRequestsScreen: React.FC = () => {
+  const { openModal } = useOutletContext<OutletContext>()
   const [expanded, setExpanded] = useState(true)
 
   return (
@@ -66,7 +68,7 @@ const MyRequestsScreen: React.FC<Props> = ({ openModal }) => {
               <div
                 key={req.id}
                 className={`employee-row hover-slide-container clickable ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}
-                onClick={() => openModal('EDIT_LEAVE_FORM', undefined, req)} // Red arrow connects ALL rows. Click to edit.
+                onClick={() => openModal('EDIT_LEAVE_FORM', undefined, req)}
               >
                 <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
                 <span className="date-span">{req.dateRange}</span>
@@ -79,7 +81,7 @@ const MyRequestsScreen: React.FC<Props> = ({ openModal }) => {
                 <button
                   className="slide-bin-btn"
                   onClick={e => {
-                    e.stopPropagation() // Prevents navigating to edit
+                    e.stopPropagation() // Don't also open the row's edit modal
                     openModal(
                       req.status === 'APPROVED' ? 'CANCEL_LEAVE' : 'DELETE_LEAVE',
                       undefined,

@@ -1,13 +1,10 @@
 import React, { useState } from 'react'
-import type { Employee, OpenModal } from '../types'
+import { useNavigate, useOutletContext } from 'react-router-dom'
+import type { Employee } from '../types'
+import type { OutletContext } from '../components/AppLayout'
 import trashIcon from '../assets/trash-icon.png.webp'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
-
-interface Props {
-  openModal: OpenModal
-  openEmployeeProfile: (emp: Employee) => void
-}
 
 // Employees with no department are not shown — this page only lists department members.
 function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
@@ -21,11 +18,16 @@ function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
   return groups
 }
 
-const EmployeesPage: React.FC<Props> = ({ openModal, openEmployeeProfile }) => {
+const EmployeesPage: React.FC = () => {
+  const { openModal } = useOutletContext<OutletContext>()
+  const navigate = useNavigate()
   const { data: employees = [], isLoading } = useEmployeesList()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [search, setSearch] = useState('')
 
+  // Search matches a surname *prefix* only (not a substring, and not the first
+  // name) — the box is labelled "Search by surname" and users expect to type the
+  // start of a last name, as in a phone-book lookup.
   const query = search.trim().toLowerCase()
   const filtered = query
     ? employees.filter(emp => (emp.surname ?? '').toLowerCase().startsWith(query))
@@ -75,7 +77,7 @@ const EmployeesPage: React.FC<Props> = ({ openModal, openEmployeeProfile }) => {
                   <div
                     key={emp.id}
                     className="employee-row hover-slide-container"
-                    onClick={() => openEmployeeProfile(emp)}
+                    onClick={() => navigate(`/employees/${emp.id}`)}
                   >
                     <span className="emp-name">
                       {[emp.name, emp.surname].filter(Boolean).join(' ')}

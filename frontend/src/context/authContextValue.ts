@@ -1,12 +1,14 @@
 import { createContext } from 'react'
-import type { MeUser, UserRole } from '../types'
+import type { MeUser } from '../types'
 
-// The auth context object and its value type live here (not in AuthContext.tsx)
-// so that file can export only the provider component — required by the
-// react-refresh/only-export-components lint rule (Fast Refresh).
 export interface AuthContextValue {
   currentUser: MeUser | null
-  userRole: UserRole | null
+  // True while the on-mount GET /api/me session-restore query is in flight. The
+  // auth gate waits on this so a refresh never flash-redirects to /login.
+  isBootstrapping: boolean
+  isOwner: boolean
+  isAdmin: boolean
+  isEmployee: boolean
   login: (email: string, password: string) => Promise<MeUser>
   logout: () => Promise<void>
   loginPending: boolean

@@ -42,8 +42,6 @@ export interface LeaveRequest {
   reason?: string
 }
 
-export type UserRole = 'OWNER' | 'ADMIN' | 'WORKER'
-
 export interface MeUser {
   id: number
   name: string
@@ -60,28 +58,7 @@ export interface MeUser {
   adminProfile: { id: number; departmentIds: number[] } | null
 }
 
-// A user can hold several profiles at once,
-// so we collapse to a single effective role by precedence: owner outranks admin outranks worker.
-// This single role drives route access (see canAccessRoute) and which UI controls are shown.
-// CHANGE WHEN MY REQUEST PAGE IS ADDED
-export function deriveRole(user: MeUser): UserRole {
-  if (user.owner) return 'OWNER'
-  if (user.adminProfile !== null) return 'ADMIN'
-  return 'WORKER'
-}
-
 // --- App State Types ---
-export type ScreenType =
-  | 'login'
-  | 'forbidden'
-  | 'employees'
-  | 'request-manager'
-  | 'my-requests'
-  | 'departments'
-  | 'department-detail'
-  | 'my-profile'
-  | 'employee-profile'
-
 export type ModalType =
   | null
   | 'ADD_EMPLOYEE'

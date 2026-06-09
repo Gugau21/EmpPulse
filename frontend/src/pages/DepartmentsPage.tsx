@@ -1,25 +1,18 @@
 import React, { useState } from 'react'
-import type { Department, OpenModal } from '../types'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import trashIcon from '../assets/trash-icon.png.webp'
+import type { OutletContext } from '../components/AppLayout'
 import { useAuth } from '../context/useAuth'
+import { useDepartmentsList } from '../hooks/useDepartmentsList'
 
-interface Props {
-  departments: Department[]
-  loading?: boolean
-  openModal: OpenModal
-  onSelectDepartment: (dept: Department) => void
-}
-
-const DepartmentsScreen: React.FC<Props> = ({
-  departments,
-  loading = false,
-  openModal,
-  onSelectDepartment
-}) => {
-  const { currentUser, userRole } = useAuth()
+const DepartmentsScreen: React.FC = () => {
+  const { openModal } = useOutletContext<OutletContext>()
+  const navigate = useNavigate()
+  const { currentUser, isOwner } = useAuth()
+  const departmentsQuery = useDepartmentsList()
+  const departments = departmentsQuery.data ?? []
+  const loading = departmentsQuery.isLoading
   const [searchTerm, setSearchTerm] = useState('')
-
-  const isOwner = userRole === 'OWNER'
 
   // Admins may only see the departments they administer.
   const visibleDepartments = isOwner
@@ -62,7 +55,7 @@ const DepartmentsScreen: React.FC<Props> = ({
             <div
               key={dept.id}
               className="employee-row hover-slide-container clickable"
-              onClick={() => onSelectDepartment(dept)}
+              onClick={() => navigate(`/departments/${dept.id}`)}
             >
               <div className="dept-info-stack">
                 <span className="emp-name">{dept.name}</span>

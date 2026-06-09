@@ -71,6 +71,9 @@ select {
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
+
+  /* NavLink renders an <a>; strip the default anchor underline. */
+  text-decoration: none;
 }
 
 .nav-item:hover {
