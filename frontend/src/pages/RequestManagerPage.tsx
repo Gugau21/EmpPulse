@@ -1,13 +1,11 @@
 import React, { useState } from 'react'
-import type { OpenModal } from '../types'
+import { useOutletContext } from 'react-router-dom'
+import type { OutletContext } from '../components/AppLayout'
 import { PENDING_REQUESTS } from '../utils/mockData'
 import blackTriangleIcon from '../assets/black_triangle.png'
 
-interface Props {
-  openModal: OpenModal
-}
-
-const RequestManagerPage: React.FC<Props> = ({ openModal }) => {
+const RequestManagerPage: React.FC = () => {
+  const { openModal } = useOutletContext<OutletContext>()
   const [expanded, setExpanded] = useState(true)
 
   return (

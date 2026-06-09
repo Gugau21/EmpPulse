@@ -1,11 +1,9 @@
 import React, { useState } from 'react'
-import type { LeaveRequest, OpenModal } from '../types'
+import { useOutletContext } from 'react-router-dom'
+import type { LeaveRequest } from '../types'
+import type { OutletContext } from '../components/AppLayout'
 import trashIcon from '../assets/trash-icon.png.webp'
 import blackTriangleIcon from '../assets/black_triangle.png'
-
-interface Props {
-  openModal: OpenModal
-}
 
 const myRecordsData: LeaveRequest[] = [
   {
@@ -38,7 +36,8 @@ const myRecordsData: LeaveRequest[] = [
   }
 ]
 
-const MyRequestsScreen: React.FC<Props> = ({ openModal }) => {
+const MyRequestsScreen: React.FC = () => {
+  const { openModal } = useOutletContext<OutletContext>()
   const [expanded, setExpanded] = useState(true)
 
   return (

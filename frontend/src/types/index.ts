@@ -58,19 +58,7 @@ export interface MeUser {
   adminProfile: { id: number; departmentIds: number[] } | null
 }
 
-
 // --- App State Types ---
-export type ScreenType =
-  | 'login'
-  | 'forbidden'
-  | 'employees'
-  | 'request-manager'
-  | 'my-requests'
-  | 'departments'
-  | 'department-detail'
-  | 'my-profile'
-  | 'employee-profile'
-
 export type ModalType =
   | null
   | 'ADD_EMPLOYEE'

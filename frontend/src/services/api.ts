@@ -96,6 +96,22 @@ export const authService = {
     return data as MeUser
   },
 
+  // GET /api/me — restores the session on page load. Returns the MeUser when a
+  // session cookie is still valid; a 401 means "no session" (not an error), so we
+  // return null. Any other status propagates as an ApiError.
+  me: async (signal?: AbortSignal): Promise<MeUser | null> => {
+    try {
+      const res = await apiRequest('/api/me', {
+        signal,
+        errorFallback: 'Failed to restore session.'
+      })
+      return (await res.json()) as MeUser
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) return null
+      throw err
+    }
+  },
+
   logout: async (): Promise<void> => {
     // Logout is best-effort: swallow errors so a failed call still clears local state.
     await fetch('/api/auth/logout', {

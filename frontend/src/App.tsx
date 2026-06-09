@@ -1,227 +1,96 @@
-import React, { useState } from 'react'
-import Sidebar from './components/Sidebar'
-import Modals from './components/Modals'
-import LoginScreen from './pages/LoginPage'
-import ForbiddenScreen from './pages/ForbiddenPage'
-import EmployeesScreen from './pages/EmployeesPage'
-import RequestManagerScreen from './pages/RequestManagerPage'
-import MyRequestsScreen from './pages/MyRequestsPage'
-import DepartmentsScreen from './pages/DepartmentsPage'
-import DepartmentDetailScreen from './pages/DepartmentDetailPage'
-import ProfileScreen from './pages/ProfilePage'
-
-import type {
-  ScreenType,
-  ModalType,
-  ModalPayload,
-  Employee,
-  LeaveRequest,
-  Department,
-  MeUser
-} from './types'
-import { canAccessRoute } from './utils/guards'
+import React from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import AppLayout from './components/AppLayout'
+import RequireRole from './components/RequireRole'
+import LoginPage from './pages/LoginPage'
+import ForbiddenPage from './pages/ForbiddenPage'
+import EmployeesPage from './pages/EmployeesPage'
+import RequestManagerPage from './pages/RequestManagerPage'
+import MyRequestsPage from './pages/MyRequestsPage'
+import DepartmentsPage from './pages/DepartmentsPage'
+import DepartmentDetailPage from './pages/DepartmentDetailPage'
+import ProfilePage from './pages/ProfilePage'
 import { useAuth } from './context/useAuth'
-import { useDepartmentsList } from './hooks/useDepartmentsList'
-import { useDepartmentDetail } from './hooks/useDepartmentDetail'
-import { useDeleteDepartment } from './hooks/useDepartmentMutations'
+import { landingPath } from './utils/guards'
 import '@fontsource/poppins'
-import { useDeleteEmployee } from './hooks/useEmployeeMutations'
 import './styles/global.css'
 
-const App: React.FC = () => {
-  const { currentUser, isOwner, isAdmin, logout } = useAuth()
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('login')
-  const [activeModal, setActiveModal] = useState<ModalType>(null)
-
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
-  const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
-  // Full department object passed into modals (e.g. EditAdmins seeds from .admins).
-  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null)
-  // Id of the department whose detail view is open; drives the detail query.
-  const [selectedDeptId, setSelectedDeptId] = useState<number | null>(null)
-  // Error surfaced inside the confirm modal when a confirm action fails (delete
-  // employee/department). Cleared on close and when the action is re-attempted.
-  const [confirmError, setConfirmError] = useState<string | null>(null)
-
-  const departmentsQuery = useDepartmentsList()
-  const departments = departmentsQuery.data ?? []
-  const departmentDetailQuery = useDepartmentDetail(selectedDeptId)
-  const deleteDepartment = useDeleteDepartment()
-  const deleteEmployee = useDeleteEmployee()
-
-  const handleLoginSuccess = (user: MeUser) => {
-    setCurrentScreen(user.adminProfile === null && !user.owner ? 'my-requests' : 'employees')
-  }
-
-  const handleSetScreen = (screen: ScreenType) => {
-    if (!canAccessRoute(screen, currentUser)) {
-      setCurrentScreen('forbidden')
-      return
-    }
-    setCurrentScreen(screen)
-  }
-
-  const handleOpenModal = (
-    modal: ModalType,
-    deptOrEmp?: ModalPayload,
-    requestObj?: LeaveRequest
-  ) => {
-    if (deptOrEmp) {
-      // Departments carry an `admins` array; employees don't — discriminate on it.
-      if ('admins' in deptOrEmp) {
-        setSelectedDepartment(deptOrEmp)
-      } else {
-        setSelectedEmployee(deptOrEmp)
-      }
-    }
-    if (requestObj) setSelectedRequest(requestObj)
-    setActiveModal(modal)
-  }
-
-  // Open a department's detail view; the useDepartmentDetail query fetches its full
-  // record. React Query cancels a superseded request when selectedDeptId changes.
-  const handleSelectDepartment = (dept: Department) => {
-    if (!canAccessRoute('department-detail', currentUser)) {
-      setCurrentScreen('forbidden')
-      return
-    }
-    setSelectedDeptId(dept.id)
-    setCurrentScreen('department-detail')
-  }
-
-  const handleOpenEmployeeProfile = (emp: Employee) => {
-    setSelectedEmployee(emp)
-    handleSetScreen('employee-profile')
-  }
-
-  if (currentScreen === 'login') {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />
-  }
-
-  if (currentScreen === 'forbidden') {
-    return (
-      <ForbiddenScreen
-        onHome={() => handleSetScreen(isOwner || isAdmin ? 'employees' : 'my-requests')}
-      />
-    )
-  }
-
-  return (
-    <div className="dashboard-layout">
-      <Sidebar currentScreen={currentScreen} setScreen={handleSetScreen} />
-
-      <main className="main-content-area">
-        {departmentDetailQuery.error && (
-          <p className="form-error form-error-block">{departmentDetailQuery.error.message}</p>
-        )}
-        {departmentsQuery.error && (
-          <p className="form-error form-error-block">{departmentsQuery.error.message}</p>
-        )}
-        {currentScreen === 'employees' && (isOwner || isAdmin) && (
-          <EmployeesScreen
-            openEmployeeProfile={handleOpenEmployeeProfile}
-            openModal={handleOpenModal}
-          />
-        )}
-        {currentScreen === 'request-manager' && (isOwner || isAdmin) && (
-          <RequestManagerScreen openModal={handleOpenModal} />
-        )}
-        {currentScreen === 'my-requests' && currentUser?.employeeProfile != null && (
-          <MyRequestsScreen openModal={handleOpenModal} />
-        )}
-        {currentScreen === 'departments' && (isOwner || isAdmin) && (
-          <DepartmentsScreen
-            departments={departments}
-            loading={departmentsQuery.isLoading}
-            openModal={handleOpenModal}
-            onSelectDepartment={handleSelectDepartment}
-          />
-        )}
-        {currentScreen === 'department-detail' && (isOwner || isAdmin) && (
-          <DepartmentDetailScreen
-            department={departmentDetailQuery.data ?? null}
-            loading={departmentDetailQuery.isLoading}
-            openModal={handleOpenModal}
-            onBack={() => handleSetScreen('departments')}
-          />
-        )}
-        {currentScreen === 'my-profile' && (
-          <ProfileScreen
-            isMyProfile={true}
-            openModal={handleOpenModal}
-            onBack={() => handleSetScreen('employees')}
-          />
-        )}
-        {currentScreen === 'employee-profile' && (isOwner || isAdmin) && (
-          <ProfileScreen
-            isMyProfile={false}
-            employee={selectedEmployee}
-            openModal={handleOpenModal}
-            onBack={() => handleSetScreen('employees')}
-          />
-        )}
-      </main>
-
-      <Modals
-        activeModal={activeModal}
-        openModal={handleOpenModal}
-        confirmModal={async () => {
-          if (activeModal === 'LOGOUT') {
-            // AuthContext.logout clears the local session even if the network
-            // call fails, so the user is never stranded in a signed-in state.
-            await logout()
-            setCurrentScreen('login')
-            setActiveModal(null)
-            return
-          }
-          if (activeModal === 'DELETE_EMPLOYEE' && selectedEmployee) {
-            deleteEmployee.mutate(Number(selectedEmployee.id), {
-              onSuccess: () => {
-                setActiveModal(null)
-                if (currentScreen === 'employee-profile') {
-                  setCurrentScreen('employees')
-                }
-              },
-              onError: err => setConfirmError(err.message)
-            })
-            return
-          }
-          if (activeModal === 'DELETE_DEPARTMENT' && selectedDepartment) {
-            const dept = selectedDepartment
-            deleteDepartment.mutate(dept.id, {
-              // The mutation invalidates the list, so no manual reload is needed.
-              onSuccess: () => {
-                setActiveModal(null)
-                if (currentScreen === 'department-detail') {
-                  setSelectedDeptId(null)
-                  setCurrentScreen('departments')
-                }
-              },
-              onError: () => {
-                setConfirmError(
-                  dept.admins.length > 0
-                    ? 'This department still has administrators attached to it. Unassign all administrators before deleting.'
-                    : 'This department still has employees assigned to it. Unassign all employees before deleting.'
-                )
-              }
-            })
-            return
-          }
-          setActiveModal(null)
-        }}
-        closeModal={() => {
-          setConfirmError(null)
-          setActiveModal(null)
-        }}
-        selectedEmployee={selectedEmployee}
-        selectedRequest={selectedRequest}
-        selectedDepartment={selectedDepartment}
-        departments={departments}
-        confirmError={confirmError}
-        onConfirmErrorClear={() => setConfirmError(null)}
-      />
-    </div>
-  )
+// `/` lands the user on the page their role makes sense for (mirrors the old
+// post-login redirect). Lives inside AppLayout, so currentUser is already settled.
+const IndexRedirect: React.FC = () => {
+  const { currentUser } = useAuth()
+  return <Navigate to={landingPath(currentUser)} replace />
 }
+
+const App: React.FC = () => (
+  <Routes>
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/forbidden" element={<ForbiddenPage />} />
+
+    {/* Authenticated shell: sidebar + modals + the matched page in its <Outlet/>. */}
+    <Route element={<AppLayout />}>
+      <Route index element={<IndexRedirect />} />
+      <Route
+        path="employees"
+        element={
+          <RequireRole roles={['OWNER', 'ADMIN']}>
+            <EmployeesPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="employees/:userId"
+        element={
+          <RequireRole roles={['OWNER', 'ADMIN']}>
+            <ProfilePage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="request-manager"
+        element={
+          <RequireRole roles={['OWNER', 'ADMIN']}>
+            <RequestManagerPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="my-requests"
+        element={
+          <RequireRole roles={['WORKER']}>
+            <MyRequestsPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="departments"
+        element={
+          <RequireRole roles={['OWNER', 'ADMIN']}>
+            <DepartmentsPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="departments/:deptId"
+        element={
+          <RequireRole roles={['OWNER', 'ADMIN']}>
+            <DepartmentDetailPage />
+          </RequireRole>
+        }
+      />
+      <Route
+        path="profile"
+        element={
+          <RequireRole roles={['OWNER', 'ADMIN', 'WORKER']}>
+            <ProfilePage />
+          </RequireRole>
+        }
+      />
+    </Route>
+
+    {/* Unknown path → bounce through the index redirect to the role landing. */}
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes>
+)
 
 export default App

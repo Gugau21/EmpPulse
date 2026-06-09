@@ -1,16 +1,11 @@
 import React, { useState } from 'react'
-import type { Employee, OpenModal } from '../types'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import type { Employee } from '../types'
+import type { OutletContext } from '../components/AppLayout'
 import { MOCK_LOGGED_HOURS, MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
 import blackTriangleIcon from '../assets/black_triangle.png'
-
-interface Props {
-  isMyProfile?: boolean
-  employee?: Employee | null
-  openModal: OpenModal
-  onBack: () => void
-}
 
 // Feature flag: the logged/unpaid hours tables are hidden until that data is
 // wired to the API. Flip to true to restore both sections (they still render
@@ -64,20 +59,39 @@ const HoursAccordion: React.FC<HoursAccordionProps> = ({
   </div>
 )
 
-const ProfilePage: React.FC<Props> = ({ isMyProfile, employee, openModal, onBack }) => {
+const ProfilePage: React.FC = () => {
+  const { openModal } = useOutletContext<OutletContext>()
+  const navigate = useNavigate()
+  // A :userId param means we're viewing someone else's profile (employee mode);
+  // no param means the signed-in user's own profile.
+  const { userId } = useParams()
+  const isMyProfile = userId == null
   const { currentUser } = useAuth()
   const [loggedExpanded, setLoggedExpanded] = useState(true)
   const [unpaidExpanded, setUnpaidExpanded] = useState(true)
 
-  const employeeId = !isMyProfile && employee?.id ? Number(employee.id) : null
+  const employeeId = userId ? Number(userId) : null
   const { data: employeeUser } = useUserDetail(employeeId)
+
+  const onBack = () => navigate('/employees')
+
+  // The modals (EDIT_EMPLOYEE/LOG_HOURS) take an Employee; in employee mode we
+  // rebuild one from the fetched user. EditEmployeeModal only needs the id (it
+  // refetches the rest), but we fill the display fields too for completeness.
+  const employee: Employee | null = employeeUser
+    ? {
+        id: String(employeeUser.id),
+        name: employeeUser.name,
+        surname: employeeUser.surname,
+        email: employeeUser.email,
+        department: employeeUser.employeeProfile?.departmentName ?? undefined
+      }
+    : null
 
   const targetName = isMyProfile
     ? [currentUser?.name, currentUser?.surname].filter(Boolean).join(' ')
-    : [employee?.name, employee?.surname].filter(Boolean).join(' ') || 'Fallback Name'
-  const targetEmail = isMyProfile
-    ? (currentUser?.email ?? '')
-    : (employeeUser?.email ?? employee?.email ?? '')
+    : [employeeUser?.name, employeeUser?.surname].filter(Boolean).join(' ') || 'Fallback Name'
+  const targetEmail = isMyProfile ? (currentUser?.email ?? '') : (employeeUser?.email ?? '')
   // The vacation widget only applies to employees; non-employee users (e.g.
   // admin-only) have no balance to show. Drives both the own- and looked-up cases.
   const targetUser = isMyProfile ? currentUser : employeeUser

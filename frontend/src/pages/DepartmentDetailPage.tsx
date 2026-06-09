@@ -1,15 +1,10 @@
 import React from 'react'
-import type { Department, OpenModal } from '../types'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import type { OutletContext } from '../components/AppLayout'
 import { useAuth } from '../context/useAuth'
+import { useDepartmentDetail } from '../hooks/useDepartmentDetail'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import EditIcon from '../assets/edit_icon.png'
-
-interface Props {
-  department: Department | null
-  loading?: boolean
-  openModal: OpenModal
-  onBack: () => void
-}
 
 // NOTE: The default working-hours feature is not wired to the API yet, so the
 // working-hours table and its button are commented out below (kept for later).
@@ -17,13 +12,15 @@ interface Props {
 //   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
 // ];
 
-const DepartmentDetailScreen: React.FC<Props> = ({
-  department,
-  loading = false,
-  openModal,
-  onBack
-}) => {
+const DepartmentDetailScreen: React.FC = () => {
+  const { openModal } = useOutletContext<OutletContext>()
+  const navigate = useNavigate()
+  const { deptId } = useParams()
   const { isOwner } = useAuth()
+  const detailQuery = useDepartmentDetail(deptId ? Number(deptId) : null)
+  const department = detailQuery.data ?? null
+  const loading = detailQuery.isLoading
+  const onBack = () => navigate('/departments')
   if (loading && !department) {
     return (
       <div className="screen-container">
@@ -35,7 +32,11 @@ const DepartmentDetailScreen: React.FC<Props> = ({
   if (!department) {
     return (
       <div className="screen-container">
-        <p>No department context selected.</p>
+        {detailQuery.error ? (
+          <p className="form-error form-error-block">{detailQuery.error.message}</p>
+        ) : (
+          <p>No department context selected.</p>
+        )}
         <button className="btn-pill-secondary" onClick={onBack}>
           🡄 Back
         </button>
@@ -66,7 +67,6 @@ const DepartmentDetailScreen: React.FC<Props> = ({
       </header>
 
       <div className="department-detail-grid">
-        {/* Administrator Column */}
         <div className="detail-column">
           <h3 className="column-section-title">Admins</h3>
           <div className="card-box list-box department-detail-card">

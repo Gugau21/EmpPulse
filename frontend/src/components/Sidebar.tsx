@@ -1,14 +1,15 @@
 import React from 'react'
-import type { ScreenType } from '../types'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
+import { landingPath } from '../utils/guards'
 
-interface Props {
-  currentScreen: ScreenType
-  setScreen: (screen: ScreenType) => void
-}
+// NavLink className callback: keep the base `nav-item` class and add `active`
+// when the link matches the current URL (router-driven, replacing currentScreen).
+const navItemClass = ({ isActive }: { isActive: boolean }) => `nav-item${isActive ? ' active' : ''}`
 
-const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
+const Sidebar: React.FC = () => {
   const { currentUser, isOwner, isAdmin, isEmployee } = useAuth()
+  const navigate = useNavigate()
 
   const showEmployees = isOwner || isAdmin
   const showRequestMgr = isOwner || isAdmin
@@ -20,50 +21,35 @@ const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
-        <h1
-          className="brand-logo clickable"
-          onClick={() => setScreen(isOwner || isAdmin ? 'employees' : 'my-requests')}
-        >
+        <h1 className="brand-logo clickable" onClick={() => navigate(landingPath(currentUser))}>
           EmpPulse
         </h1>
         <nav className="sidebar-nav">
           {showEmployees && (
-            <button
-              className={`nav-item ${currentScreen === 'employees' ? 'active' : ''}`}
-              onClick={() => setScreen('employees')}
-            >
+            <NavLink to="/employees" className={navItemClass}>
               Employees
-            </button>
+            </NavLink>
           )}
           {showRequestMgr && (
-            <button
-              className={`nav-item ${currentScreen === 'request-manager' ? 'active' : ''}`}
-              onClick={() => setScreen('request-manager')}
-            >
+            <NavLink to="/request-manager" className={navItemClass}>
               Request manager
-            </button>
+            </NavLink>
           )}
           {showMyRequests && (
-            <button
-              className={`nav-item ${currentScreen === 'my-requests' ? 'active' : ''}`}
-              onClick={() => setScreen('my-requests')}
-            >
+            <NavLink to="/my-requests" className={navItemClass}>
               My requests
-            </button>
+            </NavLink>
           )}
           {showDepartments && (
-            <button
-              className={`nav-item ${currentScreen === 'departments' ? 'active' : ''}`}
-              onClick={() => setScreen('departments')}
-            >
+            <NavLink to="/departments" className={navItemClass}>
               Department list
-            </button>
+            </NavLink>
           )}
         </nav>
       </div>
 
       <div className="sidebar-bottom">
-        <div className="user-profile clickable" onClick={() => setScreen('my-profile')}>
+        <div className="user-profile clickable" onClick={() => navigate('/profile')}>
           <div className="user-avatar"></div>
           <div className="user-info">
             <span className="user-name">{displayName}</span>
