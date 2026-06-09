@@ -20,7 +20,7 @@ Linked:
 * (ZERO.MANY-ZERO.ONE) **Department**
 * (ONE-ZERO.ONE) **Default Week hours**
 
-**Premium vacation days** - an entity representing premium vacation days.
+**Bonus vacation days** - an entity representing Bonus vacation days.
 Contains:
 * year
 * number of days
@@ -190,7 +190,7 @@ Due to codependency, **User** and (**Employee** or **Admin**) must be created in
 3. **User** can modify their password.
 4. **Admin** can modify **Default Week hours** of **Employee** in **Departments** they oversee.
 5. **Admin** can modify which **Department** an **Employee** is in. See rules for **Department** Modification.
-6. **Admin** can modify premiumVacationDays of an **Employee**
+6. **Admin** can modify BonusVacationDays of an **Employee**
 7. **Owner** can modify all parameters of **User** (except preferences), **Employee** and **Admin**.
 8. If **Owner** modifies **User** password they will receive email with credentials (Same as in User Creation).
 9. **Owner** can attach **User** to **Employee** or **Admin**.
@@ -203,32 +203,32 @@ Due to codependency, **User** and (**Employee** or **Admin**) must be created in
 
 1. **Users**, **Employees** and **Admins** are never deleted.
 
-### Premium vacation days management
+### Bonus vacation days management
 
-#### Premium vacation days Existence
+#### Bonus vacation days Existence
 
-1. All fields of  **Premium vacation days** must be filled.
-2. **Premium vacation days** must have a link to an **Employee**.
-3. **Premium vacation days** must have a unique pair of **Employee** and *year* within **Premium vacation days**.
+1. All fields of  **Bonus vacation days** must be filled.
+2. **Bonus vacation days** must have a link to an **Employee**.
+3. **Bonus vacation days** must have a unique pair of **Employee** and *year* within **Bonus vacation days**.
 
-#### Premium vacation days View
+#### Bonus vacation days View
 
-1. **Premium vacation days** is visible to **Admins** who oversee the **Department** of linked **Employee**.
+1. **Bonus vacation days** is visible to **Admins** who oversee the **Department** of linked **Employee**.
 
-#### Premium vacation days Creation
+#### Bonus vacation days Creation
 
 1. Creation must not break rules of Existence.
-2. Admin can create **Premium vacation days** with **Employee** they oversee, year and number of days.
+2. Admin can create **Bonus vacation days** with **Employee** they oversee, year and number of days.
 
-#### Premium vacation days Modification
+#### Bonus vacation days Modification
 
 1. Modification must not break rules of Existence.
-2. Modification is posible only with visible **Premium vacation days**
-3. Admin can alter *number of days* of **Premium vacation days**.
+2. Modification is posible only with visible **Bonus vacation days**
+3. Admin can alter *number of days* of **Bonus vacation days**.
 
-#### Premium vacation days Modification
+#### Bonus vacation days Modification
 
-1. If *number of days* is 0, **Premium vacation days** is deleted.
+1. If *number of days* is 0, **Bonus vacation days** is deleted.
 
 ### Authentication and session management
 
@@ -388,7 +388,7 @@ Due to codependency, **User** and (**Employee** or **Admin**) must be created in
     Vacation Balance Calculation
 </h3>
 
-For a specific year, **Employees** vacation balance is set to their yearly vacation balance plus *number of days* of **Premium vacation days** for a **Employees** and year.
+For a specific year, **Employees** vacation balance is set to their yearly vacation balance plus *number of days* of **Bonus vacation days** for a **Employees** and year.
 
 <h3>
     Data export
