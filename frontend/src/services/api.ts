@@ -1,5 +1,10 @@
 import type { MeUser, Department, DepartmentAdmin, Employee } from '../types'
 
+// Abort a request that hasn't responded in this long so a hung backend surfaces as
+// a retryable failure rather than an indefinite spinner. React Query then retries
+// (see queryClient), giving up to 3 attempts total before the error reaches the UI.
+const REQUEST_TIMEOUT_MS = 5000
+
 function getCsrfToken(): string {
   return (
     document.cookie
@@ -68,13 +73,29 @@ async function apiRequest(path: string, opts: RequestOptions): Promise<Response>
   if (method !== 'GET') headers['X-XSRF-TOKEN'] = getCsrfToken()
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
-  const res = await fetch(path, {
-    method,
-    headers,
-    credentials: 'include',
-    signal,
-    ...(body !== undefined ? { body: JSON.stringify(body) } : {})
-  })
+  // Race the caller's signal (e.g. React Query cancelling a superseded query)
+  // against our own timeout, so either can abort the fetch.
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+  const merged = signal ? AbortSignal.any([signal, timeout]) : timeout
+
+  let res: Response
+  try {
+    res = await fetch(path, {
+      method,
+      headers,
+      credentials: 'include',
+      signal: merged,
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {})
+    })
+  } catch (err) {
+    // A caller-initiated abort must propagate untouched so React Query treats it as
+    // a cancellation, not a failure. Only our timeout is remapped into a retryable
+    // ApiError (status 0 isn't a 4xx, so the retry predicate lets it through).
+    if (timeout.aborted && !signal?.aborted) {
+      throw new ApiError(0, 'The server took too long to respond. Please try again.')
+    }
+    throw err
+  }
   if (!res.ok) {
     throw await clientSafeError(res, errorFallback, errorOverrides)
   }

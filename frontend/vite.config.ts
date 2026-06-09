@@ -6,7 +6,9 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': 'http://localhost:8080'
+      '/api': 'http://localhost:8080',
+      // Health probe used by the server-status gate to detect when the backend is down.
+      '/actuator': 'http://localhost:8080'
     }
   }
 })
