@@ -8,21 +8,21 @@ interface Props {
 }
 
 const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
-  const { currentUser, userRole: role } = useAuth()
+  const { currentUser, isOwner, isAdmin, isEmployee } = useAuth()
 
-  const showEmployees = role === 'OWNER' || role === 'ADMIN'
-  const showRequestMgr = role === 'OWNER' || role === 'ADMIN'
-  const showDepartments = role === 'OWNER' || role === 'ADMIN'
-  const showMyRequests = currentUser?.employeeProfile != null
+  const showEmployees = isOwner || isAdmin
+  const showRequestMgr = isOwner || isAdmin
+  const showDepartments = isOwner || isAdmin
+  const showMyRequests = isEmployee
   const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : ''
-  const displayRole = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Administrator' : 'Employee'
+  const displayRole = isOwner ? 'Owner' : isAdmin ? 'Administrator' : 'Employee'
 
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
         <h1
           className="brand-logo clickable"
-          onClick={() => setScreen(role === 'WORKER' ? 'my-requests' : 'employees')}
+          onClick={() => setScreen(isOwner || isAdmin ? 'employees' : 'my-requests')}
         >
           EmpPulse
         </h1>
@@ -68,7 +68,7 @@ const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
           <div className="user-info">
             <span className="user-name">{displayName}</span>
             {/* Only show role badge for owner (already prominent in the app). */}
-            {role === 'OWNER' && <span className="user-role">{displayRole}</span>}
+            {isOwner && <span className="user-role">{displayRole}</span>}
           </div>
         </div>
 

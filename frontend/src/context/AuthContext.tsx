@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { MeUser } from '../types'
-import { deriveRole } from '../types'
 import { authService } from '../services/api'
 import { AuthContext, type AuthContextValue } from './authContextValue'
 
@@ -36,7 +35,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = useMemo<AuthContextValue>(
     () => ({
       currentUser,
-      userRole: currentUser ? deriveRole(currentUser) : null,
+      isOwner: currentUser?.owner ?? false,
+      isAdmin: currentUser?.adminProfile != null,
+      isEmployee: currentUser?.employeeProfile != null,
       login,
       logout,
       loginPending: loginMutation.isPending,

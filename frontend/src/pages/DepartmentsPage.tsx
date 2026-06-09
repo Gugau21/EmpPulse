@@ -16,10 +16,8 @@ const DepartmentsScreen: React.FC<Props> = ({
   openModal,
   onSelectDepartment
 }) => {
-  const { currentUser, userRole } = useAuth()
+  const { currentUser, isOwner } = useAuth()
   const [searchTerm, setSearchTerm] = useState('')
-
-  const isOwner = userRole === 'OWNER'
 
   // Admins may only see the departments they administer.
   const visibleDepartments = isOwner

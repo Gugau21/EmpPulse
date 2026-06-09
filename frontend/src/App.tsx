@@ -29,7 +29,7 @@ import { useDeleteEmployee } from './hooks/useEmployeeMutations'
 import './styles/global.css'
 
 const App: React.FC = () => {
-  const { userRole, currentUser, logout } = useAuth()
+  const { currentUser, isOwner, isAdmin, logout } = useAuth()
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('login')
   const [activeModal, setActiveModal] = useState<ModalType>(null)
 
@@ -101,7 +101,7 @@ const App: React.FC = () => {
   if (currentScreen === 'forbidden') {
     return (
       <ForbiddenScreen
-        onHome={() => handleSetScreen(userRole === 'WORKER' ? 'my-requests' : 'employees')}
+        onHome={() => handleSetScreen(isOwner || isAdmin ? 'employees' : 'my-requests')}
       />
     )
   }
@@ -117,21 +117,19 @@ const App: React.FC = () => {
         {departmentsQuery.error && (
           <p className="form-error form-error-block">{departmentsQuery.error.message}</p>
         )}
-        {currentScreen === 'employees' && userRole && ['OWNER', 'ADMIN'].includes(userRole) && (
+        {currentScreen === 'employees' && (isOwner || isAdmin) && (
           <EmployeesScreen
             openEmployeeProfile={handleOpenEmployeeProfile}
             openModal={handleOpenModal}
           />
         )}
-        {currentScreen === 'request-manager' &&
-          userRole &&
-          ['OWNER', 'ADMIN'].includes(userRole) && (
-            <RequestManagerScreen openModal={handleOpenModal} />
-          )}
+        {currentScreen === 'request-manager' && (isOwner || isAdmin) && (
+          <RequestManagerScreen openModal={handleOpenModal} />
+        )}
         {currentScreen === 'my-requests' && currentUser?.employeeProfile != null && (
           <MyRequestsScreen openModal={handleOpenModal} />
         )}
-        {currentScreen === 'departments' && userRole && ['OWNER', 'ADMIN'].includes(userRole) && (
+        {currentScreen === 'departments' && (isOwner || isAdmin) && (
           <DepartmentsScreen
             departments={departments}
             loading={departmentsQuery.isLoading}
@@ -139,16 +137,14 @@ const App: React.FC = () => {
             onSelectDepartment={handleSelectDepartment}
           />
         )}
-        {currentScreen === 'department-detail' &&
-          userRole &&
-          ['OWNER', 'ADMIN'].includes(userRole) && (
-            <DepartmentDetailScreen
-              department={departmentDetailQuery.data ?? null}
-              loading={departmentDetailQuery.isLoading}
-              openModal={handleOpenModal}
-              onBack={() => handleSetScreen('departments')}
-            />
-          )}
+        {currentScreen === 'department-detail' && (isOwner || isAdmin) && (
+          <DepartmentDetailScreen
+            department={departmentDetailQuery.data ?? null}
+            loading={departmentDetailQuery.isLoading}
+            openModal={handleOpenModal}
+            onBack={() => handleSetScreen('departments')}
+          />
+        )}
         {currentScreen === 'my-profile' && (
           <ProfileScreen
             isMyProfile={true}
@@ -156,16 +152,14 @@ const App: React.FC = () => {
             onBack={() => handleSetScreen('employees')}
           />
         )}
-        {currentScreen === 'employee-profile' &&
-          userRole &&
-          ['OWNER', 'ADMIN'].includes(userRole) && (
-            <ProfileScreen
-              isMyProfile={false}
-              employee={selectedEmployee}
-              openModal={handleOpenModal}
-              onBack={() => handleSetScreen('employees')}
-            />
-          )}
+        {currentScreen === 'employee-profile' && (isOwner || isAdmin) && (
+          <ProfileScreen
+            isMyProfile={false}
+            employee={selectedEmployee}
+            openModal={handleOpenModal}
+            onBack={() => handleSetScreen('employees')}
+          />
+        )}
       </main>
 
       <Modals

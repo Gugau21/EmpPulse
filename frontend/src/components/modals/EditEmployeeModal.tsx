@@ -48,8 +48,7 @@ interface FormProps {
 }
 
 const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, closeModal }) => {
-  const { userRole } = useAuth()
-  const isOwner = userRole === 'OWNER'
+  const { isOwner } = useAuth()
 
   const [newName, setNewName] = useState(user.name)
   const [newSurname, setNewSurname] = useState(user.surname)

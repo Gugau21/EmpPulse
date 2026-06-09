@@ -23,7 +23,7 @@ const DepartmentDetailScreen: React.FC<Props> = ({
   openModal,
   onBack
 }) => {
-  const { userRole } = useAuth()
+  const { isOwner } = useAuth()
   if (loading && !department) {
     return (
       <div className="screen-container">
@@ -42,8 +42,6 @@ const DepartmentDetailScreen: React.FC<Props> = ({
       </div>
     )
   }
-
-  const isOwner = userRole === 'OWNER'
 
   return (
     <div className="screen-container department-detail-screen">
