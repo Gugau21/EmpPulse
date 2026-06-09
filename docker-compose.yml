@@ -17,6 +17,8 @@ services:
       - emp-pulse-network
     restart: unless-stopped
   backend:
+    profiles:
+      - prod
     build:
       context: ./backend
     depends_on:
@@ -35,7 +37,30 @@ services:
     networks:
       - emp-pulse-network
     restart: unless-stopped
+  backend-dev:
+    profiles:
+      - dev
+    build:
+      context: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      APP_OWNER_EMAIL: ${OWNER_EMAIL}
+      APP_OWNER_PASSWORD: ${OWNER_PASSWORD}
+    ports:
+      - "8080:8080"
+    networks:
+      - emp-pulse-network
+    restart: unless-stopped
   frontend:
+    profiles:
+      - prod
     build:
       context: ./frontend
       args:
@@ -50,6 +75,8 @@ services:
 
   nginx:
     image: nginx:alpine
+    profiles:
+      - prod
     depends_on:
       - frontend
       - backend
