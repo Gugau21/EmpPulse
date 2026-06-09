@@ -10,12 +10,10 @@ interface Props {
 const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
   const { currentUser, userRole: role } = useAuth()
 
-  // Hide navigation items based on user role to prevent access to unauthorized screens.
   const showEmployees = role === 'OWNER' || role === 'ADMIN'
   const showRequestMgr = role === 'OWNER' || role === 'ADMIN'
   const showDepartments = role === 'OWNER' || role === 'ADMIN'
-  const showMyRequests = role === 'ADMIN' || role === 'WORKER'
-
+  const showMyRequests = currentUser?.employeeProfile != null
   const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : ''
   const displayRole = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Administrator' : 'Employee'
 

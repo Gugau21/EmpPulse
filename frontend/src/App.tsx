@@ -29,7 +29,7 @@ import { useDeleteEmployee } from './hooks/useEmployeeMutations'
 import './styles/global.css'
 
 const App: React.FC = () => {
-  const { userRole, logout } = useAuth()
+  const { userRole, currentUser, logout } = useAuth()
   const [currentScreen, setCurrentScreen] = useState<ScreenType>('login')
   const [activeModal, setActiveModal] = useState<ModalType>(null)
 
@@ -54,7 +54,7 @@ const App: React.FC = () => {
   }
 
   const handleSetScreen = (screen: ScreenType) => {
-    if (!canAccessRoute(screen, userRole)) {
+    if (!canAccessRoute(screen, currentUser)) {
       setCurrentScreen('forbidden')
       return
     }
@@ -81,7 +81,7 @@ const App: React.FC = () => {
   // Open a department's detail view; the useDepartmentDetail query fetches its full
   // record. React Query cancels a superseded request when selectedDeptId changes.
   const handleSelectDepartment = (dept: Department) => {
-    if (!canAccessRoute('department-detail', userRole)) {
+    if (!canAccessRoute('department-detail', currentUser)) {
       setCurrentScreen('forbidden')
       return
     }
@@ -128,7 +128,7 @@ const App: React.FC = () => {
           ['OWNER', 'ADMIN'].includes(userRole) && (
             <RequestManagerScreen openModal={handleOpenModal} />
           )}
-        {currentScreen === 'my-requests' && userRole && ['ADMIN', 'WORKER'].includes(userRole) && (
+        {currentScreen === 'my-requests' && currentUser?.employeeProfile != null && (
           <MyRequestsScreen openModal={handleOpenModal} />
         )}
         {currentScreen === 'departments' && userRole && ['OWNER', 'ADMIN'].includes(userRole) && (
