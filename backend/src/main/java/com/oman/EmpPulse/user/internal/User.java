@@ -37,7 +37,7 @@ public class User {
   private boolean isOwner;
 
   @Column(name = "active", nullable = false, insertable = false, updatable = false)
-  private boolean isActive;
+  private boolean active;
 
   public User() {}
 
@@ -121,6 +121,6 @@ public class User {
   }
 
   public boolean isActive() {
-    return isActive;
+    return active;
   }
 }

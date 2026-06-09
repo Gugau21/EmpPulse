@@ -13,7 +13,6 @@ import com.oman.EmpPulse.user.api.EmployeeApi;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
@@ -35,6 +34,42 @@ public class DepartmentService implements DepartmentApi {
     this.employeeApi = employeeApi;
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<String> findNameById(Long departmentId) {
+    return departmentRepository.findById(departmentId).map(Department::getName);
+  }
+
+  @Override
+  @Transactional
+  public void setAdminDepartments(Long adminId, Collection<Long> departmentIds) {
+    Admin admin =
+        adminApi
+            .findById(adminId)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
+
+    Set<Long> targetIds = new HashSet<>(departmentIds);
+    List<Department> targets = departmentRepository.findAllById(targetIds);
+    if (targets.size() != targetIds.size()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found");
+    }
+
+    // An empty departmentIds is intentional: it detaches the admin from every department, leaving
+    // them with zero departments and deactivating them (admin.active = false)
+    for (Department current : new HashSet<>(admin.getDepartments())) {
+      if (!targetIds.contains(current.getId())) {
+        current.getAdmins().remove(admin);
+      }
+    }
+
+    for (Department target : targets) {
+      target.getAdmins().add(admin);
+    }
+  }
+
   @Transactional(readOnly = true)
   public DepartmentResponse getDepartment(Long departmentId) {
     Department department =
@@ -46,8 +81,8 @@ public class DepartmentService implements DepartmentApi {
   }
 
   @Transactional(readOnly = true)
-  public boolean isAdminOfDepartment(Long userId, Long departmentId) {
-    return adminApi.overseesDepartment(userId, departmentId);
+  public boolean isAdminOfDepartment(Long adminId, Long departmentId) {
+    return adminApi.overseesDepartment(adminId, departmentId);
   }
 
   @Transactional
@@ -76,8 +111,8 @@ public class DepartmentService implements DepartmentApi {
   }
 
   @Transactional(readOnly = true)
-  public DepartmentListResponse getDepartmentsForAdmin(Long userId) {
-    List<Long> deptIds = adminApi.departmentIdsForAdminUser(userId);
+  public DepartmentListResponse getDepartmentsForAdmin(Long adminId) {
+    List<Long> deptIds = adminApi.departmentIdsForAdminUser(adminId);
     List<DepartmentResponse> items =
         departmentRepository.findAllById(deptIds).stream().map(this::toDepartmentResponse).toList();
     return new DepartmentListResponse(items);
@@ -92,7 +127,7 @@ public class DepartmentService implements DepartmentApi {
     Department department = new Department(req.getName());
 
     if (req.getAdminIds() != null) {
-      department.setAdmins(loadAdmins(req.getAdminIds()));
+      department.setAdmins(loadAdminsFromIds(req.getAdminIds()));
     }
 
     departmentRepository.save(department);
@@ -112,42 +147,8 @@ public class DepartmentService implements DepartmentApi {
     }
 
     if (req.getAdminIds() != null) {
-      validateAdminDetach(department.getAdmins(), req.getAdminIds());
-      department.setAdmins(loadAdmins(req.getAdminIds()));
-    }
-  }
-
-  @Override
-  @Transactional(readOnly = true)
-  public Optional<String> findNameById(Long departmentId) {
-    return departmentRepository.findById(departmentId).map(Department::getName);
-  }
-
-  @Override
-  @Transactional
-  public void setAdminDepartments(Long adminId, Collection<Long> departmentIds) {
-    Admin admin =
-        adminApi
-            .findById(adminId)
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
-
-    Set<Long> targetIds = new HashSet<>(departmentIds);
-    List<Department> targets = departmentRepository.findAllById(targetIds);
-    if (targets.size() != targetIds.size()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found");
-    }
-
-    for (Department current : new HashSet<>(admin.getDepartments())) {
-      if (!targetIds.contains(current.getId())) {
-        current.getAdmins().remove(admin);
-      }
-    }
-
-    for (Department target : targets) {
-      target.getAdmins().add(admin);
+      rejectDetachThatDeactivatesAdmin(department.getAdmins(), req.getAdminIds());
+      department.setAdmins(loadAdminsFromIds(req.getAdminIds()));
     }
   }
 
@@ -158,29 +159,36 @@ public class DepartmentService implements DepartmentApi {
   }
 
   /**
-   * Validates that admins being detached from this department will still oversee at least one other
-   * department. Prevents leaving an admin with no departments.
+   * Prevents a department-roster edit from <em>accidentally</em> deactivating an admin. When {@link
+   * #updateDepartment} removes an admin from this department, that admin must still oversee at least
+   * one other department; otherwise they would drop to zero departments and be deactivated ({@code
+   * admin.active} → false) as a side effect of editing a department.
    *
-   * <p>This is a business rule: every admin must oversee at least one department. If an admin
-   * currently oversees only this department, detaching them would violate this rule.
+   * <p>This is intentionally <strong>not</strong> a global invariant. Deliberate deactivation is
+   * supported via the user/role-edit path ({@link #setAdminDepartments} with an empty set), which is
+   * permitted by design; this guard only stops the department-edit path from triggering it
+   * unintentionally.
    *
    * @param currentAdmins the admins currently assigned to this department
    * @param newAdminIds the IDs of admins to assign (the new set)
-   * @throws ResponseStatusException with 409 CONFLICT if any detached admin would have no remaining
-   *     departments
+   * @throws ResponseStatusException with 409 CONFLICT if a detached admin would be left with no
+   *     remaining department
    */
-  private void validateAdminDetach(Set<Admin> currentAdmins, List<Long> newAdminIds) {
+  private void rejectDetachThatDeactivatesAdmin(Set<Admin> currentAdmins, List<Long> newAdminIds) {
     Set<Long> newAdminIdSet = new HashSet<>(newAdminIds);
     for (Admin admin : currentAdmins) {
       if (!newAdminIdSet.contains(admin.getId()) && admin.getDepartments().size() <= 1) {
         throw new ResponseStatusException(
             HttpStatus.CONFLICT,
-            "Cannot detach admin " + admin.getId() + ": must oversee more than 1 department");
+            "Cannot remove admin "
+                + admin.getId()
+                + " from their only department here; to deactivate this admin, edit their account"
+                + " instead");
       }
     }
   }
 
-  private Set<Admin> loadAdmins(List<Long> adminIds) {
+  private Set<Admin> loadAdminsFromIds(List<Long> adminIds) {
     List<Admin> admins = adminApi.findAllByIds(adminIds);
     if (admins.size() != new HashSet<>(adminIds).size()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found");
@@ -190,7 +198,7 @@ public class DepartmentService implements DepartmentApi {
 
   private DepartmentResponse toDepartmentResponse(Department department) {
     List<AdminSummaryResponse> admins =
-        department.getAdmins().stream().map(adminApi::toSummary).filter(Objects::nonNull).toList();
+        department.getAdmins().stream().map(adminApi::toAdminSummaryResponse).toList();
     return new DepartmentResponse(department.getId(), department.getName(), admins);
   }
 }

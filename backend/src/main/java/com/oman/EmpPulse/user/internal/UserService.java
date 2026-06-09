@@ -47,7 +47,7 @@ public class UserService implements UserDirectory {
   @Transactional(readOnly = true)
   public Optional<UserCredential> findActiveByEmail(String email) {
     return userRepository
-        .findByEmailAndIsDeletedFalse(email)
+        .findByEmailAndActiveTrue(email)
         .map(user -> new UserCredential(user.getId(), user.getPassHash(), authoritiesFor(user)));
   }
 
@@ -56,10 +56,10 @@ public class UserService implements UserDirectory {
     if (user.isOwner()) {
       authorities.add("OWNER");
     }
-    if (adminRepository.findByUserId(user.getId()).isPresent()) {
+    if (adminRepository.findById(user.getId()).isPresent()) {
       authorities.add("ADMIN");
     }
-    if (employeeRepository.findByUserId(user.getId()).isPresent()) {
+    if (employeeRepository.findById(user.getId()).isPresent()) {
       authorities.add("EMPLOYEE");
     }
     return authorities;
@@ -74,7 +74,7 @@ public class UserService implements UserDirectory {
   @Transactional(readOnly = true)
   public UserResponse getUserProfile(Long userId, Long callerUserId, boolean callerIsOwner) {
     if (!callerIsOwner) {
-      Optional<Employee> employeeOpt = employeeRepository.findByUserId(userId);
+      Optional<Employee> employeeOpt = employeeRepository.findById(userId);
       Employee employee =
           employeeOpt.orElseThrow(
               () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
@@ -86,7 +86,7 @@ public class UserService implements UserDirectory {
 
     userRepository
         .findById(userId)
-        .filter(u -> !u.isDeleted())
+        .filter(u -> u.isActive())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     return buildUserResponse(userId);
@@ -99,7 +99,7 @@ public class UserService implements UserDirectory {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     AdminProfileResponse adminProfile = null;
-    Optional<Admin> adminOpt = adminRepository.findByUserId(userId);
+    Optional<Admin> adminOpt = adminRepository.findById(userId);
     if (adminOpt.isPresent()) {
       Admin admin = adminOpt.get();
       List<Long> deptIds = admin.getDepartments().stream().map(Department::getId).toList();
@@ -107,7 +107,7 @@ public class UserService implements UserDirectory {
     }
 
     EmployeeProfileResponse employeeProfile = null;
-    Optional<Employee> employeeOpt = employeeRepository.findByUserId(userId);
+    Optional<Employee> employeeOpt = employeeRepository.findById(userId);
     if (employeeOpt.isPresent()) {
       Employee employee = employeeOpt.get();
       String deptName = null;
@@ -145,8 +145,8 @@ public class UserService implements UserDirectory {
             "Owner",
             email,
             passwordEncoder.encode(rawPassword),
-            UserTheme.LIGHT,
-            UserLanguage.ENG);
+            UserTheme.light,
+            UserLanguage.en);
     user.setOwner(true);
     userRepository.save(user);
   }
@@ -156,15 +156,15 @@ public class UserService implements UserDirectory {
     User user =
         userRepository
             .findById(userId)
-            .filter(u -> !u.isDeleted())
+            .filter(u -> u.isActive())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     if (user.isOwner()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Owner cannot be deleted");
     }
 
-    user.setDeleted(true);
-    userRepository.save(user);
+    // user.setDeleted(true); TODO: properly detach users admin and employee roles.
+    // userRepository.save(user);
   }
 
   @Transactional
@@ -186,8 +186,8 @@ public class UserService implements UserDirectory {
             req.getSurname(),
             req.getEmail(),
             passwordEncoder.encode(req.getPassword()),
-            UserTheme.LIGHT,
-            UserLanguage.ENG);
+            UserTheme.light,
+            UserLanguage.en);
     userRepository.save(user);
 
     if (req.getEmployeeDepartmentId() != null) {
@@ -195,7 +195,7 @@ public class UserService implements UserDirectory {
       Employee employee =
           new Employee(
               user.getId(), req.getEmployeeDepartmentId(),
-              req.getYearlyVacationBalance(), LocalDate.now());
+              null, req.getYearlyVacationBalance()); //TODO: replace 0 with WeekScheduleId
       employeeRepository.save(employee);
     }
 
@@ -226,7 +226,7 @@ public class UserService implements UserDirectory {
     User user =
         userRepository
             .findById(userId)
-            .filter(u -> !u.isDeleted())
+            .filter(u -> u.isActive())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     updateUserSpecificInfo(user, req);
@@ -234,7 +234,7 @@ public class UserService implements UserDirectory {
     boolean hasEmployeeUpdate =
         req.isChangeEmployeeDepartment() || req.getYearlyVacationBalance() != null;
     if (hasEmployeeUpdate) {
-      Optional<Employee> employeeOpt = employeeRepository.findByUserId(userId);
+      Optional<Employee> employeeOpt = employeeRepository.findById(userId);
       if (employeeOpt.isPresent()) {
         updateEmployeeSpecificInfo(employeeOpt.get(), req, callerUserId, callerIsOwner);
       } else if (callerIsOwner && canCreateEmployee(req)) {
@@ -243,7 +243,7 @@ public class UserService implements UserDirectory {
     }
 
     if (req.getAdminDepartmentIds() != null) {
-      Optional<Admin> adminOpt = adminRepository.findByUserId(userId);
+      Optional<Admin> adminOpt = adminRepository.findById(userId);
       if (adminOpt.isPresent()) {
         updateAdminSpecificInfo(adminOpt.get(), req);
       } else if (callerIsOwner && !req.getAdminDepartmentIds().isEmpty()) {
@@ -255,7 +255,7 @@ public class UserService implements UserDirectory {
   private void verifyAdminOverseesDepartment(Long callerUserId, Long departmentId) {
     Admin callerAdmin =
         adminRepository
-            .findByUserId(callerUserId)
+            .findById(callerUserId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Not an admin"));
     boolean oversees =
         callerAdmin.getDepartments().stream().anyMatch(d -> d.getId().equals(departmentId));
@@ -273,7 +273,7 @@ public class UserService implements UserDirectory {
       user.setSurname(req.getSurname());
     }
     if (req.getEmail() != null && !req.getEmail().equals(user.getEmail())) {
-      if (userRepository.findByEmailAndIsDeletedFalse(req.getEmail()).isPresent()) {
+      if (userRepository.findByEmailAndActiveTrue(req.getEmail()).isPresent()) {
         throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
       }
       user.setEmail(req.getEmail());
@@ -320,7 +320,7 @@ public class UserService implements UserDirectory {
   private void attachEmployeeToUser(Long userId, UserUpdateRequest req) {
     Employee employee =
         new Employee(
-            userId, req.getEmployeeDepartmentId(), req.getYearlyVacationBalance(), LocalDate.now());
+            userId, req.getEmployeeDepartmentId(), null, req.getYearlyVacationBalance()); //TODO: replace 0 with WeekScheduleId
     employeeRepository.save(employee);
   }
 

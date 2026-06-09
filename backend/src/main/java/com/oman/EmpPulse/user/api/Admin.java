@@ -37,10 +37,6 @@ public class Admin {
     return active;
   }
 
-  public void setActive(boolean active) {
-    this.active = active;
-  }
-
   /**
    * Returns the departments this admin oversees. This is the inverse side of the Admin_Department
    * join table.
