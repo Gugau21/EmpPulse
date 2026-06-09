@@ -1,13 +1,11 @@
 import React, { useState } from 'react'
-import type { MeUser } from '../types'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
+import { landingPath } from '../utils/guards'
 
-interface Props {
-  onLoginSuccess: (user: MeUser) => void
-}
-
-const LoginPage: React.FC<Props> = ({ onLoginSuccess }) => {
+const LoginPage: React.FC = () => {
   const { login } = useAuth()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -19,7 +17,7 @@ const LoginPage: React.FC<Props> = ({ onLoginSuccess }) => {
     setLoading(true)
     try {
       const user = await login(email, password)
-      onLoginSuccess(user)
+      navigate(landingPath(user))
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed')
     } finally {

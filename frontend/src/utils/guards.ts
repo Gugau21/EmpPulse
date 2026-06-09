@@ -1,20 +1,13 @@
-import type { ScreenType, UserRole } from '../types'
+import type { MeUser } from '../types'
 
-const ROUTE_PERMISSIONS: Record<ScreenType, UserRole[]> = {
-  login: [],
-  forbidden: ['OWNER', 'ADMIN', 'WORKER'],
-  'my-profile': ['OWNER', 'ADMIN', 'WORKER'],
-  employees: ['OWNER', 'ADMIN'],
-  'request-manager': ['OWNER', 'ADMIN'],
-  'my-requests': ['ADMIN', 'WORKER'],
-  departments: ['OWNER', 'ADMIN'],
-  'department-detail': ['OWNER', 'ADMIN'],
-  'employee-profile': ['OWNER', 'ADMIN']
-}
-
-export function canAccessRoute(screen: ScreenType, userRole: UserRole | null): boolean {
-  if (screen === 'login') return true
-  if (!userRole) return false
-  const allowedRoles = ROUTE_PERMISSIONS[screen] || []
-  return allowedRoles.includes(userRole)
+// Where a user should land after login or when hitting `/` / an unknown route.
+// Employee-only users (an employee profile, no admin profile, not the owner) go
+// to their own requests; everyone else (owner/admin) goes to the employee list.
+// Mirrors the old handleLoginSuccess branch in App.tsx.
+export function landingPath(user: MeUser | null): string {
+  if (!user) return '/login'
+  if (user.employeeProfile != null && user.adminProfile === null && !user.owner) {
+    return '/my-requests'
+  }
+  return '/employees'
 }

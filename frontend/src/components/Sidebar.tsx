@@ -1,76 +1,60 @@
 import React from 'react'
-import type { ScreenType } from '../types'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
+import { landingPath } from '../utils/guards'
 
-interface Props {
-  currentScreen: ScreenType
-  setScreen: (screen: ScreenType) => void
-}
+// NavLink className callback: keep the base `nav-item` class and add `active`
+// when the link matches the current URL (router-driven, replacing currentScreen).
+const navItemClass = ({ isActive }: { isActive: boolean }) => `nav-item${isActive ? ' active' : ''}`
 
-const Sidebar: React.FC<Props> = ({ currentScreen, setScreen }) => {
-  const { currentUser, userRole: role } = useAuth()
+const Sidebar: React.FC = () => {
+  const { currentUser, isOwner, isAdmin, isEmployee } = useAuth()
+  const navigate = useNavigate()
 
-  // Hide navigation items based on user role to prevent access to unauthorized screens.
-  const showEmployees = role === 'OWNER' || role === 'ADMIN'
-  const showRequestMgr = role === 'OWNER' || role === 'ADMIN'
-  const showDepartments = role === 'OWNER' || role === 'ADMIN'
-  const showMyRequests = role === 'ADMIN' || role === 'WORKER'
-
+  const showEmployees = isOwner || isAdmin
+  const showRequestMgr = isOwner || isAdmin
+  const showDepartments = isOwner || isAdmin
+  const showMyRequests = isEmployee
   const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : ''
-  const displayRole = role === 'OWNER' ? 'Owner' : role === 'ADMIN' ? 'Administrator' : 'Employee'
+  const displayRole = isOwner ? 'Owner' : isAdmin ? 'Administrator' : 'Employee'
 
   return (
     <aside className="sidebar">
       <div className="sidebar-top">
-        <h1
-          className="brand-logo clickable"
-          onClick={() => setScreen(role === 'WORKER' ? 'my-requests' : 'employees')}
-        >
+        <h1 className="brand-logo clickable" onClick={() => navigate(landingPath(currentUser))}>
           EmpPulse
         </h1>
         <nav className="sidebar-nav">
           {showEmployees && (
-            <button
-              className={`nav-item ${currentScreen === 'employees' ? 'active' : ''}`}
-              onClick={() => setScreen('employees')}
-            >
+            <NavLink to="/employees" className={navItemClass}>
               Employees
-            </button>
+            </NavLink>
           )}
           {showRequestMgr && (
-            <button
-              className={`nav-item ${currentScreen === 'request-manager' ? 'active' : ''}`}
-              onClick={() => setScreen('request-manager')}
-            >
+            <NavLink to="/request-manager" className={navItemClass}>
               Request manager
-            </button>
+            </NavLink>
           )}
           {showMyRequests && (
-            <button
-              className={`nav-item ${currentScreen === 'my-requests' ? 'active' : ''}`}
-              onClick={() => setScreen('my-requests')}
-            >
+            <NavLink to="/my-requests" className={navItemClass}>
               My requests
-            </button>
+            </NavLink>
           )}
           {showDepartments && (
-            <button
-              className={`nav-item ${currentScreen === 'departments' ? 'active' : ''}`}
-              onClick={() => setScreen('departments')}
-            >
+            <NavLink to="/departments" className={navItemClass}>
               Department list
-            </button>
+            </NavLink>
           )}
         </nav>
       </div>
 
       <div className="sidebar-bottom">
-        <div className="user-profile clickable" onClick={() => setScreen('my-profile')}>
+        <div className="user-profile clickable" onClick={() => navigate('/profile')}>
           <div className="user-avatar"></div>
           <div className="user-info">
             <span className="user-name">{displayName}</span>
             {/* Only show role badge for owner (already prominent in the app). */}
-            {role === 'OWNER' && <span className="user-role">{displayRole}</span>}
+            {isOwner && <span className="user-role">{displayRole}</span>}
           </div>
         </div>
 

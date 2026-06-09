@@ -3,13 +3,13 @@ import { employeeService } from '../services/api'
 import { employeeKeys } from '../lib/queryKeys'
 import { useAuth } from '../context/useAuth'
 
-// Employees list. Gated on role: nothing fetches before login (userRole is
-// null), and only OWNER/ADMIN may load employees (filtered server-side).
+// Employees list. Gated on access: nothing fetches before login, and only
+// owners/admins may load employees (filtered server-side).
 export function useEmployeesList() {
-  const { userRole } = useAuth()
+  const { isOwner, isAdmin } = useAuth()
   return useQuery({
     queryKey: employeeKeys.lists(),
     queryFn: () => employeeService.getAll(),
-    enabled: userRole === 'OWNER' || userRole === 'ADMIN'
+    enabled: isOwner || isAdmin
   })
 }

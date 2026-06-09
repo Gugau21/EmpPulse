@@ -11,9 +11,9 @@ interface Props {
 }
 
 const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal }) => {
-  const { userRole } = useAuth()
+  const { isOwner, isAdmin } = useAuth()
   // An admin can only ever create plain employees (no admin accounts, no role choice).
-  const isAdminCreator = userRole === 'ADMIN'
+  const isAdminCreator = isAdmin && !isOwner
 
   const [isEmployeeChecked, setIsEmployeeChecked] = useState(true)
   // An admin creator can't assign the admin role, so it starts (and stays) off;
