@@ -5,8 +5,10 @@ import type { MeUser } from '../types'
 // to their own requests; everyone else (owner/admin) goes to the employee list.
 // Mirrors the old handleLoginSuccess branch in App.tsx.
 export function landingPath(user: MeUser | null): string {
-  if (user && user.employeeProfile != null && user.adminProfile === null && !user.owner) {
+  if (!user) return '/login'
+  if (user.employeeProfile != null && user.adminProfile === null && !user.owner) {
     return '/my-requests'
   }
   return '/employees'
+}
 }
