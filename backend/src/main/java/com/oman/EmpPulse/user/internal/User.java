@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnTransformer;
 
 @Entity
-@Table(name = "\"User\"")
+@Table(name = "app_user")
 public class User {
 
   @Id
@@ -25,19 +25,19 @@ public class User {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  @ColumnTransformer(write = "?::theme")
+  @ColumnTransformer(write = "?::user_theme")
   private UserTheme theme;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  @ColumnTransformer(write = "?::language")
+  @ColumnTransformer(write = "?::user_language")
   private UserLanguage language;
 
   @Column(name = "is_owner", nullable = false)
   private boolean isOwner;
 
-  @Column(name = "is_deleted", nullable = false)
-  private boolean isDeleted;
+  @Column(name = "active", nullable = false, insertable = false, updatable = false)
+  private boolean isActive;
 
   public User() {}
 
@@ -120,11 +120,7 @@ public class User {
     this.isOwner = isOwner;
   }
 
-  public boolean isDeleted() {
-    return isDeleted;
-  }
-
-  public void setDeleted(boolean deleted) {
-    this.isDeleted = deleted;
+  public boolean isActive() {
+    return isActive;
   }
 }

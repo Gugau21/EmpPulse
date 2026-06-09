@@ -3,7 +3,7 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TYPE user_theme    AS ENUM ('light', 'dark', 'system');
-CREATE TYPE user_language AS ENUM ('en', 'pl');
+CREATE TYPE user_language AS ENUM ('en', 'ukr');
 CREATE TYPE leave_type    AS ENUM ('vacation', 'sick', 'personal');
 CREATE TYPE leave_status  AS ENUM ('pending', 'approved', 'rejected', 'cancelled');
 
@@ -184,9 +184,9 @@ BEGIN
 
   UPDATE app_user
   SET active = (
-    EXISTS (SELECT 1 FROM employee WHERE id = v_user_id AND active = true)
-    OR
-    EXISTS (SELECT 1 FROM admin    WHERE id = v_user_id AND active = true)
+    is_owner
+    OR EXISTS (SELECT 1 FROM employee WHERE id = v_user_id AND active = true)
+    OR EXISTS (SELECT 1 FROM admin    WHERE id = v_user_id AND active = true)
   )
   WHERE id = v_user_id;
 
@@ -201,6 +201,27 @@ FOR EACH ROW EXECUTE FUNCTION sync_user_active();
 CREATE TRIGGER trg_admin_sync_user_active
 AFTER INSERT OR UPDATE OF active OR DELETE ON admin
 FOR EACH ROW EXECUTE FUNCTION sync_user_active();
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Owner is always active: app_user is inserted directly (no employee/admin row),
+-- so a BEFORE trigger sets active at insert time. sync_user_active() additionally
+-- keeps is_owner in its derivation so later employee/admin changes can't unset it.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION sync_owner_active()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF NEW.is_owner THEN
+    NEW.active := true;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_app_user_owner_active
+BEFORE INSERT OR UPDATE OF is_owner ON app_user
+FOR EACH ROW EXECUTE FUNCTION sync_owner_active();
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
