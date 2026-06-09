@@ -578,6 +578,59 @@ select {
   cursor: pointer;
 }
 
+.profile-accordion-title {
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.logged-hours-grid {
+  grid-template-columns: 1fr 2fr 1fr;
+  text-align: center;
+  align-items: center;
+}
+
+/* Wider tiny buttons for 'show more / less' */
+.btn-tiny-pill.wide {
+  padding: 6px 24px;
+  font-size: 12px;
+}
+
+/* Stacked action buttons at the bottom */
+.action-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+/* Specific overrides for buttons */
+.primary-btn.fixed-width {
+  width: 200px;
+}
+
+.primary-btn.danger {
+  background-color: #dc3545;
+}
+
+.profile-accordion-title {
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+/* Replaces the inline 3-column grid style */
+.working-hours-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+
+/* Replaces the inline margin style for stacked days */
+.day-label-margin {
+  margin-top: 16px;
+}
+
 /* ============================================================
    SHARED BUTTONS
    ============================================================ */

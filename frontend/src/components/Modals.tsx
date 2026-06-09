@@ -10,6 +10,7 @@ import AddDepartmentModal from './modals/AddDepartmentModal'
 import EditDepartmentModal from './modals/EditDepartmentModal'
 import AddDefaultWorkingHoursModal from './modals/AddDefaultWorkingHoursModal'
 import EditEmployeeModal from './modals/EditEmployeeModal'
+import EditHoursModal from './modals/EditHoursModal'
 
 interface Props {
   activeModal: ModalType
@@ -111,6 +112,10 @@ const Modals: React.FC<Props> = ({
             departments={departments}
             selectedEmployee={selectedEmployee}
           />
+        )}
+
+        {activeModal === 'EDIT_LOGGED_HOURS' && (
+          <EditHoursModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
         )}
       </div>
     </div>

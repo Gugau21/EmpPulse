@@ -84,6 +84,7 @@ export type ModalType =
   | 'ADD_WORKING_HOURS'
   | 'EDIT_WORKING_HOURS'
   | 'EDIT_EMPLOYEE'
+  | 'EDIT_LOGGED_HOURS'
 
 // Payload a caller passes to openModal: a department (its detail/admins modals)
 // or an employee (its profile/edit modals). Discriminated via the `admins` field.
