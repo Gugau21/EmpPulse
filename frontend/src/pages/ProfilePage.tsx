@@ -60,6 +60,26 @@ const HoursAccordion: React.FC<HoursAccordionProps> = ({
   </div>
 )
 
+// A single row in the "Logged hours" table. The clickable/edit wiring is
+// identical across rows, so it lives here to avoid duplicating the wrapper.
+interface LoggedHoursRowProps {
+  isMyProfile: boolean
+  onEdit: () => void
+  children: React.ReactNode
+}
+
+const LoggedHoursRow: React.FC<LoggedHoursRowProps> = ({ isMyProfile, onEdit, children }) => (
+  <div
+    className={`table-row-grid logged-hours-grid ${!isMyProfile ? 'clickable' : ''}`}
+    onClick={() => {
+      if (!isMyProfile) onEdit()
+    }}
+    style={{ cursor: !isMyProfile ? 'pointer' : 'default' }}
+  >
+    {children}
+  </div>
+)
+
 const ProfilePage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
@@ -260,24 +280,18 @@ const ProfilePage: React.FC = () => {
               <span>Duration</span>
             </div>
 
-            <div
-              className={`table-row-grid logged-hours-grid ${!isMyProfile ? 'clickable' : ''}`}
-              onClick={() => {
-                if (!isMyProfile) openModal('EDIT_LOGGED_HOURS', employee as Employee)
-              }}
-              style={{ cursor: !isMyProfile ? 'pointer' : 'default' }}
+            <LoggedHoursRow
+              isMyProfile={isMyProfile}
+              onEdit={() => openModal('EDIT_LOGGED_HOURS', employee as Employee)}
             >
               <span>28.05.2026</span>
               <span>9:00 - 17:00</span>
               <span>8 hours</span>
-            </div>
+            </LoggedHoursRow>
 
-            <div
-              className={`table-row-grid logged-hours-grid ${!isMyProfile ? 'clickable' : ''}`}
-              onClick={() => {
-                if (!isMyProfile) openModal('EDIT_LOGGED_HOURS', employee as Employee)
-              }}
-              style={{ cursor: !isMyProfile ? 'pointer' : 'default' }}
+            <LoggedHoursRow
+              isMyProfile={isMyProfile}
+              onEdit={() => openModal('EDIT_LOGGED_HOURS', employee as Employee)}
             >
               <span>28.05.2026</span>
               <div>
@@ -289,7 +303,7 @@ const ProfilePage: React.FC = () => {
                 </span>
               </div>
               <span>8 hours</span>
-            </div>
+            </LoggedHoursRow>
 
             <div className="table-footer-actions">
               <button className="btn-tiny-pill wide">show more</button>
