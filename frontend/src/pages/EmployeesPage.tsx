@@ -48,6 +48,7 @@ const EmployeesPage: React.FC = () => {
               placeholder="Search by surname"
               value={search}
               onChange={e => setSearch(e.target.value)}
+              maxLength={50}
             />
           </div>
           <div className="filter-dropdown">

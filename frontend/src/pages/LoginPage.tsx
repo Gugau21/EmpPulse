@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
         <form onSubmit={handleSubmit} className="auth-form">
           <label className="auth-input-label">
             Email
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required maxLength={254} />
           </label>
 
           <label className="auth-input-label">
@@ -46,6 +46,7 @@ const LoginPage: React.FC = () => {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              maxLength={128}
             />
           </label>
 

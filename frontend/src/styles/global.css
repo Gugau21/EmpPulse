@@ -727,6 +727,13 @@ select {
   outline: none;
 }
 
+.char-counter {
+  font-size: 12px;
+  color: #888;
+  text-align: right;
+  margin-top: 2px;
+}
+
 /* Role toggle (Employee / Administrator) used by the add/edit employee modals */
 .role-checkbox {
   display: flex;

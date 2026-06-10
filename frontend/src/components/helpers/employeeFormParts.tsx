@@ -144,16 +144,16 @@ export const IdentityFields: React.FC<IdentityFieldsProps> = ({
   <>
     <label>
       First name
-      <input type="text" value={name} onChange={e => onName(e.target.value)} />
+      <input type="text" value={name} onChange={e => onName(e.target.value)} maxLength={50} />
     </label>
     <label>
       Surname
-      <input type="text" value={surname} onChange={e => onSurname(e.target.value)} />
+      <input type="text" value={surname} onChange={e => onSurname(e.target.value)} maxLength={50} />
     </label>
     {onEmail && (
       <label>
         Email
-        <input type="email" value={email ?? ''} onChange={e => onEmail(e.target.value)} />
+        <input type="email" value={email ?? ''} onChange={e => onEmail(e.target.value)} maxLength={254} />
       </label>
     )}
     {onPassword && (
@@ -164,6 +164,7 @@ export const IdentityFields: React.FC<IdentityFieldsProps> = ({
           placeholder={passwordPlaceholder}
           value={password ?? ''}
           onChange={e => onPassword(e.target.value)}
+          maxLength={128}
         />
       </label>
     )}
