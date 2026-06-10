@@ -358,6 +358,17 @@ select {
   padding: 16px;
 }
 
+.role-section-title {
+  padding-left: 4px;
+  margin-bottom: 4px;
+  font-size: 15px;
+  color: #333;
+}
+
+.role-section-title.secondary {
+  margin-top: 16px;
+}
+
 /* ============================================================
    BADGES & STATUS LABELS
    ============================================================ */
