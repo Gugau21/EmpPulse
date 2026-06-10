@@ -154,7 +154,7 @@ const ProfilePage: React.FC = () => {
         <img src={blackTriangleIcon} alt="Back to employees list" />
       </button>
       <header className="page-header profile-header">
-        <h2>{isMyProfile ? 'My Profile' : 'Users profile'}</h2>
+        <h2>{isMyProfile ? 'My Profile' : 'User Profile'}</h2>
         {isMyProfile && (
           <button className="btn-logout-pill" onClick={() => openModal('LOGOUT')}>
             log out
