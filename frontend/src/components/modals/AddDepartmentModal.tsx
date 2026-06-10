@@ -30,6 +30,7 @@ const AddDepartmentModal: React.FC<Props> = ({ closeModal }) => {
           placeholder="e.g. Department 7"
           value={deptName}
           onChange={e => setDeptName(e.target.value)}
+          maxLength={100}
         />
       </label>
       {(validationError || createDept.error) && (

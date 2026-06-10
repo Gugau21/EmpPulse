@@ -727,6 +727,13 @@ select {
   outline: none;
 }
 
+.char-counter {
+  font-size: 12px;
+  color: #888;
+  text-align: right;
+  margin-top: 2px;
+}
+
 /* Role toggle (Employee / Administrator) used by the add/edit employee modals */
 .role-checkbox {
   display: flex;
@@ -849,6 +856,32 @@ select {
   height: 20px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+/* Selected-department rows in the Multi/Edit admin pickers: number + name on the
+   left, remove button pushed to the right edge of each row. */
+.edit-admins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-admin-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-admin-item .index {
+  flex: 0 0 auto;
+}
+
+.edit-admin-pill {
+  flex: 1 1 auto;
+}
+
+.edit-admin-item .btn-remove {
+  margin-left: auto;
 }
 
 /* --- Department Detail Screen Formatting --- */
@@ -1009,6 +1042,14 @@ select {
   border-radius: 6px;
   font-size: 13px;
   margin-bottom: 20px;
+}
+
+/* Inline validation/error text shown under fields and in form footers. */
+.form-error {
+  display: block;
+  color: #c0392b;
+  font-size: 13px;
+  margin-top: 4px;
 }
 
 /* Input layout container */

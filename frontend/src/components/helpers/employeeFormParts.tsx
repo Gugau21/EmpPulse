@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Department } from '../../types'
+import { isValidEmail } from '../../utils/validation'
 
 // Shared building blocks for the Add/Edit employee modals. Both modals render the
 // same role checkboxes and department selects, so the markup lives here once to
@@ -74,11 +75,6 @@ export const MultiDepartmentSelect: React.FC<MultiDepartmentSelectProps> = ({
   return (
     <>
       <div className="edit-admins-list">
-        {value.length === 0 && (
-          <div className="edit-admin-item">
-            <div className="edit-admin-pill">No departments selected.</div>
-          </div>
-        )}
         {value.map((id, idx) => (
           <div key={id} className="edit-admin-item">
             <span className="index">{idx + 1})</span>
@@ -144,16 +140,24 @@ export const IdentityFields: React.FC<IdentityFieldsProps> = ({
   <>
     <label>
       First name
-      <input type="text" value={name} onChange={e => onName(e.target.value)} />
+      <input type="text" value={name} onChange={e => onName(e.target.value)} maxLength={50} />
     </label>
     <label>
       Surname
-      <input type="text" value={surname} onChange={e => onSurname(e.target.value)} />
+      <input type="text" value={surname} onChange={e => onSurname(e.target.value)} maxLength={50} />
     </label>
     {onEmail && (
       <label>
         Email
-        <input type="email" value={email ?? ''} onChange={e => onEmail(e.target.value)} />
+        <input
+          type="email"
+          value={email ?? ''}
+          onChange={e => onEmail(e.target.value)}
+          maxLength={254}
+        />
+        {email && email.trim() !== '' && !isValidEmail(email) && (
+          <span className="form-error">Please enter a valid email address.</span>
+        )}
       </label>
     )}
     {onPassword && (
@@ -164,6 +168,7 @@ export const IdentityFields: React.FC<IdentityFieldsProps> = ({
           placeholder={passwordPlaceholder}
           value={password ?? ''}
           onChange={e => onPassword(e.target.value)}
+          maxLength={128}
         />
       </label>
     )}
@@ -225,10 +230,10 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         <label className="field-tight">
           Yearly vacation days
           <input
-            type="number"
-            min={0}
+            type="text"
+            inputMode="numeric"
             value={vacationDays}
-            onChange={e => onVacationDays(e.target.value)}
+            onChange={e => onVacationDays(e.target.value.replace(/\D/g, ''))}
           />
         </label>
       </>

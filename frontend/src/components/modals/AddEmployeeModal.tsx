@@ -3,6 +3,7 @@ import type { Department, OpenModal } from '../../types'
 import { useAuth } from '../../context/useAuth'
 import { useCreateUser } from '../../hooks/useCreateUser'
 import { IdentityFields, RoleSection } from '../helpers/employeeFormParts'
+import { isValidEmail } from '../../utils/validation'
 
 interface Props {
   closeModal: () => void
@@ -15,11 +16,12 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
   // An admin can only ever create plain employees (no admin accounts, no role choice).
   const isAdminCreator = isAdmin && !isOwner
 
-  const [isEmployeeChecked, setIsEmployeeChecked] = useState(true)
-  // An admin creator can't assign the admin role, so it starts (and stays) off;
-  // otherwise the admin role defaults on. The modal remounts per open, so this
-  // initial value is sufficient — no effect needed to keep it in sync.
-  const [isAdminChecked, setIsAdminChecked] = useState(!isAdminCreator)
+  // Both roles start unchecked so nothing is pre-selected on a fresh form. The one
+  // exception: an admin creator can only ever make plain employees and their toggle
+  // is hidden, so the employee role is forced on for them.
+  const [isEmployeeChecked, setIsEmployeeChecked] = useState(isAdminCreator)
+  // An admin creator can't assign the admin role, so it stays off either way.
+  const [isAdminChecked, setIsAdminChecked] = useState(false)
 
   const [newName, setNewName] = useState('')
   const [newSurname, setNewSurname] = useState('')
@@ -47,6 +49,10 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
     setCreateError(null)
     if (!newName.trim() || !newSurname.trim() || !newEmail.trim() || !newPassword) {
       setCreateError('Name, surname, email and password are required.')
+      return
+    }
+    if (!isValidEmail(newEmail)) {
+      setCreateError('Please enter a valid email address.')
       return
     }
     // A user with no role is meaningless — must be employee and/or admin.
@@ -125,12 +131,6 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         departments={departments}
       />
 
-      {departments.length === 0 && (
-        <p className="form-error">
-          No departments exist yet. Create a department before adding users.
-        </p>
-      )}
-
       {(createError || createUser.error) && (
         <p className="form-error">{createError ?? createUser.error?.message}</p>
       )}
@@ -139,7 +139,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         <button
           className="btn-modal-action"
           onClick={handleCreateUser}
-          disabled={createUser.isPending || departments.length === 0}
+          disabled={createUser.isPending}
         >
           + add without default working hours
         </button>

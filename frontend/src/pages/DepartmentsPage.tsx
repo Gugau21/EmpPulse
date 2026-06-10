@@ -34,6 +34,7 @@ const DepartmentsScreen: React.FC = () => {
               placeholder="Search"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
+              maxLength={100}
             />
           </div>
         </div>
