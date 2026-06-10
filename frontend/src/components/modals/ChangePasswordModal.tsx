@@ -21,10 +21,7 @@ const ChangePasswordModal: React.FC<Props> = ({ openModal }) => {
         Repeat new password
         <input type="password" placeholder=" " />
       </label>
-      <button 
-        className="primary-btn full-width" 
-        onClick={() => openModal('CHANGE_PASSWORD')}
-      >
+      <button className="primary-btn full-width" onClick={() => openModal('CHANGE_PASSWORD')}>
         change password
       </button>
     </div>

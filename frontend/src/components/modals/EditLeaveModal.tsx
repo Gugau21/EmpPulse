@@ -20,7 +20,7 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
 
       if (selectedRequest.dateRange) {
         const [startStr, endStr] = selectedRequest.dateRange.split(' - ')
-        
+
         const formatDate = (dateStr?: string) => {
           if (!dateStr) return ''
           const [dd, mm, yyyy] = dateStr.split('.')
@@ -37,7 +37,7 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
   return (
     <div className="modal-form">
       <h2>Edit leave</h2>
-      
+
       <label>
         Type of leave (by payment)
         <select value={paymentType} onChange={e => setPaymentType(e.target.value)}>
@@ -45,7 +45,7 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
           <option value="Unpaid">Unpaid</option>
         </select>
       </label>
-      
+
       <label>
         Type of leave
         <select value={leaveType} onChange={e => setLeaveType(e.target.value)}>
@@ -63,21 +63,17 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
         From
         <input type="date" value={from} onChange={e => setFrom(e.target.value)} />
       </label>
-      
+
       <label>
         Till
         <input type="date" value={till} onChange={e => setTill(e.target.value)} />
       </label>
-      
+
       <label>
         Reason
-        <textarea 
-          rows={2} 
-          value={reason} 
-          onChange={e => setReason(e.target.value)}
-        ></textarea>
+        <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)}></textarea>
       </label>
-      
+
       <button className="primary-btn full-width" onClick={closeModal}>
         edit leave
       </button>

@@ -9,7 +9,9 @@ interface Props {
 const LogHoursModal: React.FC<Props> = ({ closeModal, selectedEmployee }) => (
   <div className="modal-form">
     <h2>Log hours</h2>
-    <h4 className="log-hours-name">{selectedEmployee?.name || 'Employee'} {selectedEmployee?.surname || 'Employee'}</h4>
+    <h4 className="log-hours-name">
+      {selectedEmployee?.name || 'Employee'} {selectedEmployee?.surname || 'Employee'}
+    </h4>
     <label>
       From
       <input type="time" defaultValue="09:00" />

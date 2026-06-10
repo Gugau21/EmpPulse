@@ -122,7 +122,6 @@ const ProfilePage: React.FC = () => {
       <div className="profile-top-grid">
         <div className="profile-banner">
           <div className="banner-top-row">
-            
             <div className="banner-main-info">
               <h3>{targetName}</h3>
               <p className="email-sub">{targetEmail}</p>
@@ -136,8 +135,8 @@ const ProfilePage: React.FC = () => {
               <div className="banner-stacked-detail">
                 <label>Administrator of:</label>
                 <span>
-                  {targetUser?.adminProfile?.departmentIds.length 
-                    ? `Department ${targetUser.adminProfile.departmentIds.join(', ')}` 
+                  {targetUser?.adminProfile?.departmentIds.length
+                    ? `Department ${targetUser.adminProfile.departmentIds.join(', ')}`
                     : 'Department1, Department2'}
                 </span>
               </div>
@@ -150,13 +149,12 @@ const ProfilePage: React.FC = () => {
                 <span>{(targetUser as any)?.status || 'Vacation'}</span>
               </div>
             </div>
-
           </div>
 
           <div className="banner-center-action">
             {isMyProfile ? (
-              <button 
-                className="btn-change-password" 
+              <button
+                className="btn-change-password"
                 onClick={() => openModal('CHANGE_PASSWORD_FORM')}
               >
                 Change password
@@ -183,10 +181,17 @@ const ProfilePage: React.FC = () => {
       </div>
 
       <div className="accordion-section">
-        <h3 
-          className="department-title" 
+        <h3
+          className="department-title"
           onClick={() => setWorkingHoursExpanded(!workingHoursExpanded)}
-          style={{ marginBottom: '20px', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+          style={{
+            marginBottom: '20px',
+            fontSize: '20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
         >
           Default working hours
           <img
@@ -233,9 +238,9 @@ const ProfilePage: React.FC = () => {
         )}
       </div>
 
-        <div className="accordion-section">
-        <h3 
-          className="department-title profile-accordion-title" 
+      <div className="accordion-section">
+        <h3
+          className="department-title profile-accordion-title"
           onClick={() => setLoggedExpanded(!loggedExpanded)}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
@@ -255,9 +260,11 @@ const ProfilePage: React.FC = () => {
               <span>Duration</span>
             </div>
 
-            <div 
+            <div
               className={`table-row-grid logged-hours-grid ${!isMyProfile ? 'clickable' : ''}`}
-              onClick={() => { if (!isMyProfile) openModal('EDIT_LOGGED_HOURS', employee as Employee) }}
+              onClick={() => {
+                if (!isMyProfile) openModal('EDIT_LOGGED_HOURS', employee as Employee)
+              }}
               style={{ cursor: !isMyProfile ? 'pointer' : 'default' }}
             >
               <span>28.05.2026</span>
@@ -265,14 +272,19 @@ const ProfilePage: React.FC = () => {
               <span>8 hours</span>
             </div>
 
-            <div 
+            <div
               className={`table-row-grid logged-hours-grid ${!isMyProfile ? 'clickable' : ''}`}
-              onClick={() => { if (!isMyProfile) openModal('EDIT_LOGGED_HOURS', employee as Employee) }}
+              onClick={() => {
+                if (!isMyProfile) openModal('EDIT_LOGGED_HOURS', employee as Employee)
+              }}
               style={{ cursor: !isMyProfile ? 'pointer' : 'default' }}
             >
               <span>28.05.2026</span>
               <div>
-                <span className="badge badge-sick" style={{ padding: '4px 32px', borderRadius: '16px' }}>
+                <span
+                  className="badge badge-sick"
+                  style={{ padding: '4px 32px', borderRadius: '16px' }}
+                >
                   Sick
                 </span>
               </div>
@@ -287,7 +299,6 @@ const ProfilePage: React.FC = () => {
         )}
       </div>
 
-
       {/* HIDDEN FOR NOW (not deleted): "Logged hours" table — see SHOW_HOURS_TABLES. */}
       {SHOW_HOURS_TABLES && (
         <HoursAccordion
@@ -296,9 +307,9 @@ const ProfilePage: React.FC = () => {
           onToggle={() => setLoggedExpanded(!loggedExpanded)}
           chevron={
             <img
-            src={blackTriangleIcon}
-            alt=""
-            className={`chevron ${loggedExpanded ? 'expanded' : ''}`}
+              src={blackTriangleIcon}
+              alt=""
+              className={`chevron ${loggedExpanded ? 'expanded' : ''}`}
             />
           }
         />

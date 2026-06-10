@@ -462,6 +462,12 @@ select {
   margin-bottom: 4px;
 }
 
+.email-sub {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 16px;
+}
+
 .banner-main-info .email-sub {
   font-size: 16px;
   opacity: 0.9;
@@ -514,12 +520,6 @@ select {
 
 .btn-change-password:hover {
   background-color: #d1d5db;
-}
-
-.email-sub {
-  font-size: 13px;
-  opacity: 0.8;
-  margin-bottom: 16px;
 }
 
 .btn-pill-action {
@@ -687,7 +687,6 @@ select {
 .primary-btn.danger {
   background-color: #dc3545;
 }
-
 
 /* Replaces the inline 3-column grid style */
 .working-hours-grid {

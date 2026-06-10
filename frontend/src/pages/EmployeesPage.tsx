@@ -7,7 +7,6 @@ import blackTriangleIcon from '../assets/black_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
 import { useAuth } from '../context/useAuth'
 
-
 // Employees with no department are not shown — this page only lists department members.
 function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
   const groups = new Map<string, Employee[]>()
@@ -45,9 +44,7 @@ const EmployeesPage: React.FC = () => {
       className="employee-row hover-slide-container"
       onClick={() => navigate(`/employees/${emp.id}`)}
     >
-      <span className="emp-name">
-        {[emp.name, emp.surname].filter(Boolean).join(' ')}
-      </span>
+      <span className="emp-name">{[emp.name, emp.surname].filter(Boolean).join(' ')}</span>
       <div className="emp-meta">
         {/*
                         HIDDEN FOR NOW: leave status badge + "until" date.
@@ -112,17 +109,12 @@ const EmployeesPage: React.FC = () => {
 
             {expanded && (
               <div className="card-box list-box">
-                
                 {/* Administrators Section */}
-                <div className="role-section-title">
-                  Administrators:
-                </div>
+                <div className="role-section-title">Administrators:</div>
                 {deptEmployees.slice(0, 1).map(renderRow)}
 
                 {/* Employees Section */}
-                <div className="role-section-title secondary">
-                  Employees:
-                </div>
+                <div className="role-section-title secondary">Employees:</div>
                 {deptEmployees.slice(1).map(renderRow)}
 
                 {deptEmployees.map(emp => (

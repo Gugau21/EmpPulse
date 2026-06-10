@@ -103,10 +103,7 @@ const Modals: React.FC<Props> = ({
         )}
 
         {activeModal === 'EDIT_LEAVE_FORM' && (
-          <EditLeaveModal 
-            closeModal={closeModal} 
-            selectedRequest={selectedRequest} 
-          />
+          <EditLeaveModal closeModal={closeModal} selectedRequest={selectedRequest} />
         )}
 
         {activeModal === 'ACCEPT_REQUEST' && (
