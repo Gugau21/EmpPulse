@@ -36,7 +36,10 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
 
       <label>
         Type of leave
-        <select value={leaveType} onChange={e => setLeaveType(e.target.value)}>
+        <select
+          value={leaveType}
+          onChange={e => setLeaveType(e.target.value as LeaveRequest['type'])}
+        >
           <option value="Vacation">Vacation</option>
           <option value="Sick">Sick</option>
           <option value="Personal">Personal</option>
