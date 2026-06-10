@@ -49,8 +49,7 @@ const EmployeesPage: React.FC = () => {
   const error = employeesErr ?? departmentsErr
 
   const query = search.trim().toLowerCase()
-  const matchesSearch = (surname: string) =>
-    !query || surname.toLowerCase().startsWith(query)
+  const matchesSearch = (surname: string) => !query || surname.toLowerCase().startsWith(query)
 
   const employeesByDept = groupByDepartment(
     query ? employees.filter(emp => matchesSearch(emp.surname ?? '')) : employees
