@@ -210,7 +210,8 @@ select {
   outline: none;
   font-family: Poppins, sans-serif;
   font-size: 14px;
-  width: 130px;
+  width: 160px;
+  text-align: left;
 }
 
 .filter-dropdown {
