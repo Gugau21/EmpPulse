@@ -8,12 +8,11 @@ import { useUserDetail } from '../hooks/useUserDetail'
 import { landingPath } from '../utils/guards'
 import blackTriangleIcon from '../assets/black_triangle.png'
 
-// Feature flag: the API-backed logged hours table is hidden until that data is
-// wired to the API. Flip to true to restore it (it still renders
-// MOCK_LOGGED_HOURS placeholder rows). A named flag keeps the intent explicit.
+// Feature flag for the legacy accordion-style logged-hours block at the bottom of
+// this file. The main "Logged hours" section above is currently always rendered.
 const SHOW_HOURS_TABLES = false
 
-// Accordion + table layout for the (hidden) API-backed logged hours section.
+// Accordion + table layout for the legacy (flagged) logged-hours section.
 interface HoursAccordionProps {
   title: string
   expanded: boolean
@@ -363,7 +362,7 @@ const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* HIDDEN FOR NOW (not deleted): "Logged hours" table — see SHOW_HOURS_TABLES. */}
+      {/* Legacy "Logged hours" accordion, gated by SHOW_HOURS_TABLES. */}
       {SHOW_HOURS_TABLES && (
         <HoursAccordion
           title="Logged hours"
