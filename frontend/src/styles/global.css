@@ -688,10 +688,6 @@ select {
   background-color: #dc3545;
 }
 
-.profile-accordion-title {
-  margin-bottom: 20px;
-  font-size: 20px;
-}
 
 /* Replaces the inline 3-column grid style */
 .working-hours-grid {
