@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Department } from '../../types'
+import { isValidEmail } from '../../utils/validation'
 
 // Shared building blocks for the Add/Edit employee modals. Both modals render the
 // same role checkboxes and department selects, so the markup lives here once to
@@ -149,6 +150,9 @@ export const IdentityFields: React.FC<IdentityFieldsProps> = ({
       <label>
         Email
         <input type="email" value={email ?? ''} onChange={e => onEmail(e.target.value)} maxLength={254} />
+        {email && email.trim() !== '' && !isValidEmail(email) && (
+          <span className="form-error">Please enter a valid email address.</span>
+        )}
       </label>
     )}
     {onPassword && (
@@ -221,10 +225,10 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
         <label className="field-tight">
           Yearly vacation days
           <input
-            type="number"
-            min={0}
+            type="text"
+            inputMode="numeric"
             value={vacationDays}
-            onChange={e => onVacationDays(e.target.value)}
+            onChange={e => onVacationDays(e.target.value.replace(/\D/g, ''))}
           />
         </label>
       </>

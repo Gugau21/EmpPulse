@@ -5,6 +5,7 @@ import { useUserDetail } from '../../hooks/useUserDetail'
 import { useUpdateUser, useDeleteEmployee } from '../../hooks/useEmployeeMutations'
 import type { UserUpdatePayload } from '../../services/api'
 import { IdentityFields, RoleSection } from '../helpers/employeeFormParts'
+import { isValidEmail } from '../../utils/validation'
 
 interface Props {
   closeModal: () => void
@@ -104,6 +105,10 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
     if (isOwner) {
       if (!newName.trim() || !newSurname.trim()) {
         setEditError('First name and surname are required.')
+        return
+      }
+      if (newEmail.trim() && !isValidEmail(newEmail)) {
+        setEditError('Please enter a valid email address.')
         return
       }
       payload.name = newName.trim()

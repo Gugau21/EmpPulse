@@ -3,6 +3,7 @@ import type { Department, OpenModal } from '../../types'
 import { useAuth } from '../../context/useAuth'
 import { useCreateUser } from '../../hooks/useCreateUser'
 import { IdentityFields, RoleSection } from '../helpers/employeeFormParts'
+import { isValidEmail } from '../../utils/validation'
 
 interface Props {
   closeModal: () => void
@@ -47,6 +48,10 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
     setCreateError(null)
     if (!newName.trim() || !newSurname.trim() || !newEmail.trim() || !newPassword) {
       setCreateError('Name, surname, email and password are required.')
+      return
+    }
+    if (!isValidEmail(newEmail)) {
+      setCreateError('Please enter a valid email address.')
       return
     }
     // A user with no role is meaningless — must be employee and/or admin.

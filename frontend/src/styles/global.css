@@ -1018,6 +1018,14 @@ select {
   margin-bottom: 20px;
 }
 
+/* Inline validation/error text shown under fields and in form footers. */
+.form-error {
+  display: block;
+  color: #c0392b;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
 /* Input layout container */
 .auth-form {
   display: flex;
