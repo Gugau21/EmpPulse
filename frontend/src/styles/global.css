@@ -461,7 +461,7 @@ select {
 }
 
 .btn-edit-action {
-  background-color: #fff;
+  background-color: #fafafd;
   color: #5932ea;
   border: none;
   padding: 6px 16px;
@@ -1098,10 +1098,15 @@ select {
 }
 
 /* ============================================================
-   DEPARTMENT DETAIL SCREEN HEADER
+   DEPARTMENT DETAIL SCREEN 
    ============================================================ */
 .department-detail-title-row {
   display: flex;
   align-items: center;
   gap: 16px; /* This adds a nice 16px space between the buttons and the title */
+}
+
+.detail-action-row {
+  margin-top: 24px; /* Increase this number if you want even more space */
+  display: flex;
 }
