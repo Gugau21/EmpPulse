@@ -76,8 +76,6 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteEmployee()
 
-  const hadAdmin = user.adminProfile !== null
-
   const submit = (payload: UserUpdatePayload) =>
     updateUser.mutate({ userId, payload }, { onSuccess: () => closeModal() })
 
@@ -112,13 +110,9 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
       if (newEmail.trim()) payload.email = newEmail.trim()
       if (newPassword) payload.password = newPassword
 
-      // [] detaches the admin from every department; an omitted key leaves a
-      // never-admin user untouched.
-      if (isAdminChecked) {
-        payload.adminDepartmentIds = adminDeptIds
-      } else if (hadAdmin) {
-        payload.adminDepartmentIds = []
-      }
+      // [] detaches the admin from every department; the backend treats an
+      // empty array for a never-admin user as a no-op.
+      payload.adminDepartmentIds = isAdminChecked ? adminDeptIds : []
     }
 
     if (isEmployeeChecked) {
