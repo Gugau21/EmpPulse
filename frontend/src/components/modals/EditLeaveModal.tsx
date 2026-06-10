@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import type { LeaveRequest } from '../../types' // Adjust path if needed
 
 interface Props {
@@ -6,33 +6,21 @@ interface Props {
   selectedRequest: LeaveRequest | null
 }
 
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return ''
+  const [dd, mm, yyyy] = dateStr.split('.')
+  if (dd && mm && yyyy) return `${yyyy}-${mm}-${dd}`
+  return ''
+}
+
 const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
+  const [startStr, endStr] = selectedRequest?.dateRange?.split(' - ') ?? []
+
   const [paymentType, setPaymentType] = useState('Paid')
-  const [leaveType, setLeaveType] = useState('Vacation')
-  const [from, setFrom] = useState('')
-  const [till, setTill] = useState('')
-  const [reason, setReason] = useState('')
-
-  useEffect(() => {
-    if (selectedRequest) {
-      setLeaveType(selectedRequest.type)
-      if (selectedRequest.reason) setReason(selectedRequest.reason)
-
-      if (selectedRequest.dateRange) {
-        const [startStr, endStr] = selectedRequest.dateRange.split(' - ')
-
-        const formatDate = (dateStr?: string) => {
-          if (!dateStr) return ''
-          const [dd, mm, yyyy] = dateStr.split('.')
-          if (dd && mm && yyyy) return `${yyyy}-${mm}-${dd}`
-          return ''
-        }
-
-        setFrom(formatDate(startStr))
-        setTill(formatDate(endStr))
-      }
-    }
-  }, [selectedRequest])
+  const [leaveType, setLeaveType] = useState(selectedRequest?.type ?? 'Vacation')
+  const [from, setFrom] = useState(formatDate(startStr))
+  const [till, setTill] = useState(formatDate(endStr))
+  const [reason, setReason] = useState(selectedRequest?.reason ?? '')
 
   return (
     <div className="modal-form">

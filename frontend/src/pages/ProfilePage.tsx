@@ -146,7 +146,7 @@ const ProfilePage: React.FC = () => {
               <div className="banner-stacked-detail">
                 <label>Status:</label>
                 {/* Fallback to Vacation for visual matching if user lacks status */}
-                <span>{(targetUser as any)?.status || 'Vacation'}</span>
+                <span>{(targetUser as { status?: string })?.status || 'Vacation'}</span>
               </div>
             </div>
           </div>
