@@ -16,11 +16,12 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
   // An admin can only ever create plain employees (no admin accounts, no role choice).
   const isAdminCreator = isAdmin && !isOwner
 
-  const [isEmployeeChecked, setIsEmployeeChecked] = useState(true)
-  // An admin creator can't assign the admin role, so it starts (and stays) off;
-  // otherwise the admin role defaults on. The modal remounts per open, so this
-  // initial value is sufficient — no effect needed to keep it in sync.
-  const [isAdminChecked, setIsAdminChecked] = useState(!isAdminCreator)
+  // Both roles start unchecked so nothing is pre-selected on a fresh form. The one
+  // exception: an admin creator can only ever make plain employees and their toggle
+  // is hidden, so the employee role is forced on for them.
+  const [isEmployeeChecked, setIsEmployeeChecked] = useState(isAdminCreator)
+  // An admin creator can't assign the admin role, so it stays off either way.
+  const [isAdminChecked, setIsAdminChecked] = useState(false)
 
   const [newName, setNewName] = useState('')
   const [newSurname, setNewSurname] = useState('')

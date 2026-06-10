@@ -149,7 +149,12 @@ export const IdentityFields: React.FC<IdentityFieldsProps> = ({
     {onEmail && (
       <label>
         Email
-        <input type="email" value={email ?? ''} onChange={e => onEmail(e.target.value)} maxLength={254} />
+        <input
+          type="email"
+          value={email ?? ''}
+          onChange={e => onEmail(e.target.value)}
+          maxLength={254}
+        />
         {email && email.trim() !== '' && !isValidEmail(email) && (
           <span className="form-error">Please enter a valid email address.</span>
         )}

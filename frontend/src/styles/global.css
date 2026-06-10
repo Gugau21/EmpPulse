@@ -858,6 +858,32 @@ select {
   cursor: pointer;
 }
 
+/* Selected-department rows in the Multi/Edit admin pickers: number + name on the
+   left, remove button pushed to the right edge of each row. */
+.edit-admins-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-admin-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-admin-item .index {
+  flex: 0 0 auto;
+}
+
+.edit-admin-pill {
+  flex: 1 1 auto;
+}
+
+.edit-admin-item .btn-remove {
+  margin-left: auto;
+}
+
 /* --- Department Detail Screen Formatting --- */
 .department-detail-grid {
   display: grid;
