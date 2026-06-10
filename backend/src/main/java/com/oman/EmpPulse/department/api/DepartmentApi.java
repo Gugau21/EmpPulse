@@ -18,8 +18,8 @@ public interface DepartmentApi {
    * the owning side of the Admin_Department join table. The admin is detached from any current
    * department not in {@code departmentIds} and attached to any that are new.
    *
-   * <p>An empty {@code departmentIds} detaches the admin from every department. The {@code Admin}
-   * row itself is preserved (an admin overseeing no departments is a valid state).
+   * <p>An empty {@code departmentIds} detaches the admin from every department. This will set the
+   * {@code Admin.active} to false in the database
    *
    * <p>Callers must be Transactional.
    *

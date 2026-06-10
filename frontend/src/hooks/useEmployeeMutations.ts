@@ -2,11 +2,19 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { userService, type UserUpdatePayload } from '../services/api'
 import { employeeKeys, departmentKeys, adminKeys, userKeys } from '../lib/queryKeys'
 
+// Deleting a user detaches them from their department and from any admin
+// assignments, so invalidate the department caches (list + detail) and the
+// admin list alongside the employee list — otherwise the deleted user lingers
+// as an admin in cached department views until staleTime elapses.
 export function useDeleteEmployee() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (userId: number) => userService.delete(userId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: employeeKeys.lists() })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: employeeKeys.lists() })
+      qc.invalidateQueries({ queryKey: departmentKeys.all })
+      qc.invalidateQueries({ queryKey: adminKeys.lists() })
+    }
   })
 }
 

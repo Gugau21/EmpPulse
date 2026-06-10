@@ -6,35 +6,35 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "\"Admin\"")
+@Table(name = "admin")
 public class Admin {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id", nullable = false)
   private Long id;
 
-  @Column(name = "user_id", nullable = false)
-  private Long userId;
+  @Column(name = "active", nullable = false, insertable = false, updatable = false)
+  private boolean active;
 
   @ManyToMany(mappedBy = "admins")
   private Set<Department> departments = new HashSet<>();
 
   public Admin() {}
 
-  public Admin(Long userId) {
-    this.userId = userId;
+  public Admin(Long id) {
+    this.id = id;
   }
 
   public Long getId() {
     return id;
   }
 
-  public Long getUserId() {
-    return userId;
+  public void setId(Long id) {
+    this.id = id;
   }
 
-  public void setUserId(Long userId) {
-    this.userId = userId;
+  public boolean isActive() {
+    return active;
   }
 
   /**

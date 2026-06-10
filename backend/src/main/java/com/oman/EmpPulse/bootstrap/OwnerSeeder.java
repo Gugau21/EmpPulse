@@ -1,6 +1,6 @@
 package com.oman.EmpPulse.bootstrap;
 
-import com.oman.EmpPulse.user.api.UserDirectory;
+import com.oman.EmpPulse.user.api.UserApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class OwnerSeeder implements CommandLineRunner {
 
-  private final UserDirectory userDirectory;
+  private final UserApi userApi;
 
   @Value("${APP_OWNER_EMAIL}")
   private String ownerEmail;
@@ -16,12 +16,12 @@ public class OwnerSeeder implements CommandLineRunner {
   @Value("${APP_OWNER_PASSWORD}")
   private String ownerPassword;
 
-  public OwnerSeeder(UserDirectory userDirectory) {
-    this.userDirectory = userDirectory;
+  public OwnerSeeder(UserApi userApi) {
+    this.userApi = userApi;
   }
 
   @Override
   public void run(String... args) {
-    userDirectory.ensureOwnerExists(ownerEmail, ownerPassword);
+    userApi.ensureOwnerExists(ownerEmail, ownerPassword);
   }
 }

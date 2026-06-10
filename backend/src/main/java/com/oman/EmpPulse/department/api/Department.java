@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "\"Department\"")
+@Table(name = "department")
 public class Department {
 
   @Id
@@ -16,12 +16,12 @@ public class Department {
   @Column(unique = true, nullable = false)
   private String name;
 
-  @Column(name = "default_hours")
-  private Long defaultHours;
+  @Column(name = "week_schedule_id")
+  private Long weekScheduleId;
 
   @ManyToMany
   @JoinTable(
-      name = "\"Admin_Department\"",
+      name = "admin_department",
       joinColumns = @JoinColumn(name = "department_id"),
       inverseJoinColumns = @JoinColumn(name = "admin_id"))
   private Set<Admin> admins = new HashSet<>();
@@ -44,12 +44,12 @@ public class Department {
     this.name = name;
   }
 
-  public Long getDefaultHours() {
-    return defaultHours;
+  public Long getWeekScheduleId() {
+    return weekScheduleId;
   }
 
-  public void setDefaultHours(Long defaultHours) {
-    this.defaultHours = defaultHours;
+  public void setWeekScheduleId(Long weekScheduleId) {
+    this.weekScheduleId = weekScheduleId;
   }
 
   public Set<Admin> getAdmins() {

@@ -2,7 +2,7 @@ package com.oman.EmpPulse.user.api;
 
 import java.util.Optional;
 
-public interface UserDirectory {
+public interface UserApi {
 
   /**
    * Looks up an active (non-deleted) user by email and returns their credential including password
@@ -26,7 +26,7 @@ public interface UserDirectory {
   UserResponse loadProfile(Long userId);
 
   /**
-   * Ensures an owner account exists with the given email and password, creating it if needed..
+   * Ensures an owner account exists with the given email and password, creating it if needed.
    *
    * <p>Called during bootstrap to seed the application with an initial owner. If an owner with this
    * email already exists, the method returns without modification.

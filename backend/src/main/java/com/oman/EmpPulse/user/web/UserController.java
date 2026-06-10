@@ -27,7 +27,8 @@ public class UserController {
   @PostMapping("/api/users")
   public ResponseEntity<?> createUser(
       @RequestBody UserCreateRequest req, Authentication authentication) {
-    userService.createUser(req, AuthUtils.isOwner(authentication));
+    userService.createUser(
+        req, AuthUtils.getUserId(authentication), AuthUtils.isOwner(authentication));
     return ResponseEntity.noContent().build();
   }
 

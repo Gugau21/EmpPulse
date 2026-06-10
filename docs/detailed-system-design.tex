@@ -186,7 +186,7 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 % ── 3.2 User Management Module ──
 \subsection{User Management Module}
 
-\textbf{Responsibility:} CRUD operations for Users, Employees, Admins, and Premium Vacation Days. Enforces role-based creation, visibility, and modification rules.
+\textbf{Responsibility:} CRUD operations for Users, Employees, Admins, and Bonus Vacation Days. Enforces role-based creation, visibility, and modification rules.
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
@@ -194,12 +194,12 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
     \item \texttt{UserService} -- Orchestrates User + Employee/Admin creation atomically.
     \item \texttt{EmployeeService} -- Employee-specific logic (vacation balance, activation/deactivation).
     \item \texttt{AdminService} -- Admin-specific logic (department oversight assignments).
-    \item \texttt{PremiumVacationDaysService} -- Manages bonus vacation days per employee per year.
-    \item \texttt{UserRepository}, \texttt{EmployeeRepository}, \texttt{AdminRepository}, \texttt{PremiumVacationDaysRepository}.
+    \item \texttt{BonusVacationDaysService} -- Manages bonus vacation days per employee per year.
+    \item \texttt{UserRepository}, \texttt{EmployeeRepository}, \texttt{AdminRepository}, \texttt{BonusVacationDaysRepository}.
     \item \texttt{UserValidator} -- Email uniqueness, required-field checks, role constraints.
 \end{itemize}
 
-\textbf{Data owned/modified:} \texttt{User}, \texttt{Employee}, \texttt{Admin}, \texttt{Premium\_vacation\_days} tables.
+\textbf{Data owned/modified:} \texttt{User}, \texttt{Employee}, \texttt{Admin}, \texttt{Bonus\_vacation\_days} tables.
 
 \textbf{Public operations:}
 \begin{itemize}[leftmargin=1.5em]
@@ -272,7 +272,7 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
     \item \texttt{VacationBalanceService} -- Calculates and updates vacation balances.
 \end{itemize}
 
-\textbf{Data owned/modified:} \texttt{Leave} table; reads \texttt{Employee}, \texttt{Premium\_vacation\_days}.
+\textbf{Data owned/modified:} \texttt{Leave} table; reads \texttt{Employee}, \texttt{Bonus\_vacation\_days}.
 
 \textbf{Public operations:}
 \begin{itemize}[leftmargin=1.5em]
@@ -625,7 +625,7 @@ The system has three roles with hierarchical permissions:
     Manage default hours for overseen Departments and their Employees.
     Move Employees across overseen Departments.
     Export CSV data for overseen Departments.
-    Manage Premium Vacation Days for overseen Employees. \\
+    Manage Bonus Vacation Days for overseen Employees. \\
 \midrule
 \textbf{Owner} &
     All Admin permissions across all Departments.

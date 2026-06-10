@@ -1,47 +1,45 @@
 package com.oman.EmpPulse.user.internal;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 @Entity
-@Table(name = "\"Employee\"")
+@Table(name = "employee")
 public class Employee {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "id", nullable = false)
   private Long id;
-
-  @Column(name = "user_id", nullable = false)
-  private Long userId;
 
   @Column(name = "department_id")
   private Long departmentId;
 
+  @Column(name = "week_schedule_id")
+  private Long weekScheduleId;
+
   @Column(name = "vacation_balance", nullable = false)
   private int vacationBalance;
 
-  @Column(name = "date_of_hiring", nullable = false)
-  private LocalDate dateOfHiring;
+  @Generated(event = {EventType.INSERT, EventType.UPDATE})
+  @Column(name = "active", nullable = false)
+  private boolean active;
 
   public Employee() {}
 
-  public Employee(Long userId, Long departmentId, int vacationBalance, LocalDate dateOfHiring) {
-    this.userId = userId;
+  public Employee(Long id, Long departmentId, Long weekScheduleId, int vacationBalance) {
+    this.id = id;
     this.departmentId = departmentId;
+    this.weekScheduleId = weekScheduleId;
     this.vacationBalance = vacationBalance;
-    this.dateOfHiring = dateOfHiring;
   }
 
   public Long getId() {
     return id;
   }
 
-  public Long getUserId() {
-    return userId;
-  }
-
-  public void setUserId(Long userId) {
-    this.userId = userId;
+  public void setId(Long id) {
+    this.id = id;
   }
 
   public Long getDepartmentId() {
@@ -52,6 +50,14 @@ public class Employee {
     this.departmentId = departmentId;
   }
 
+  public Long getWeekScheduleId() {
+    return weekScheduleId;
+  }
+
+  public void setWeekScheduleId(Long weekScheduleId) {
+    this.weekScheduleId = weekScheduleId;
+  }
+
   public int getVacationBalance() {
     return vacationBalance;
   }
@@ -60,11 +66,7 @@ public class Employee {
     this.vacationBalance = vacationBalance;
   }
 
-  public LocalDate getDateOfHiring() {
-    return dateOfHiring;
-  }
-
-  public void setDateOfHiring(LocalDate dateOfHiring) {
-    this.dateOfHiring = dateOfHiring;
+  public boolean isActive() {
+    return active;
   }
 }
