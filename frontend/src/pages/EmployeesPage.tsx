@@ -5,6 +5,7 @@ import type { OutletContext } from '../components/AppLayout'
 import trashIcon from '../assets/trash-icon.png.webp'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
+import { useAuth } from '../context/useAuth'
 
 // Employees with no department are not shown — this page only lists department members.
 function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
@@ -21,6 +22,9 @@ function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
 const EmployeesPage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
+  // Only owners may remove employees from a department; admins see a plain,
+  // non-sliding row with no delete affordance.
+  const { isOwner } = useAuth()
   const { data: employees = [], isLoading } = useEmployeesList()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [search, setSearch] = useState('')
@@ -77,7 +81,7 @@ const EmployeesPage: React.FC = () => {
                 {deptEmployees.map(emp => (
                   <div
                     key={emp.id}
-                    className="employee-row hover-slide-container"
+                    className={`employee-row ${isOwner ? 'hover-slide-container' : 'clickable'}`}
                     onClick={() => navigate(`/employees/${emp.id}`)}
                   >
                     <span className="emp-name">
@@ -96,16 +100,19 @@ const EmployeesPage: React.FC = () => {
                         )}
                         {emp.untilDate && <span className="until-text">untill {emp.untilDate}</span>}
                       */}
-                      <button
-                        className="slide-bin-btn"
-                        onClick={e => {
-                          e.stopPropagation()
-                          openModal('DELETE_EMPLOYEE', emp)
-                        }}
-                        title="Remove from department"
-                      >
-                        <img src={trashIcon} alt="Delete" width={30} height={30} />
-                      </button>
+                      {/* Removing an employee from a department is owner-only. */}
+                      {isOwner && (
+                        <button
+                          className="slide-bin-btn"
+                          onClick={e => {
+                            e.stopPropagation()
+                            openModal('DELETE_EMPLOYEE', emp)
+                          }}
+                          title="Remove from department"
+                        >
+                          <img src={trashIcon} alt="Delete" width={30} height={30} />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
