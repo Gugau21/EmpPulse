@@ -135,11 +135,15 @@ export const authService = {
 
   logout: async (): Promise<void> => {
     // Logout is best-effort: swallow errors so a failed call still clears local state.
-    await fetch('/api/auth/logout', {
-      method: 'POST',
-      headers: { 'X-XSRF-TOKEN': getCsrfToken() },
-      credentials: 'include'
-    })
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { 'X-XSRF-TOKEN': getCsrfToken() },
+        credentials: 'include'
+      })
+    } catch {
+      // Network failure — the caller clears the local session regardless.
+    }
   }
 }
 
@@ -218,8 +222,11 @@ export const employeeService = {
   // GET /api/employees (OWNER lists all; ADMIN receives only employees in their
   // departments — filtered server-side). Mapped into the app's Employee shape;
   // the API summary carries no leave/status data, so those fields stay absent.
-  getAll: async (): Promise<Employee[]> => {
-    const res = await apiRequest('/api/employees', { errorFallback: 'Failed to load employees.' })
+  getAll: async (signal?: AbortSignal): Promise<Employee[]> => {
+    const res = await apiRequest('/api/employees', {
+      signal,
+      errorFallback: 'Failed to load employees.'
+    })
     const data = await res.json()
     const items = (data.items ?? []) as EmployeeSummaryDto[]
     return items.map(e => ({
@@ -231,18 +238,34 @@ export const employeeService = {
   }
 }
 
+// Wire format for leave types (LeaveType in the API contract); the UI's
+// display values ('Vacation' | 'Sick' | 'Personal') must be mapped to these.
+export type ApiLeaveType = 'SICK' | 'VACATION' | 'PERSONAL'
+
+// PATCH /api/leave-requests/{id} body (LeaveRequestUpdate in the API contract).
+// All fields optional; dates are ISO yyyy-mm-dd. reason is required server-side
+// when type is PERSONAL.
+export interface LeaveRequestUpdatePayload {
+  type?: ApiLeaveType
+  paid?: boolean
+  startDate?: string
+  endDate?: string
+  reason?: string | null
+}
+
 export const leaveRequestService = {
-  getAll: async () => {
-    throw new Error('Not implemented')
-  },
-  create: async (_data: unknown) => {
-    throw new Error('Not implemented')
-  },
-  update: async (_id: string, _data: unknown) => {
-    throw new Error('Not implemented')
-  },
-  delete: async (_id: string) => {
-    throw new Error('Not implemented')
+  // PATCH /api/leave-requests/{id} — employees edit their own PENDING request;
+  // admins update any request in their departments in-place. The list/create/
+  // delete endpoints exist in the contract but aren't consumed by the UI yet.
+  update: async (id: number, payload: LeaveRequestUpdatePayload): Promise<void> => {
+    await apiRequest(`/api/leave-requests/${id}`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to update leave request.',
+      errorOverrides: {
+        409: 'This request was changed elsewhere. Please refresh and retry.'
+      }
+    })
   }
 }
 

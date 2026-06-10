@@ -1,11 +1,24 @@
 import React, { useState } from 'react'
-import type { LeaveRequest } from '../../types' // Adjust path if needed
+import type { LeaveRequest } from '../../types'
+import type { ApiLeaveType } from '../../services/api'
+import { useUpdateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 
 interface Props {
   closeModal: () => void
   selectedRequest: LeaveRequest | null
 }
 
+// The UI shows display-cased leave types; the API takes the uppercase enum.
+const LEAVE_TYPE_TO_API: Record<LeaveRequest['type'], ApiLeaveType> = {
+  Vacation: 'VACATION',
+  Sick: 'SICK',
+  Personal: 'PERSONAL'
+}
+
+// Stored leave dates are display-formatted as `dd.mm.yyyy`, but a native
+// <input type="date"> only accepts ISO `yyyy-mm-dd`. Flip the parts so the
+// existing range pre-fills the date pickers; an unparseable value yields '',
+// leaving the input blank rather than rejecting the whole form.
 const formatDate = (dateStr?: string) => {
   if (!dateStr) return ''
   const [dd, mm, yyyy] = dateStr.split('.')
@@ -21,6 +34,51 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
   const [from, setFrom] = useState(formatDate(startStr))
   const [till, setTill] = useState(formatDate(endStr))
   const [reason, setReason] = useState(selectedRequest?.reason ?? '')
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const updateLeave = useUpdateLeaveRequest()
+
+  const handleSubmit = () => {
+    setValidationError(null)
+    if (!selectedRequest) {
+      // Shouldn't happen (the modal is opened from an existing request row),
+      // but without an id there is nothing to update.
+      closeModal()
+      return
+    }
+    if (!from || !till) {
+      setValidationError('Both dates are required.')
+      return
+    }
+    // ISO yyyy-mm-dd strings compare correctly as plain strings.
+    if (from > till) {
+      setValidationError('The "From" date must not be after the "Till" date.')
+      return
+    }
+    if (leaveType === 'Personal' && !reason.trim()) {
+      setValidationError('A reason is required for personal leave.')
+      return
+    }
+    // The API expects a numeric id; bail out clearly rather than sending
+    // `/api/leave-requests/NaN` if the id is ever non-numeric.
+    const id = Number(selectedRequest.id)
+    if (!Number.isInteger(id)) {
+      setValidationError('This leave request has an invalid identifier and cannot be updated.')
+      return
+    }
+    updateLeave.mutate(
+      {
+        id,
+        payload: {
+          type: LEAVE_TYPE_TO_API[leaveType],
+          paid: paymentType === 'Paid',
+          startDate: from,
+          endDate: till,
+          reason: reason.trim() || null
+        }
+      },
+      { onSuccess: () => closeModal() }
+    )
+  }
 
   return (
     <div className="modal-form">
@@ -65,7 +123,15 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
         <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)}></textarea>
       </label>
 
-      <button className="primary-btn full-width" onClick={closeModal}>
+      {(validationError || updateLeave.error) && (
+        <p className="form-error">{validationError ?? updateLeave.error?.message}</p>
+      )}
+
+      <button
+        className="primary-btn full-width"
+        onClick={handleSubmit}
+        disabled={updateLeave.isPending}
+      >
         edit leave
       </button>
     </div>

@@ -125,6 +125,12 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
       const parsed = Number(vacationDays)
       payload.yearlyVacationBalance =
         vacationDays.trim() === '' || Number.isNaN(parsed) ? 0 : parsed
+    } else if (user.employeeProfile !== null) {
+      // Employee role unchecked for someone who currently has it: detach the
+      // profile (null department) so the user actually loses the identity,
+      // mirroring how an empty adminDepartmentIds removes the admin role above.
+      payload.changeEmployeeDepartment = true
+      payload.employeeDepartmentId = null
     }
 
     submit(payload)
