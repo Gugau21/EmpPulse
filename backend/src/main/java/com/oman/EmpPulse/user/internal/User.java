@@ -17,7 +17,7 @@ public class User {
   @Column(nullable = false)
   private String surname;
 
-  @Column(unique = true, nullable = false)
+  @Column(nullable = false)
   private String email;
 
   @Column(name = "pass_hash", nullable = false)

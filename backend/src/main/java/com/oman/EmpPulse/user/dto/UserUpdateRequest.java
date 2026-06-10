@@ -17,7 +17,7 @@ public class UserUpdateRequest {
 
   private boolean changeEmployeeDepartment;
   private Integer yearlyVacationBalance;
-  private List<PremiumVacationDayRequest> premiumVacationDays;
+  private List<BonusVacationDayRequest> bonusVacationDays;
   private List<Long> adminDepartmentIds;
 
   public String getName() {
@@ -76,12 +76,12 @@ public class UserUpdateRequest {
     this.yearlyVacationBalance = yearlyVacationBalance;
   }
 
-  public List<PremiumVacationDayRequest> getPremiumVacationDays() {
-    return premiumVacationDays;
+  public List<BonusVacationDayRequest> getBonusVacationDays() {
+    return bonusVacationDays;
   }
 
-  public void setPremiumVacationDays(List<PremiumVacationDayRequest> premiumVacationDays) {
-    this.premiumVacationDays = premiumVacationDays;
+  public void setBonusVacationDays(List<BonusVacationDayRequest> bonusVacationDays) {
+    this.bonusVacationDays = bonusVacationDays;
   }
 
   public List<Long> getAdminDepartmentIds() {

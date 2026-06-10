@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.Session;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -27,6 +29,7 @@ public class UserService implements UserApi {
   private final UserRepository userRepository;
   private final AdminRepository adminRepository;
   private final EmployeeRepository employeeRepository;
+  private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
   private final DepartmentApi departmentApi;
   private final PasswordEncoder passwordEncoder;
 
@@ -34,11 +37,13 @@ public class UserService implements UserApi {
       UserRepository userRepository,
       AdminRepository adminRepository,
       EmployeeRepository employeeRepository,
+      FindByIndexNameSessionRepository<? extends Session> sessionRepository,
       DepartmentApi departmentApi,
       PasswordEncoder passwordEncoder) {
     this.userRepository = userRepository;
     this.adminRepository = adminRepository;
     this.employeeRepository = employeeRepository;
+    this.sessionRepository = sessionRepository;
     this.departmentApi = departmentApi;
     this.passwordEncoder = passwordEncoder;
   }
@@ -60,7 +65,7 @@ public class UserService implements UserApi {
   @Override
   @Transactional
   public void ensureOwnerExists(String email, String rawPassword) {
-    if (userRepository.findByEmail(email).isPresent()) {
+    if (userRepository.existsByIsOwnerTrue()) {
       return;
     }
     User user =
@@ -168,6 +173,11 @@ public class UserService implements UserApi {
     if (adminOpt.isPresent()) {
       departmentApi.setAdminDepartments(userId, List.of());
     }
+
+    sessionRepository
+        .findByPrincipalName(userId.toString())
+        .keySet()
+        .forEach(sessionRepository::deleteById);
   }
 
   @Transactional
@@ -334,6 +344,7 @@ public class UserService implements UserApi {
       employee.setDepartmentId(newDepartmentId);
     }
     if (req.getYearlyVacationBalance() != null) {
+      requireNonNegativeVacationBalance(req.getYearlyVacationBalance());
       employee.setVacationBalance(req.getYearlyVacationBalance());
     }
     employeeRepository.save(employee);
@@ -403,6 +414,14 @@ public class UserService implements UserApi {
           HttpStatus.BAD_REQUEST,
           "Yearly vacation balance is required when creating an employee. "
               + "You can set 0 if you do not wish to track Vacation Balance.");
+    }
+    requireNonNegativeVacationBalance(vacationBalance);
+  }
+
+  private void requireNonNegativeVacationBalance(int vacationBalance) {
+    if (vacationBalance < 0) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Yearly vacation balance must be greater or equal to 0");
     }
   }
 }

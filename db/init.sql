@@ -184,7 +184,7 @@ CREATE TABLE bonus_vacation_days(
   year_ integer NOT NULL
 );
 
-CREATE INDEX ON bonus_vacation_days (employee_id, year_);
+CREATE UNIQUE INDEX ON bonus_vacation_days (employee_id, year_);
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
