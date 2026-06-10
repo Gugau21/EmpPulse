@@ -45,6 +45,18 @@ const EmployeesPage: React.FC = () => {
         {[emp.name, emp.surname].filter(Boolean).join(' ')}
       </span>
       <div className="emp-meta">
+        {/*
+                        HIDDEN FOR NOW: leave status badge + "until" date.
+                        GET /api/employees returns no leave/status data, so these are
+                        intentionally not rendered. Restore once a leave API is wired:
+                        re-enable the badge/until-text below and populate emp.status /
+                        emp.untilDate from that endpoint.
+
+                        {emp.status && emp.status !== 'Working' && (
+                          <span className={`badge badge-${emp.status.toLowerCase()}`}>{emp.status}</span>
+                        )}
+                        {emp.untilDate && <span className="until-text">untill {emp.untilDate}</span>}
+                      */}
         <button
           className="slide-bin-btn"
           onClick={e => {

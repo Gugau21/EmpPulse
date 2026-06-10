@@ -12,6 +12,7 @@ import AddDefaultWorkingHoursModal from './modals/AddDefaultWorkingHoursModal'
 import EditEmployeeModal from './modals/EditEmployeeModal'
 import EditHoursModal from './modals/EditHoursModal'
 import EditLeaveModal from './modals/EditLeaveModal'
+import ChangePasswordFormModal from './modals/ChangePasswordModal'
 
 interface Props {
   activeModal: ModalType
@@ -124,6 +125,10 @@ const Modals: React.FC<Props> = ({
 
         {activeModal === 'EDIT_LOGGED_HOURS' && (
           <EditHoursModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
+        )}
+
+        {activeModal === 'CHANGE_PASSWORD_FORM' && (
+          <ChangePasswordFormModal openModal={openModal} />
         )}
       </div>
     </div>

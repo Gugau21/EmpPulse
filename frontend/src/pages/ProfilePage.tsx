@@ -121,37 +121,54 @@ const ProfilePage: React.FC = () => {
 
       <div className="profile-top-grid">
         <div className="profile-banner">
-          <div className="banner-info">
-            <h3>{targetName}</h3>
-            <p className="email-sub">{targetEmail}</p>
-            {/*
-              HIDDEN FOR NOW (not deleted): "Change password" button.
-              Intentionally not rendered on the user's own profile until the
-              change-password flow is wired to the API. Restore by re-enabling
-              this button for the isMyProfile case.
-            */}
-            {!isMyProfile && (
+          <div className="banner-top-row">
+            
+            <div className="banner-main-info">
+              <h3>{targetName}</h3>
+              <p className="email-sub">{targetEmail}</p>
+
+              <div className="banner-stacked-detail">
+                <label>Department:</label>
+                <span>{employeeProfile?.departmentName || 'Department1'}</span>
+              </div>
+
+              {/* Administrator info (Displays based on data, mocked for UI right now) */}
+              <div className="banner-stacked-detail">
+                <label>Administrator of:</label>
+                <span>
+                  {targetUser?.adminProfile?.departmentIds.length 
+                    ? `Department ${targetUser.adminProfile.departmentIds.join(', ')}` 
+                    : 'Department1, Department2'}
+                </span>
+              </div>
+            </div>
+
+            <div className="banner-side-info">
+              <div className="banner-stacked-detail">
+                <label>Status:</label>
+                {/* Fallback to Vacation for visual matching if user lacks status */}
+                <span>{(targetUser as any)?.status || 'Vacation'}</span>
+              </div>
+            </div>
+
+          </div>
+
+          <div className="banner-center-action">
+            {isMyProfile ? (
+              <button 
+                className="btn-change-password" 
+                onClick={() => openModal('CHANGE_PASSWORD_FORM')}
+              >
+                Change password
+              </button>
+            ) : (
               <button
-                className="btn-pill-action"
+                className="btn-change-password"
                 onClick={() => openModal('EDIT_EMPLOYEE', employee as Employee)}
               >
                 Edit profile
               </button>
             )}
-          </div>
-          <div className="banner-stats">
-            <div>
-              <label>Department:</label>
-              <span></span>
-            </div>
-            <div>
-              <label>Role:</label>
-              <span></span>
-            </div>
-            <div>
-              <label>Status:</label>
-              <span></span>
-            </div>
           </div>
         </div>
 

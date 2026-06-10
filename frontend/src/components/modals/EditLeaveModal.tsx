@@ -13,13 +13,11 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
   const [till, setTill] = useState('')
   const [reason, setReason] = useState('')
 
-  // Pre-fill the form when the modal opens with a selected request
   useEffect(() => {
     if (selectedRequest) {
       setLeaveType(selectedRequest.type)
       if (selectedRequest.reason) setReason(selectedRequest.reason)
 
-      // Convert "DD.MM.YYYY - DD.MM.YYYY" to HTML Date Input format "YYYY-MM-DD"
       if (selectedRequest.dateRange) {
         const [startStr, endStr] = selectedRequest.dateRange.split(' - ')
         
@@ -57,7 +55,6 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
         </select>
       </label>
 
-      {/* Only show the purple balance hint if Vacation is selected */}
       {leaveType === 'Vacation' && (
         <div className="balance-hint">If vacation: you have 15 days left</div>
       )}
