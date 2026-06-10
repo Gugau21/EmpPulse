@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
 import type { LeaveRequest } from '../types'
 import type { OutletContext } from '../components/AppLayout'
+import AccordionScreen from '../components/AccordionScreen'
 import trashIcon from '../assets/trash-icon.png.webp'
-import blackTriangleIcon from '../assets/black_triangle.png'
 
 // Placeholder leave records: there is no leave/requests API yet, so this page
 // renders static mock data to exercise the layout. Replace with a real query
@@ -44,70 +44,56 @@ const MyRequestsScreen: React.FC = () => {
   const [expanded, setExpanded] = useState(true)
 
   return (
-    <div className="screen-container">
-      <header className="page-header">
-        <h2>My requests</h2>
-        <div className="filter-dropdown">
-          <span>Filter by</span>...
+    <AccordionScreen
+      pageTitle="My requests"
+      accordionTitle="Last requests"
+      expanded={expanded}
+      onToggle={() => setExpanded(!expanded)}
+      footer={
+        <div className="center-action">
+          <button className="primary-btn" onClick={() => openModal('ADD_LEAVE')}>
+            + add request
+          </button>
         </div>
-      </header>
+      }
+    >
+      <div className="card-box list-box">
+        {myRecordsData.map(req => (
+          <div
+            key={req.id}
+            className={`employee-row hover-slide-container clickable ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}
+            onClick={() => openModal('EDIT_LEAVE_FORM', undefined, req)}
+          >
+            <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
+            <span className="date-span">{req.dateRange}</span>
+            <div className="emp-meta">
+              <span className={`status-label status-${req.status.toLowerCase()}`}>
+                {req.status}
+              </span>
+            </div>
 
-      <div className="accordion-section">
-        <h3 className="department-title" onClick={() => setExpanded(!expanded)}>
-          Last requests{' '}
-          <img
-            src={blackTriangleIcon}
-            alt="Toggle last requests"
-            className={`chevron ${expanded ? 'expanded' : ''}`}
-          />
-        </h3>
-
-        {expanded && (
-          <div className="card-box list-box">
-            {myRecordsData.map(req => (
-              <div
-                key={req.id}
-                className={`employee-row hover-slide-container clickable ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}
-                onClick={() => openModal('EDIT_LEAVE_FORM', undefined, req)}
-              >
-                <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
-                <span className="date-span">{req.dateRange}</span>
-                <div className="emp-meta">
-                  <span className={`status-label status-${req.status.toLowerCase()}`}>
-                    {req.status}
-                  </span>
-                </div>
-
-                <button
-                  className="slide-bin-btn"
-                  onClick={e => {
-                    e.stopPropagation() // Don't also open the row's edit modal
-                    openModal(
-                      req.status === 'APPROVED' ? 'CANCEL_LEAVE' : 'DELETE_LEAVE',
-                      undefined,
-                      req
-                    )
-                  }}
-                  title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
-                >
-                  {req.status === 'APPROVED' ? (
-                    '✕'
-                  ) : (
-                    <img src={trashIcon} alt="Delete" width={30} height={30} />
-                  )}
-                </button>
-              </div>
-            ))}
+            <button
+              className="slide-bin-btn"
+              onClick={e => {
+                e.stopPropagation() // Don't also open the row's edit modal
+                openModal(
+                  req.status === 'APPROVED' ? 'CANCEL_LEAVE' : 'DELETE_LEAVE',
+                  undefined,
+                  req
+                )
+              }}
+              title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
+            >
+              {req.status === 'APPROVED' ? (
+                '✕'
+              ) : (
+                <img src={trashIcon} alt="Delete" width={30} height={30} />
+              )}
+            </button>
           </div>
-        )}
+        ))}
       </div>
-
-      <div className="center-action">
-        <button className="primary-btn" onClick={() => openModal('ADD_LEAVE')}>
-          + add request
-        </button>
-      </div>
-    </div>
+    </AccordionScreen>
   )
 }
 

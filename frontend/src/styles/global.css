@@ -210,7 +210,8 @@ select {
   outline: none;
   font-family: Poppins, sans-serif;
   font-size: 14px;
-  width: 130px;
+  width: 160px;
+  text-align: left;
 }
 
 .filter-dropdown {
@@ -358,6 +359,17 @@ select {
   padding: 16px;
 }
 
+.role-section-title {
+  padding-left: 4px;
+  margin-bottom: 4px;
+  font-size: 15px;
+  color: #333;
+}
+
+.role-section-title.secondary {
+  margin-top: 16px;
+}
+
 /* ============================================================
    BADGES & STATUS LABELS
    ============================================================ */
@@ -431,15 +443,22 @@ select {
   flex: 1;
   background-color: #5932ea;
   border-radius: 16px;
-  padding: 24px;
+  padding: 32px;
   color: white;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
 }
 
-.banner-info h3 {
-  font-size: 24px;
-  font-weight: 500;
+.banner-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.banner-main-info h3 {
+  font-size: 32px;
+  font-weight: 600;
   margin-bottom: 4px;
 }
 
@@ -447,6 +466,60 @@ select {
   font-size: 13px;
   opacity: 0.8;
   margin-bottom: 16px;
+}
+
+.banner-main-info .email-sub {
+  font-size: 16px;
+  opacity: 0.9;
+  margin-bottom: 24px;
+}
+
+.banner-stacked-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+
+.banner-stacked-detail:last-child {
+  margin-bottom: 0;
+}
+
+.banner-stacked-detail label {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.banner-stacked-detail span {
+  font-size: 14px;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.banner-side-info {
+  text-align: right;
+}
+
+.banner-center-action {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.btn-change-password {
+  background-color: #e5e7eb;
+  color: #8c95a5;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-change-password:hover {
+  background-color: #d1d5db;
 }
 
 .btn-pill-action {
@@ -461,7 +534,7 @@ select {
 }
 
 .btn-edit-action {
-  background-color: #fff;
+  background-color: #fafafd;
   color: #5932ea;
   border: none;
   padding: 6px 16px;
@@ -501,6 +574,7 @@ select {
 /* Compact vacation balance card on the right */
 .vacation-widget {
   width: 240px;
+  height: 120px;
   background-color: #fff;
   border-radius: 16px;
   padding: 24px;
@@ -576,6 +650,54 @@ select {
   border-radius: 12px;
   font-size: 11px;
   cursor: pointer;
+}
+
+.profile-accordion-title {
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.logged-hours-grid {
+  grid-template-columns: 1fr 2fr 1fr;
+  text-align: center;
+  align-items: center;
+}
+
+/* Wider tiny buttons for 'show more / less' */
+.btn-tiny-pill.wide {
+  padding: 6px 24px;
+  font-size: 12px;
+}
+
+/* Stacked action buttons at the bottom */
+.action-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+/* Specific overrides for buttons */
+.primary-btn.fixed-width {
+  width: 200px;
+}
+
+.primary-btn.danger {
+  background-color: #dc3545;
+}
+
+/* Replaces the inline 3-column grid style */
+.working-hours-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+
+/* Replaces the inline margin style for stacked days */
+.day-label-margin {
+  margin-top: 16px;
 }
 
 /* ============================================================
@@ -1086,10 +1208,15 @@ select {
 }
 
 /* ============================================================
-   DEPARTMENT DETAIL SCREEN HEADER
+   DEPARTMENT DETAIL SCREEN
    ============================================================ */
 .department-detail-title-row {
   display: flex;
   align-items: center;
   gap: 16px; /* This adds a nice 16px space between the buttons and the title */
+}
+
+.detail-action-row {
+  margin-top: 24px; /* Increase this number if you want even more space */
+  display: flex;
 }

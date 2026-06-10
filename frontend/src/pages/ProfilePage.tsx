@@ -19,7 +19,7 @@ interface HoursAccordionProps {
   title: string
   expanded: boolean
   onToggle: () => void
-  chevron: string
+  chevron: React.ReactNode
   className?: string
 }
 
@@ -60,6 +60,26 @@ const HoursAccordion: React.FC<HoursAccordionProps> = ({
   </div>
 )
 
+// A single row in the "Logged hours" table. The clickable/edit wiring is
+// identical across rows, so it lives here to avoid duplicating the wrapper.
+interface LoggedHoursRowProps {
+  isMyProfile: boolean
+  onEdit: () => void
+  children: React.ReactNode
+}
+
+const LoggedHoursRow: React.FC<LoggedHoursRowProps> = ({ isMyProfile, onEdit, children }) => (
+  <div
+    className={`table-row-grid logged-hours-grid ${!isMyProfile ? 'clickable' : ''}`}
+    onClick={() => {
+      if (!isMyProfile) onEdit()
+    }}
+    style={{ cursor: !isMyProfile ? 'pointer' : 'default' }}
+  >
+    {children}
+  </div>
+)
+
 const ProfilePage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
@@ -70,6 +90,7 @@ const ProfilePage: React.FC = () => {
   const { currentUser } = useAuth()
   const [loggedExpanded, setLoggedExpanded] = useState(true)
   const [unpaidExpanded, setUnpaidExpanded] = useState(true)
+  const [workingHoursExpanded, setWorkingHoursExpanded] = useState(true)
 
   // Parse userId as number, but guard against NaN (e.g., /employees/not-a-number)
   const parsedId = userId ? Number(userId) : null
@@ -120,37 +141,52 @@ const ProfilePage: React.FC = () => {
 
       <div className="profile-top-grid">
         <div className="profile-banner">
-          <div className="banner-info">
-            <h3>{targetName}</h3>
-            <p className="email-sub">{targetEmail}</p>
-            {/*
-              HIDDEN FOR NOW (not deleted): "Change password" button.
-              Intentionally not rendered on the user's own profile until the
-              change-password flow is wired to the API. Restore by re-enabling
-              this button for the isMyProfile case.
-            */}
-            {!isMyProfile && (
+          <div className="banner-top-row">
+            <div className="banner-main-info">
+              <h3>{targetName}</h3>
+              <p className="email-sub">{targetEmail}</p>
+
+              <div className="banner-stacked-detail">
+                <label>Department:</label>
+                <span>{employeeProfile?.departmentName || 'Department1'}</span>
+              </div>
+
+              {/* Administrator info (Displays based on data, mocked for UI right now) */}
+              <div className="banner-stacked-detail">
+                <label>Administrator of:</label>
+                <span>
+                  {targetUser?.adminProfile?.departmentIds.length
+                    ? `Department ${targetUser.adminProfile.departmentIds.join(', ')}`
+                    : 'Department1, Department2'}
+                </span>
+              </div>
+            </div>
+
+            <div className="banner-side-info">
+              <div className="banner-stacked-detail">
+                <label>Status:</label>
+                {/* Fallback to Vacation for visual matching if user lacks status */}
+                <span>{(targetUser as { status?: string })?.status || 'Vacation'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="banner-center-action">
+            {isMyProfile ? (
               <button
-                className="btn-pill-action"
+                className="btn-change-password"
+                onClick={() => openModal('CHANGE_PASSWORD_FORM')}
+              >
+                Change password
+              </button>
+            ) : (
+              <button
+                className="btn-change-password"
                 onClick={() => openModal('EDIT_EMPLOYEE', employee as Employee)}
               >
                 Edit profile
               </button>
             )}
-          </div>
-          <div className="banner-stats">
-            <div>
-              <label>Department:</label>
-              <span></span>
-            </div>
-            <div>
-              <label>Role:</label>
-              <span></span>
-            </div>
-            <div>
-              <label>Status:</label>
-              <span></span>
-            </div>
           </div>
         </div>
 
@@ -165,38 +201,50 @@ const ProfilePage: React.FC = () => {
       </div>
 
       <div className="accordion-section">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-          <h3 className="department-title" style={{ marginBottom: 0, fontSize: '20px' }}>
-            Default working hours
-          </h3>
-          <span className="chevron expanded">🡇</span>
-        </div>
-
-        <div
-          className="card-box"
-          style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px' }}
+        <h3
+          className="department-title"
+          onClick={() => setWorkingHoursExpanded(!workingHoursExpanded)}
+          style={{
+            marginBottom: '20px',
+            fontSize: '20px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
         >
-          {MOCK_DEFAULT_WORKING_HOURS.map((column, ci) => (
-            <div className="shifts-stack" key={ci}>
-              {column.map((day, di) => (
-                <React.Fragment key={day.label}>
-                  <div className="day-label" style={di > 0 ? { marginTop: '16px' } : undefined}>
-                    {day.label}
-                  </div>
-                  {day.shifts.map((shift, si) => (
-                    <div className="shift-pill-row" key={si}>
-                      <span className="shift-index">{si + 1})</span>
-                      <div className="time-range-display">
-                        <span>{shift.start}</span> <span className="muted-separator">—</span>{' '}
-                        <span>{shift.end}</span>
-                      </div>
+          Default working hours
+          <img
+            src={blackTriangleIcon}
+            alt="Toggle working hours"
+            className={`chevron ${workingHoursExpanded ? 'expanded' : ''}`}
+          />
+        </h3>
+
+        {workingHoursExpanded && (
+          <div className="card-box working-hours-grid">
+            {MOCK_DEFAULT_WORKING_HOURS.map((column, ci) => (
+              <div className="shifts-stack" key={ci}>
+                {column.map((day, di) => (
+                  <React.Fragment key={day.label}>
+                    <div className={`day-label ${di > 0 ? 'day-label-margin' : ''}`}>
+                      {day.label}
                     </div>
-                  ))}
-                </React.Fragment>
-              ))}
-            </div>
-          ))}
-        </div>
+                    {day.shifts.map((shift, si) => (
+                      <div className="shift-pill-row" key={si}>
+                        <span className="shift-index">{si + 1})</span>
+                        <div className="time-range-display">
+                          <span>{shift.start}</span> <span className="muted-separator">—</span>{' '}
+                          <span>{shift.end}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
 
         {!isMyProfile && (
           <div className="center-action tight">
@@ -210,13 +258,74 @@ const ProfilePage: React.FC = () => {
         )}
       </div>
 
+      <div className="accordion-section">
+        <h3
+          className="department-title profile-accordion-title"
+          onClick={() => setLoggedExpanded(!loggedExpanded)}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          Logged hours
+          <img
+            src={blackTriangleIcon}
+            alt="Toggle logged hours"
+            className={`chevron ${loggedExpanded ? 'expanded' : ''}`}
+          />
+        </h3>
+
+        {loggedExpanded && (
+          <div className="card-box table-box">
+            <div className="table-header-grid logged-hours-grid">
+              <span>Date</span>
+              <span>Time interval</span>
+              <span>Duration</span>
+            </div>
+
+            <LoggedHoursRow
+              isMyProfile={isMyProfile}
+              onEdit={() => openModal('EDIT_LOGGED_HOURS', employee as Employee)}
+            >
+              <span>28.05.2026</span>
+              <span>9:00 - 17:00</span>
+              <span>8 hours</span>
+            </LoggedHoursRow>
+
+            <LoggedHoursRow
+              isMyProfile={isMyProfile}
+              onEdit={() => openModal('EDIT_LOGGED_HOURS', employee as Employee)}
+            >
+              <span>28.05.2026</span>
+              <div>
+                <span
+                  className="badge badge-sick"
+                  style={{ padding: '4px 32px', borderRadius: '16px' }}
+                >
+                  Sick
+                </span>
+              </div>
+              <span>8 hours</span>
+            </LoggedHoursRow>
+
+            <div className="table-footer-actions">
+              <button className="btn-tiny-pill wide">show more</button>
+              <button className="btn-tiny-pill wide">show less</button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* HIDDEN FOR NOW (not deleted): "Logged hours" table — see SHOW_HOURS_TABLES. */}
       {SHOW_HOURS_TABLES && (
         <HoursAccordion
           title="Logged hours"
           expanded={loggedExpanded}
           onToggle={() => setLoggedExpanded(!loggedExpanded)}
-          chevron="►"
+          chevron={
+            <img
+              src={blackTriangleIcon}
+              alt=""
+              className={`chevron ${loggedExpanded ? 'expanded' : ''}`}
+            />
+          }
         />
       )}
 

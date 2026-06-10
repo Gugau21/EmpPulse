@@ -29,9 +29,6 @@ const EmployeesPage: React.FC = () => {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [search, setSearch] = useState('')
 
-  // Search matches a surname *prefix* only (not a substring, and not the first
-  // name) — the box is labelled "Search by surname" and users expect to type the
-  // start of a last name, as in a phone-book lookup.
   const query = search.trim().toLowerCase()
   const filtered = query
     ? employees.filter(emp => (emp.surname ?? '').toLowerCase().startsWith(query))
@@ -40,6 +37,40 @@ const EmployeesPage: React.FC = () => {
   const groups = groupByDepartment(filtered)
 
   const toggle = (dept: string) => setCollapsed(prev => ({ ...prev, [dept]: !prev[dept] }))
+
+  const renderRow = (emp: Employee) => (
+    <div
+      key={emp.id}
+      className="employee-row hover-slide-container"
+      onClick={() => navigate(`/employees/${emp.id}`)}
+    >
+      <span className="emp-name">{[emp.name, emp.surname].filter(Boolean).join(' ')}</span>
+      <div className="emp-meta">
+        {/*
+                        HIDDEN FOR NOW: leave status badge + "until" date.
+                        GET /api/employees returns no leave/status data, so these are
+                        intentionally not rendered. Restore once a leave API is wired:
+                        re-enable the badge/until-text below and populate emp.status /
+                        emp.untilDate from that endpoint.
+
+                        {emp.status && emp.status !== 'Working' && (
+                          <span className={`badge badge-${emp.status.toLowerCase()}`}>{emp.status}</span>
+                        )}
+                        {emp.untilDate && <span className="until-text">untill {emp.untilDate}</span>}
+                      */}
+        <button
+          className="slide-bin-btn"
+          onClick={e => {
+            e.stopPropagation()
+            openModal('DELETE_EMPLOYEE', emp)
+          }}
+          title="Remove from department"
+        >
+          <img src={trashIcon} alt="Delete" width={30} height={30} />
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="screen-container">
@@ -78,6 +109,14 @@ const EmployeesPage: React.FC = () => {
 
             {expanded && (
               <div className="card-box list-box">
+                {/* Administrators Section */}
+                <div className="role-section-title">Administrators:</div>
+                {deptEmployees.slice(0, 1).map(renderRow)}
+
+                {/* Employees Section */}
+                <div className="role-section-title secondary">Employees:</div>
+                {deptEmployees.slice(1).map(renderRow)}
+
                 {deptEmployees.map(emp => (
                   <div
                     key={emp.id}

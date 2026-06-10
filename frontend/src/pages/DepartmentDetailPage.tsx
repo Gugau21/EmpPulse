@@ -54,7 +54,7 @@ const DepartmentDetailScreen: React.FC = () => {
           <button className="btn-pill-secondary" onClick={onBack}>
             <img src={blackTriangleIcon} alt="Back to departments list" />
           </button>
-          <div className="department-detail-title_row">
+          <div className="department-detail-title-row">
             <h2>{department.name}</h2>
             {isOwner && (
               <button
