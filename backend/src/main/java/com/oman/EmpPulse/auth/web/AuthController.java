@@ -2,8 +2,8 @@ package com.oman.EmpPulse.auth.web;
 
 import com.oman.EmpPulse.auth.dto.LoginRequest;
 import com.oman.EmpPulse.auth.internal.AuthService;
+import com.oman.EmpPulse.user.api.UserApi;
 import com.oman.EmpPulse.user.api.UserCredential;
-import com.oman.EmpPulse.user.api.UserDirectory;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -23,15 +23,15 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
   private final AuthService authService;
-  private final UserDirectory userDirectory;
+  private final UserApi userApi;
   private final SecurityContextRepository securityContextRepository;
 
   public AuthController(
       AuthService authService,
-      UserDirectory userDirectory,
+      UserApi userApi,
       SecurityContextRepository securityContextRepository) {
     this.authService = authService;
-    this.userDirectory = userDirectory;
+    this.userApi = userApi;
     this.securityContextRepository = securityContextRepository;
   }
 
@@ -59,7 +59,7 @@ public class AuthController {
     SecurityContextHolder.setContext(context);
     securityContextRepository.saveContext(context, request, response);
 
-    return ResponseEntity.ok(userDirectory.loadProfile(credential.id()));
+    return ResponseEntity.ok(userApi.loadProfile(credential.id()));
   }
 
   @PostMapping("/logout")

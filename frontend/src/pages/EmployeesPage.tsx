@@ -5,6 +5,7 @@ import type { OutletContext } from '../components/AppLayout'
 import trashIcon from '../assets/trash-icon.png.webp'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
+import { useAuth } from '../context/useAuth'
 
 
 // Employees with no department are not shown — this page only lists department members.
@@ -22,6 +23,9 @@ function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
 const EmployeesPage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
+  // Only owners may remove employees from a department; admins see a plain,
+  // non-sliding row with no delete affordance.
+  const { isOwner } = useAuth()
   const { data: employees = [], isLoading } = useEmployeesList()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
   const [search, setSearch] = useState('')
@@ -82,6 +86,7 @@ const EmployeesPage: React.FC = () => {
               placeholder="Search by surname"
               value={search}
               onChange={e => setSearch(e.target.value)}
+              maxLength={50}
             />
           </div>
           <div className="filter-dropdown">
@@ -120,6 +125,44 @@ const EmployeesPage: React.FC = () => {
                 </div>
                 {deptEmployees.slice(1).map(renderRow)}
 
+                {deptEmployees.map(emp => (
+                  <div
+                    key={emp.id}
+                    className={`employee-row ${isOwner ? 'hover-slide-container' : 'clickable'}`}
+                    onClick={() => navigate(`/employees/${emp.id}`)}
+                  >
+                    <span className="emp-name">
+                      {[emp.name, emp.surname].filter(Boolean).join(' ')}
+                    </span>
+                    <div className="emp-meta">
+                      {/*
+                        HIDDEN FOR NOW: leave status badge + "until" date.
+                        GET /api/employees returns no leave/status data, so these are
+                        intentionally not rendered. Restore once a leave API is wired:
+                        re-enable the badge/until-text below and populate emp.status /
+                        emp.untilDate from that endpoint.
+
+                        {emp.status && emp.status !== 'Working' && (
+                          <span className={`badge badge-${emp.status.toLowerCase()}`}>{emp.status}</span>
+                        )}
+                        {emp.untilDate && <span className="until-text">untill {emp.untilDate}</span>}
+                      */}
+                      {/* Removing an employee from a department is owner-only. */}
+                      {isOwner && (
+                        <button
+                          className="slide-bin-btn"
+                          onClick={e => {
+                            e.stopPropagation()
+                            openModal('DELETE_EMPLOYEE', emp)
+                          }}
+                          title="Remove from department"
+                        >
+                          <img src={trashIcon} alt="Delete" width={30} height={30} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

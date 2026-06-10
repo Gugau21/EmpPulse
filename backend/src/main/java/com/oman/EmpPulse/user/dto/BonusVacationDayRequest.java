@@ -1,6 +1,6 @@
 package com.oman.EmpPulse.user.dto;
 
-public class PremiumVacationDayRequest {
+public class BonusVacationDayRequest {
   private Integer year;
   private Integer days;
 

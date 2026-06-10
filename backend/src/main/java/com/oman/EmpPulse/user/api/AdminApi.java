@@ -24,12 +24,12 @@ public interface AdminApi {
   Optional<Admin> findById(Long id);
 
   /**
-   * Converts an Admin entity to a response DTO. Returns null if the admin has been soft-deleted.
+   * Converts an Admin entity to a response DTO.
    *
    * @param admin the admin entity to convert
-   * @return the response DTO, or null if the admin is deleted
+   * @return the response DTO
    */
-  AdminSummaryResponse toSummary(Admin admin);
+  AdminSummaryResponse toAdminSummaryResponse(Admin admin);
 
   /**
    * Gets the IDs of all departments this admin oversees.

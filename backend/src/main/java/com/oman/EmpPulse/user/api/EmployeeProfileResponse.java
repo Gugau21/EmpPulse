@@ -7,7 +7,7 @@ public class EmployeeProfileResponse {
   private Long departmentId;
   private String departmentName;
   private int yearlyVacationBalance;
-  private List<Object> premiumVacationDays;
+  private List<Object> bonusVacationDays;
 
   public EmployeeProfileResponse(
       Long employeeId, Long departmentId, String departmentName, int yearlyVacationBalance) {
@@ -15,7 +15,7 @@ public class EmployeeProfileResponse {
     this.departmentId = departmentId;
     this.departmentName = departmentName;
     this.yearlyVacationBalance = yearlyVacationBalance;
-    this.premiumVacationDays = List.of();
+    this.bonusVacationDays = List.of();
   }
 
   public Long getEmployeeId() {
@@ -34,7 +34,7 @@ public class EmployeeProfileResponse {
     return yearlyVacationBalance;
   }
 
-  public List<Object> getPremiumVacationDays() {
-    return premiumVacationDays;
+  public List<Object> getBonusVacationDays() {
+    return bonusVacationDays;
   }
 }

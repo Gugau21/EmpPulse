@@ -41,6 +41,7 @@ const EditDepartmentModal: React.FC<Props> = ({ closeModal, selectedDepartment }
           placeholder="e.g. Department 7"
           value={deptName}
           onChange={e => setDeptName(e.target.value)}
+          maxLength={100}
         />
       </label>
 

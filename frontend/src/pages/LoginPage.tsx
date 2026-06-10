@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import { landingPath } from '../utils/guards'
+import { isValidEmail } from '../utils/validation'
 
 const LoginPage: React.FC = () => {
   const { login } = useAuth()
@@ -14,6 +15,10 @@ const LoginPage: React.FC = () => {
   const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault()
     setError('')
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address.')
+      return
+    }
     setLoading(true)
     try {
       const user = await login(email, password)
@@ -33,10 +38,16 @@ const LoginPage: React.FC = () => {
 
         {error && <div className="auth-error-msg">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={handleSubmit} className="auth-form" noValidate>
           <label className="auth-input-label">
             Email
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              maxLength={254}
+            />
           </label>
 
           <label className="auth-input-label">
@@ -46,6 +57,7 @@ const LoginPage: React.FC = () => {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              maxLength={128}
             />
           </label>
 

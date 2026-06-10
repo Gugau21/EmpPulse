@@ -69,13 +69,24 @@ const Modals: React.FC<Props> = ({
           />
         )}
 
-        {activeModal === 'ADD_EMPLOYEE' && (
-          <AddEmployeeModal
-            closeModal={closeModal}
-            departments={departments}
-            openModal={openModal}
-          />
-        )}
+        {activeModal === 'ADD_EMPLOYEE' &&
+          (departments.length === 0 ? (
+            <div className="modal-form">
+              <h2>Employee can't be added</h2>
+              <p>No departments were created. Create a department first.</p>
+              <div className="modal-actions">
+                <button className="btn-modal-action" onClick={closeModal}>
+                  OK
+                </button>
+              </div>
+            </div>
+          ) : (
+            <AddEmployeeModal
+              closeModal={closeModal}
+              departments={departments}
+              openModal={openModal}
+            />
+          ))}
 
         {activeModal === 'EDIT_ADMINS' && (
           <EditAdminsModal closeModal={closeModal} selectedDepartment={selectedDepartment} />

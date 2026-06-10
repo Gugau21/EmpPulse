@@ -5,6 +5,7 @@ import { useUserDetail } from '../../hooks/useUserDetail'
 import { useUpdateUser, useDeleteEmployee } from '../../hooks/useEmployeeMutations'
 import type { UserUpdatePayload } from '../../services/api'
 import { IdentityFields, RoleSection } from '../helpers/employeeFormParts'
+import { isValidEmail } from '../../utils/validation'
 
 interface Props {
   closeModal: () => void
@@ -75,8 +76,6 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteEmployee()
 
-  const hadAdmin = user.adminProfile !== null
-
   const submit = (payload: UserUpdatePayload) =>
     updateUser.mutate({ userId, payload }, { onSuccess: () => closeModal() })
 
@@ -106,18 +105,18 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
         setEditError('First name and surname are required.')
         return
       }
+      if (newEmail.trim() && !isValidEmail(newEmail)) {
+        setEditError('Please enter a valid email address.')
+        return
+      }
       payload.name = newName.trim()
       payload.surname = newSurname.trim()
       if (newEmail.trim()) payload.email = newEmail.trim()
       if (newPassword) payload.password = newPassword
 
-      // [] detaches the admin from every department; an omitted key leaves a
-      // never-admin user untouched.
-      if (isAdminChecked) {
-        payload.adminDepartmentIds = adminDeptIds
-      } else if (hadAdmin) {
-        payload.adminDepartmentIds = []
-      }
+      // [] detaches the admin from every department; the backend treats an
+      // empty array for a never-admin user as a no-op.
+      payload.adminDepartmentIds = isAdminChecked ? adminDeptIds : []
     }
 
     if (isEmployeeChecked) {
@@ -160,22 +159,21 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
     <div className="modal-form">
       <h2 style={{ marginBottom: '24px' }}>Edit employee’s profile</h2>
 
-      {/* Email & password are editable by owners only. */}
-      <IdentityFields
-        name={newName}
-        onName={setNewName}
-        surname={newSurname}
-        onSurname={setNewSurname}
-        {...(isOwner
-          ? {
-              email: newEmail,
-              onEmail: setNewEmail,
-              password: newPassword,
-              onPassword: setNewPassword,
-              passwordPlaceholder: 'Leave blank to keep current password'
-            }
-          : {})}
-      />
+      {/* Identity fields (name/surname/email/password) are editable by owners
+          only; admins can change just the department and vacation balance. */}
+      {isOwner && (
+        <IdentityFields
+          name={newName}
+          onName={setNewName}
+          surname={newSurname}
+          onSurname={setNewSurname}
+          email={newEmail}
+          onEmail={setNewEmail}
+          password={newPassword}
+          onPassword={setNewPassword}
+          passwordPlaceholder="Leave blank to keep current password"
+        />
+      )}
 
       {/* Administrator role is assignable by owners only. */}
       <RoleSection
