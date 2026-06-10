@@ -125,12 +125,6 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         departments={departments}
       />
 
-      {departments.length === 0 && (
-        <p className="form-error">
-          No departments exist yet. Create a department before adding users.
-        </p>
-      )}
-
       {(createError || createUser.error) && (
         <p className="form-error">{createError ?? createUser.error?.message}</p>
       )}
@@ -139,7 +133,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         <button
           className="btn-modal-action"
           onClick={handleCreateUser}
-          disabled={createUser.isPending || departments.length === 0}
+          disabled={createUser.isPending}
         >
           + add without default working hours
         </button>

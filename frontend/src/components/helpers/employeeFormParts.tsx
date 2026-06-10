@@ -74,11 +74,6 @@ export const MultiDepartmentSelect: React.FC<MultiDepartmentSelectProps> = ({
   return (
     <>
       <div className="edit-admins-list">
-        {value.length === 0 && (
-          <div className="edit-admin-item">
-            <div className="edit-admin-pill">No departments selected.</div>
-          </div>
-        )}
         {value.map((id, idx) => (
           <div key={id} className="edit-admin-item">
             <span className="index">{idx + 1})</span>
