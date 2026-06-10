@@ -5,9 +5,12 @@ import type { OutletContext } from '../components/AppLayout'
 import trashIcon from '../assets/trash-icon.png.webp'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
+import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useAuth } from '../context/useAuth'
 
-// Employees with no department are not shown — this page only lists department members.
+// Employees grouped by their department NAME (admins are sourced separately from
+// the departments list). Employees with no department are not shown — this page
+// only lists department members.
 function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
   const groups = new Map<string, Employee[]>()
   for (const emp of employees) {
@@ -25,52 +28,70 @@ const EmployeesPage: React.FC = () => {
   // Only owners may remove employees from a department; admins see a plain,
   // non-sliding row with no delete affordance.
   const { isOwner } = useAuth()
-  const { data: employees = [], isLoading } = useEmployeesList()
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const {
+    data: employees = [],
+    isLoading: employeesLoading,
+    isError: employeesError,
+    error: employeesErr
+  } = useEmployeesList()
+  // Departments carry the per-department admin lists; the employees summary does not.
+  const {
+    data: departments = [],
+    isLoading: departmentsLoading,
+    isError: departmentsError,
+    error: departmentsErr
+  } = useDepartmentsList()
+  const [collapsed, setCollapsed] = useState<Record<number, boolean>>({})
   const [search, setSearch] = useState('')
 
+  const isLoading = employeesLoading || departmentsLoading
+  const isError = employeesError || departmentsError
+  const error = employeesErr ?? departmentsErr
+
   const query = search.trim().toLowerCase()
-  const filtered = query
-    ? employees.filter(emp => (emp.surname ?? '').toLowerCase().startsWith(query))
-    : employees
+  const matchesSearch = (surname: string) =>
+    !query || surname.toLowerCase().startsWith(query)
 
-  const groups = groupByDepartment(filtered)
-
-  const toggle = (dept: string) => setCollapsed(prev => ({ ...prev, [dept]: !prev[dept] }))
-
-  const renderRow = (emp: Employee) => (
-    <div
-      key={emp.id}
-      className="employee-row hover-slide-container"
-      onClick={() => navigate(`/employees/${emp.id}`)}
-    >
-      <span className="emp-name">{[emp.name, emp.surname].filter(Boolean).join(' ')}</span>
-      <div className="emp-meta">
-        {/*
-                        HIDDEN FOR NOW: leave status badge + "until" date.
-                        GET /api/employees returns no leave/status data, so these are
-                        intentionally not rendered. Restore once a leave API is wired:
-                        re-enable the badge/until-text below and populate emp.status /
-                        emp.untilDate from that endpoint.
-
-                        {emp.status && emp.status !== 'Working' && (
-                          <span className={`badge badge-${emp.status.toLowerCase()}`}>{emp.status}</span>
-                        )}
-                        {emp.untilDate && <span className="until-text">untill {emp.untilDate}</span>}
-                      */}
-        <button
-          className="slide-bin-btn"
-          onClick={e => {
-            e.stopPropagation()
-            openModal('DELETE_EMPLOYEE', emp)
-          }}
-          title="Remove from department"
-        >
-          <img src={trashIcon} alt="Delete" width={30} height={30} />
-        </button>
-      </div>
-    </div>
+  const employeesByDept = groupByDepartment(
+    query ? employees.filter(emp => matchesSearch(emp.surname ?? '')) : employees
   )
+
+  const toggle = (deptId: number) => setCollapsed(prev => ({ ...prev, [deptId]: !prev[deptId] }))
+
+  // A single person row. `deleteEmployee` is passed only for employee rows owned
+  // by the owner, who may remove them from the department; admin rows are never
+  // deletable here (admin assignment is managed via the department's admins modal).
+  const renderPersonRow = (
+    person: { id: string; name: string; surname: string },
+    keyPrefix: string,
+    deleteEmployee?: Employee
+  ) => {
+    const deletable = isOwner && deleteEmployee != null
+    return (
+      <div
+        key={`${keyPrefix}-${person.id}`}
+        className={`employee-row ${deletable ? 'hover-slide-container' : 'clickable'}`}
+        onClick={() => navigate(`/employees/${person.id}`)}
+      >
+        <span className="emp-name">{[person.name, person.surname].filter(Boolean).join(' ')}</span>
+        <div className="emp-meta">
+          {/* Removing an employee from a department is owner-only. */}
+          {deletable && (
+            <button
+              className="slide-bin-btn"
+              onClick={e => {
+                e.stopPropagation()
+                openModal('DELETE_EMPLOYEE', deleteEmployee)
+              }}
+              title="Remove from department"
+            >
+              <img src={trashIcon} alt="Delete" width={30} height={30} />
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="screen-container">
@@ -93,13 +114,18 @@ const EmployeesPage: React.FC = () => {
       </header>
 
       {isLoading && <p className="muted">Loading employees…</p>}
+      {isError && <p className="form-error">{error?.message ?? 'Failed to load employees.'}</p>}
 
-      {[...groups.entries()].map(([dept, deptEmployees]) => {
-        const expanded = !collapsed[dept]
+      {departments.map(dept => {
+        const expanded = !collapsed[dept.id]
+        // A user who is both an admin and an employee of this department appears
+        // in both lists by design.
+        const admins = dept.admins.filter(a => matchesSearch(a.user.surname ?? ''))
+        const deptEmployees = employeesByDept.get(dept.name) ?? []
         return (
-          <div className="accordion-section" key={dept}>
-            <h3 className="department-title" onClick={() => toggle(dept)}>
-              {dept}
+          <div className="accordion-section" key={dept.id}>
+            <h3 className="department-title" onClick={() => toggle(dept.id)}>
+              {dept.name}
               <img
                 src={blackTriangleIcon}
                 alt=""
@@ -109,52 +135,24 @@ const EmployeesPage: React.FC = () => {
 
             {expanded && (
               <div className="card-box list-box">
-                {/* Administrators Section */}
                 <div className="role-section-title">Administrators:</div>
-                {deptEmployees.slice(0, 1).map(renderRow)}
+                {admins.length ? (
+                  admins.map(a =>
+                    renderPersonRow(
+                      { id: String(a.user.id), name: a.user.name, surname: a.user.surname },
+                      'admin'
+                    )
+                  )
+                ) : (
+                  <div className="muted role-empty">None</div>
+                )}
 
-                {/* Employees Section */}
                 <div className="role-section-title secondary">Employees:</div>
-                {deptEmployees.slice(1).map(renderRow)}
-
-                {deptEmployees.map(emp => (
-                  <div
-                    key={emp.id}
-                    className={`employee-row ${isOwner ? 'hover-slide-container' : 'clickable'}`}
-                    onClick={() => navigate(`/employees/${emp.id}`)}
-                  >
-                    <span className="emp-name">
-                      {[emp.name, emp.surname].filter(Boolean).join(' ')}
-                    </span>
-                    <div className="emp-meta">
-                      {/*
-                        HIDDEN FOR NOW: leave status badge + "until" date.
-                        GET /api/employees returns no leave/status data, so these are
-                        intentionally not rendered. Restore once a leave API is wired:
-                        re-enable the badge/until-text below and populate emp.status /
-                        emp.untilDate from that endpoint.
-
-                        {emp.status && emp.status !== 'Working' && (
-                          <span className={`badge badge-${emp.status.toLowerCase()}`}>{emp.status}</span>
-                        )}
-                        {emp.untilDate && <span className="until-text">untill {emp.untilDate}</span>}
-                      */}
-                      {/* Removing an employee from a department is owner-only. */}
-                      {isOwner && (
-                        <button
-                          className="slide-bin-btn"
-                          onClick={e => {
-                            e.stopPropagation()
-                            openModal('DELETE_EMPLOYEE', emp)
-                          }}
-                          title="Remove from department"
-                        >
-                          <img src={trashIcon} alt="Delete" width={30} height={30} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                {deptEmployees.length ? (
+                  deptEmployees.map(emp => renderPersonRow(emp, 'emp', emp))
+                ) : (
+                  <div className="muted role-empty">None</div>
+                )}
               </div>
             )}
           </div>

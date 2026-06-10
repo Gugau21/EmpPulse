@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { departmentService, type DepartmentCreatePayload } from '../services/api'
-import { departmentKeys } from '../lib/queryKeys'
+import { departmentKeys, employeeKeys } from '../lib/queryKeys'
 
 export function useCreateDepartment() {
   const qc = useQueryClient()
@@ -19,6 +19,7 @@ export function useUpdateDepartment() {
       // Refresh both the list and the open detail view.
       qc.invalidateQueries({ queryKey: departmentKeys.lists() })
       qc.invalidateQueries({ queryKey: departmentKeys.detail(vars.id) })
+      qc.invalidateQueries({ queryKey: employeeKeys.lists() })
     }
   })
 }

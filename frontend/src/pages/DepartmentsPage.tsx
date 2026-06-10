@@ -40,43 +40,40 @@ const DepartmentsScreen: React.FC = () => {
         </div>
       </header>
 
-      <div className="card-box list-box">
-        {loading && (
-          <div className="employee-row">
-            <span className="emp-name">Loading departments…</span>
-          </div>
-        )}
-        {!loading && filteredDepartments.length === 0 && (
-          <div className="employee-row">
-            <span className="emp-name">No departments yet.</span>
-          </div>
-        )}
-        {!loading &&
-          filteredDepartments.map(dept => (
-            <div
-              key={dept.id}
-              className="employee-row hover-slide-container clickable"
-              onClick={() => navigate(`/departments/${dept.id}`)}
-            >
-              <div className="dept-info-stack">
-                <span className="emp-name">{dept.name}</span>
-              </div>
-
-              {isOwner && (
-                <button
-                  className="slide-bin-btn"
-                  onClick={e => {
-                    e.stopPropagation()
-                    openModal('DELETE_DEPARTMENT', dept)
-                  }}
-                  title="Delete Department"
-                >
-                  <img src={trashIcon} alt="Delete" width={30} height={30} />
-                </button>
-              )}
+      {(loading || filteredDepartments.length > 0) && (
+        <div className="card-box list-box">
+          {loading && (
+            <div className="employee-row">
+              <span className="emp-name">Loading departments…</span>
             </div>
-          ))}
-      </div>
+          )}
+          {!loading &&
+            filteredDepartments.map(dept => (
+              <div
+                key={dept.id}
+                className="employee-row hover-slide-container clickable"
+                onClick={() => navigate(`/departments/${dept.id}`)}
+              >
+                <div className="dept-info-stack">
+                  <span className="emp-name">{dept.name}</span>
+                </div>
+
+                {isOwner && (
+                  <button
+                    className="slide-bin-btn"
+                    onClick={e => {
+                      e.stopPropagation()
+                      openModal('DELETE_DEPARTMENT', dept)
+                    }}
+                    title="Delete Department"
+                  >
+                    <img src={trashIcon} alt="Delete" width={30} height={30} />
+                  </button>
+                )}
+              </div>
+            ))}
+        </div>
+      )}
 
       {isOwner && (
         <div className="center-action">

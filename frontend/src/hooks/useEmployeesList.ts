@@ -9,7 +9,7 @@ export function useEmployeesList() {
   const { isOwner, isAdmin } = useAuth()
   return useQuery({
     queryKey: employeeKeys.lists(),
-    queryFn: () => employeeService.getAll(),
+    queryFn: ({ signal }) => employeeService.getAll(signal),
     enabled: isOwner || isAdmin
   })
 }
