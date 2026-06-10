@@ -60,7 +60,7 @@ public class UserUpdateRequest {
     this.employeeDepartmentId = employeeDepartmentId;
   }
 
-  public boolean isChangeEmployeeDepartment() {
+  public boolean hasChangeEmployeeDepartment() {
     return changeEmployeeDepartment;
   }
 

@@ -160,13 +160,13 @@ public class DepartmentService implements DepartmentApi {
 
   /**
    * Prevents a department-roster edit from <em>accidentally</em> deactivating an admin. When {@link
-   * #updateDepartment} removes an admin from this department, that admin must still oversee at least
-   * one other department; otherwise they would drop to zero departments and be deactivated ({@code
-   * admin.active} → false) as a side effect of editing a department.
+   * #updateDepartment} removes an admin from this department, that admin must still oversee at
+   * least one other department; otherwise they would drop to zero departments and be deactivated
+   * ({@code admin.active} → false) as a side effect of editing a department.
    *
    * <p>This is intentionally <strong>not</strong> a global invariant. Deliberate deactivation is
-   * supported via the user/role-edit path ({@link #setAdminDepartments} with an empty set), which is
-   * permitted by design; this guard only stops the department-edit path from triggering it
+   * supported via the user/role-edit path ({@link #setAdminDepartments} with an empty set), which
+   * is permitted by design; this guard only stops the department-edit path from triggering it
    * unintentionally.
    *
    * @param currentAdmins the admins currently assigned to this department

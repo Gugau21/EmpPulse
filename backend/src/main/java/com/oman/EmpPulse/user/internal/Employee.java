@@ -1,6 +1,8 @@
 package com.oman.EmpPulse.user.internal;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 @Entity
 @Table(name = "employee")
@@ -19,7 +21,8 @@ public class Employee {
   @Column(name = "vacation_balance", nullable = false)
   private int vacationBalance;
 
-  @Column(name = "active", nullable = false, insertable = false, updatable = false)
+  @Generated(event = {EventType.INSERT, EventType.UPDATE})
+  @Column(name = "active", nullable = false)
   private boolean active;
 
   public Employee() {}

@@ -5,13 +5,12 @@ import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.user.api.Admin;
 import com.oman.EmpPulse.user.api.AdminProfileResponse;
 import com.oman.EmpPulse.user.api.EmployeeProfileResponse;
+import com.oman.EmpPulse.user.api.UserApi;
 import com.oman.EmpPulse.user.api.UserCredential;
-import com.oman.EmpPulse.user.api.UserDirectory;
 import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.api.UserResponse;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,10 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class UserService implements UserDirectory {
+public class UserService implements UserApi {
 
   private final UserRepository userRepository;
   private final AdminRepository adminRepository;
@@ -51,86 +51,10 @@ public class UserService implements UserDirectory {
         .map(user -> new UserCredential(user.getId(), user.getPassHash(), authoritiesFor(user)));
   }
 
-  private List<String> authoritiesFor(User user) {
-    List<String> authorities = new ArrayList<>();
-    if (user.isOwner()) {
-      authorities.add("OWNER");
-    }
-    if (adminRepository.findById(user.getId()).isPresent()) {
-      authorities.add("ADMIN");
-    }
-    if (employeeRepository.findById(user.getId()).isPresent()) {
-      authorities.add("EMPLOYEE");
-    }
-    return authorities;
-  }
-
   @Override
   @Transactional(readOnly = true)
   public UserResponse loadProfile(Long userId) {
     return buildUserResponse(userId);
-  }
-
-  @Transactional(readOnly = true)
-  public UserResponse getUserProfile(Long userId, Long callerUserId, boolean callerIsOwner) {
-    if (!callerIsOwner) {
-      Optional<Employee> employeeOpt = employeeRepository.findById(userId);
-      Employee employee =
-          employeeOpt.orElseThrow(
-              () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
-      if (employee.getDepartmentId() == null) {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-      }
-      verifyAdminOverseesDepartment(callerUserId, employee.getDepartmentId());
-    }
-
-    userRepository
-        .findById(userId)
-        .filter(u -> u.isActive())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-    return buildUserResponse(userId);
-  }
-
-  private UserResponse buildUserResponse(Long userId) {
-    User user =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-    AdminProfileResponse adminProfile = null;
-    Optional<Admin> adminOpt = adminRepository.findById(userId);
-    if (adminOpt.isPresent()) {
-      Admin admin = adminOpt.get();
-      List<Long> deptIds = admin.getDepartments().stream().map(Department::getId).toList();
-      adminProfile = new AdminProfileResponse(admin.getId(), deptIds);
-    }
-
-    EmployeeProfileResponse employeeProfile = null;
-    Optional<Employee> employeeOpt = employeeRepository.findById(userId);
-    if (employeeOpt.isPresent()) {
-      Employee employee = employeeOpt.get();
-      String deptName = null;
-      if (employee.getDepartmentId() != null) {
-        deptName = departmentApi.findNameById(employee.getDepartmentId()).orElse(null);
-      }
-      employeeProfile =
-          new EmployeeProfileResponse(
-              employee.getId(),
-              employee.getDepartmentId(),
-              deptName,
-              employee.getVacationBalance());
-    }
-
-    return new UserResponse(
-        user.getId(),
-        user.getName(),
-        user.getSurname(),
-        user.getEmail(),
-        user.isOwner(),
-        new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name()),
-        employeeProfile,
-        adminProfile);
   }
 
   @Override
@@ -151,32 +75,127 @@ public class UserService implements UserDirectory {
     userRepository.save(user);
   }
 
+  private User getUserById(Long userId) {
+    return userRepository
+        .findById(userId)
+        .filter(User::isActive)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+  }
+
+  private List<String> authoritiesFor(User user) {
+    List<String> authorities = new ArrayList<>();
+    if (user.isOwner()) {
+      authorities.add("OWNER");
+    }
+    if (adminRepository.findById(user.getId()).filter(Admin::isActive).isPresent()) {
+      authorities.add("ADMIN");
+    }
+    if (employeeRepository.findById(user.getId()).filter(Employee::isActive).isPresent()) {
+      authorities.add("EMPLOYEE");
+    }
+    return authorities;
+  }
+
+  @Transactional(readOnly = true)
+  public UserResponse getUserProfile(Long userId, Long callerId, boolean callerIsOwner) {
+    if (!callerIsOwner) {
+      Optional<Employee> employeeOpt = employeeRepository.findById(userId);
+      Employee employee =
+          employeeOpt.orElseThrow(
+              () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+      if (!employee.isActive()) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+      }
+      verifyAdminOverseesDepartment(callerId, employee.getDepartmentId());
+    }
+
+    return buildUserResponse(userId);
+  }
+
+  private UserResponse buildUserResponse(Long userId) {
+    User user = getUserById(userId);
+
+    AdminProfileResponse adminProfile = null;
+    Optional<Admin> adminOpt = adminRepository.findById(userId);
+    if (adminOpt.isPresent()) {
+      Admin admin = adminOpt.get();
+      if (admin.isActive()) {
+        List<Long> deptIds = admin.getDepartments().stream().map(Department::getId).toList();
+        adminProfile = new AdminProfileResponse(admin.getId(), deptIds);
+      }
+    }
+
+    EmployeeProfileResponse employeeProfile = null;
+    Optional<Employee> employeeOpt = employeeRepository.findById(userId);
+    if (employeeOpt.isPresent()) {
+      Employee employee = employeeOpt.get();
+      if (employee.isActive()) {
+        String deptName = departmentApi.findNameById(employee.getDepartmentId()).orElse(null);
+        employeeProfile =
+            new EmployeeProfileResponse(
+                employee.getId(),
+                employee.getDepartmentId(),
+                deptName,
+                employee.getVacationBalance());
+      }
+    }
+
+    return new UserResponse(
+        user.getId(),
+        user.getName(),
+        user.getSurname(),
+        user.getEmail(),
+        user.isOwner(),
+        new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name()),
+        employeeProfile,
+        adminProfile);
+  }
+
   @Transactional
   public void softDeleteUser(Long userId) {
-    User user =
-        userRepository
-            .findById(userId)
-            .filter(u -> u.isActive())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
+    User user = getUserById(userId);
     if (user.isOwner()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Owner cannot be deleted");
     }
 
-    // user.setDeleted(true); TODO: properly detach users admin and employee roles.
-    // userRepository.save(user);
+    Optional<Employee> employeeOpt = employeeRepository.findById(userId);
+    if (employeeOpt.isPresent()) {
+      Employee employee = employeeOpt.get();
+      employee.setDepartmentId(null);
+    }
+
+    Optional<Admin> adminOpt = adminRepository.findById(userId);
+    if (adminOpt.isPresent()) {
+      departmentApi.setAdminDepartments(userId, List.of());
+    }
   }
 
   @Transactional
-  public void createUser(UserCreateRequest req, boolean callerIsOwner) {
-    boolean wantsAdmin = req.getAdminDepartmentIds() != null;
+  public void createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
+    boolean reqToCreateEmployee = (req.getEmployeeDepartmentId() != null);
+    boolean reqToCreateAdmin =
+        (req.getAdminDepartmentIds() != null) && !req.getAdminDepartmentIds().isEmpty();
 
-    if (!callerIsOwner && wantsAdmin) {
+    requireUserFields(req);
+
+    if (!reqToCreateAdmin && !reqToCreateEmployee) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Cannot create an account with no role");
+    }
+
+    if (!callerIsOwner && reqToCreateAdmin) {
       throw new ResponseStatusException(
           HttpStatus.FORBIDDEN, "Admins can only create employee accounts");
     }
 
-    if (userRepository.findByEmail(req.getEmail()).isPresent()) {
+    if (reqToCreateEmployee) {
+      requireDepartmentExists(req.getEmployeeDepartmentId());
+      if (!callerIsOwner) {
+        verifyAdminOverseesDepartment(callerUserId, req.getEmployeeDepartmentId());
+      }
+    }
+
+    if (userRepository.findByEmailAndActiveTrue(req.getEmail()).isPresent()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
     }
 
@@ -190,25 +209,63 @@ public class UserService implements UserDirectory {
             UserLanguage.en);
     userRepository.save(user);
 
-    if (req.getEmployeeDepartmentId() != null) {
+    if (reqToCreateEmployee) {
       requireVacationBalanceForCreation(req.getYearlyVacationBalance());
       Employee employee =
           new Employee(
-              user.getId(), req.getEmployeeDepartmentId(),
-              null, req.getYearlyVacationBalance()); //TODO: replace 0 with WeekScheduleId
+              user.getId(),
+              req.getEmployeeDepartmentId(),
+              null,
+              req.getYearlyVacationBalance()); // WeekScheduleId to be added
       employeeRepository.save(employee);
     }
 
-    if (wantsAdmin) {
+    if (reqToCreateAdmin) {
       Admin admin = new Admin(user.getId());
       adminRepository.save(admin);
       departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
     }
   }
 
+  private void requireUserFields(UserCreateRequest req) {
+    if (!StringUtils.hasText(req.getName())
+        || !StringUtils.hasText(req.getSurname())
+        || !StringUtils.hasText(req.getEmail())
+        || !StringUtils.hasText(req.getPassword())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Name, surname, email and password are required");
+    }
+  }
+
   @Transactional
   public void updateUser(
       Long userId, UserUpdateRequest req, Long callerUserId, boolean callerIsOwner) {
+
+    verifyAdminNotEditingUserData(req, callerIsOwner);
+    User user = getUserById(userId);
+    if (callerIsOwner) {
+      updateUserSpecificData(user, req);
+    }
+
+    boolean hasAdminUpdate = req.getAdminDepartmentIds() != null;
+    boolean hasEmployeeUpdate =
+        req.hasChangeEmployeeDepartment() || (req.getYearlyVacationBalance() != null);
+
+    if (hasEmployeeUpdate) {
+      handleEmployeeUpdate(userId, req, callerUserId, callerIsOwner);
+    }
+
+    if (hasAdminUpdate) {
+      Optional<Admin> adminOpt = adminRepository.findById(userId);
+      if (adminOpt.isPresent()) {
+        updateAdminSpecificData(adminOpt.get(), req);
+      } else if (!req.getAdminDepartmentIds().isEmpty()) {
+        attachAdminToUser(userId, req);
+      }
+    }
+  }
+
+  private void verifyAdminNotEditingUserData(UserUpdateRequest req, boolean callerIsOwner) {
     if (!callerIsOwner) {
       boolean hasOwnerOnlyFields =
           req.getName() != null
@@ -222,50 +279,9 @@ public class UserService implements UserDirectory {
             "Admins can only update employee department and vacation balance");
       }
     }
-
-    User user =
-        userRepository
-            .findById(userId)
-            .filter(u -> u.isActive())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-    updateUserSpecificInfo(user, req);
-
-    boolean hasEmployeeUpdate =
-        req.isChangeEmployeeDepartment() || req.getYearlyVacationBalance() != null;
-    if (hasEmployeeUpdate) {
-      Optional<Employee> employeeOpt = employeeRepository.findById(userId);
-      if (employeeOpt.isPresent()) {
-        updateEmployeeSpecificInfo(employeeOpt.get(), req, callerUserId, callerIsOwner);
-      } else if (callerIsOwner && canCreateEmployee(req)) {
-        attachEmployeeToUser(userId, req);
-      }
-    }
-
-    if (req.getAdminDepartmentIds() != null) {
-      Optional<Admin> adminOpt = adminRepository.findById(userId);
-      if (adminOpt.isPresent()) {
-        updateAdminSpecificInfo(adminOpt.get(), req);
-      } else if (callerIsOwner && !req.getAdminDepartmentIds().isEmpty()) {
-        attachAdminToUser(userId, req);
-      }
-    }
   }
 
-  private void verifyAdminOverseesDepartment(Long callerUserId, Long departmentId) {
-    Admin callerAdmin =
-        adminRepository
-            .findById(callerUserId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Not an admin"));
-    boolean oversees =
-        callerAdmin.getDepartments().stream().anyMatch(d -> d.getId().equals(departmentId));
-    if (!oversees) {
-      throw new ResponseStatusException(
-          HttpStatus.FORBIDDEN, "Admin does not oversee target department");
-    }
-  }
-
-  private void updateUserSpecificInfo(User user, UserUpdateRequest req) {
+  private void updateUserSpecificData(User user, UserUpdateRequest req) {
     if (req.getName() != null) {
       user.setName(req.getName());
     }
@@ -284,11 +300,37 @@ public class UserService implements UserDirectory {
     userRepository.save(user);
   }
 
-  private void updateEmployeeSpecificInfo(
+  private void handleEmployeeUpdate(
+      Long userId, UserUpdateRequest req, Long callerUserId, boolean callerIsOwner) {
+    Optional<Employee> employeeOpt = employeeRepository.findById(userId);
+    if (employeeOpt.isEmpty()) {
+      if (callerIsOwner && canUpdateUserToAttachEmployee(req)) {
+        attachEmployeeToUser(userId, req);
+      }
+      return;
+    }
+
+    Employee employee = employeeOpt.get();
+    boolean attemptingToAssignRealDepartment =
+        req.hasChangeEmployeeDepartment() && (req.getEmployeeDepartmentId() != null);
+
+    if (attemptingToAssignRealDepartment) {
+      requireDepartmentExists(req.getEmployeeDepartmentId());
+    }
+    if (!callerIsOwner) {
+      verifyAdminOverseesDepartment(callerUserId, employee.getDepartmentId());
+      if (attemptingToAssignRealDepartment) {
+        verifyAdminOverseesDepartment(callerUserId, req.getEmployeeDepartmentId());
+      }
+    }
+    updateEmployeeSpecificData(employee, req, callerUserId, callerIsOwner);
+  }
+
+  private void updateEmployeeSpecificData(
       Employee employee, UserUpdateRequest req, Long callerUserId, boolean callerIsOwner) {
-    if (req.isChangeEmployeeDepartment()) {
-      Long newDepartmentId = req.getEmployeeDepartmentId(); // null = detach
-      authorizeDepartmentChange(newDepartmentId, callerUserId, callerIsOwner);
+    if (req.hasChangeEmployeeDepartment()) {
+      Long newDepartmentId = req.getEmployeeDepartmentId();
+      authorizeDepartmentDetach(newDepartmentId, callerIsOwner);
       employee.setDepartmentId(newDepartmentId);
     }
     if (req.getYearlyVacationBalance() != null) {
@@ -297,8 +339,7 @@ public class UserService implements UserDirectory {
     employeeRepository.save(employee);
   }
 
-  private void authorizeDepartmentChange(
-      Long newDepartmentId, Long callerUserId, boolean callerIsOwner) {
+  private void authorizeDepartmentDetach(Long newDepartmentId, boolean callerIsOwner) {
     if (callerIsOwner) {
       return;
     }
@@ -306,11 +347,10 @@ public class UserService implements UserDirectory {
       throw new ResponseStatusException(
           HttpStatus.FORBIDDEN, "Only the owner can detach an employee from a department");
     }
-    verifyAdminOverseesDepartment(callerUserId, newDepartmentId);
   }
 
-  private boolean canCreateEmployee(UserUpdateRequest req) {
-    if (!req.isChangeEmployeeDepartment() || req.getEmployeeDepartmentId() == null) {
+  private boolean canUpdateUserToAttachEmployee(UserUpdateRequest req) {
+    if (req.getEmployeeDepartmentId() == null) {
       return false;
     }
     requireVacationBalanceForCreation(req.getYearlyVacationBalance());
@@ -318,20 +358,17 @@ public class UserService implements UserDirectory {
   }
 
   private void attachEmployeeToUser(Long userId, UserUpdateRequest req) {
+    requireDepartmentExists(req.getEmployeeDepartmentId());
     Employee employee =
         new Employee(
-            userId, req.getEmployeeDepartmentId(), null, req.getYearlyVacationBalance()); //TODO: replace 0 with WeekScheduleId
+            userId,
+            req.getEmployeeDepartmentId(),
+            null,
+            req.getYearlyVacationBalance()); // WeekScheduleId to be added
     employeeRepository.save(employee);
   }
 
-  private void requireVacationBalanceForCreation(Integer vacationBalance) {
-    if (vacationBalance == null) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Yearly vacation balance is required when creating an employee");
-    }
-  }
-
-  private void updateAdminSpecificInfo(Admin admin, UserUpdateRequest req) {
+  private void updateAdminSpecificData(Admin admin, UserUpdateRequest req) {
     departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
   }
 
@@ -339,5 +376,33 @@ public class UserService implements UserDirectory {
     Admin admin = new Admin(userId);
     adminRepository.save(admin);
     departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
+  }
+
+  private void requireDepartmentExists(Long departmentId) {
+    if (departmentApi.findNameById(departmentId).isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found");
+    }
+  }
+
+  private void verifyAdminOverseesDepartment(Long callerUserId, Long departmentId) {
+    Admin callerAdmin =
+        adminRepository
+            .findById(callerUserId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Not an admin"));
+    boolean oversees =
+        callerAdmin.getDepartments().stream().anyMatch(d -> d.getId().equals(departmentId));
+    if (!oversees) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Admin does not oversee target department");
+    }
+  }
+
+  private void requireVacationBalanceForCreation(Integer vacationBalance) {
+    if (vacationBalance == null) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          "Yearly vacation balance is required when creating an employee. "
+              + "You can set 0 if you do not wish to track Vacation Balance.");
+    }
   }
 }

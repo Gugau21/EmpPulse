@@ -7,9 +7,9 @@ import com.oman.EmpPulse.user.dto.EmployeeListResponse;
 import com.oman.EmpPulse.user.dto.EmployeeSummaryResponse;
 import java.util.List;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -49,23 +49,21 @@ public class EmployeeService implements EmployeeApi {
 
   private EmployeeListResponse toListResponse(List<Employee> employees) {
     List<EmployeeSummaryResponse> items =
-        employees.stream()
-            .map(this::toEmployeeSummaryResponse)
-            .toList();
+        employees.stream().map(this::toEmployeeSummaryResponse).toList();
     return new EmployeeListResponse(items);
   }
 
   private EmployeeSummaryResponse toEmployeeSummaryResponse(Employee employee) {
-    User user = userRepository.findById(employee.getId())
-        .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
+    User user =
+        userRepository
+            .findById(employee.getId())
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
     String deptName = departmentApi.findNameById(employee.getDepartmentId()).orElse(null);
 
     return new EmployeeSummaryResponse(
-        employee.getId(),
-        user.getName(),
-        user.getSurname(),
-        employee.getDepartmentId(),
-        deptName);
+        employee.getId(), user.getName(), user.getSurname(), employee.getDepartmentId(), deptName);
   }
 }

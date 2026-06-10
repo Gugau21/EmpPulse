@@ -4,6 +4,8 @@ import com.oman.EmpPulse.department.api.Department;
 import jakarta.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 
 @Entity
 @Table(name = "admin")
@@ -13,7 +15,8 @@ public class Admin {
   @Column(name = "id", nullable = false)
   private Long id;
 
-  @Column(name = "active", nullable = false, insertable = false, updatable = false)
+  @Generated(event = {EventType.INSERT, EventType.UPDATE})
+  @Column(name = "active", nullable = false)
   private boolean active;
 
   @ManyToMany(mappedBy = "admins")
