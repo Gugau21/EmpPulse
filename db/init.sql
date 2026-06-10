@@ -175,6 +175,20 @@ CREATE INDEX ON schedule_block (set_id);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 
+CREATE TABLE bonus_vacation_days(
+	id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+  days integer NOT NULL,
+  employee_id integer NOT NULL
+                      REFERENCES employee (id)
+                      ON DELETE CASCADE ON UPDATE CASCADE,
+  year_ integer NOT NULL
+);
+
+CREATE INDEX ON bonus_vacation_days (employee_id, year_);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+
 CREATE OR REPLACE FUNCTION sync_user_active()
 RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
