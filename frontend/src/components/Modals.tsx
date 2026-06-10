@@ -11,6 +11,7 @@ import EditDepartmentModal from './modals/EditDepartmentModal'
 import AddDefaultWorkingHoursModal from './modals/AddDefaultWorkingHoursModal'
 import EditEmployeeModal from './modals/EditEmployeeModal'
 import EditHoursModal from './modals/EditHoursModal'
+import EditLeaveModal from './modals/EditLeaveModal'
 
 interface Props {
   activeModal: ModalType
@@ -87,6 +88,13 @@ const Modals: React.FC<Props> = ({
           activeModal === 'EDIT_LEAVE' ||
           activeModal === 'CREATE_REQUEST') && (
           <LeaveModal activeModal={activeModal} closeModal={closeModal} />
+        )}
+
+        {activeModal === 'EDIT_LEAVE_FORM' && (
+          <EditLeaveModal 
+            closeModal={closeModal} 
+            selectedRequest={selectedRequest} 
+          />
         )}
 
         {activeModal === 'ACCEPT_REQUEST' && (
