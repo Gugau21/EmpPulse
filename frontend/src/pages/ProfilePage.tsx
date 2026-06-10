@@ -2,61 +2,11 @@ import React, { useState } from 'react'
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import type { Employee } from '../types'
 import type { OutletContext } from '../components/AppLayout'
-import { MOCK_LOGGED_HOURS, MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
+import { MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
 import { landingPath } from '../utils/guards'
 import blackTriangleIcon from '../assets/black_triangle.png'
-
-// Feature flag for the legacy accordion-style logged-hours block at the bottom of
-// this file. The main "Logged hours" section above is currently always rendered.
-const SHOW_HOURS_TABLES = false
-
-// Accordion + table layout for the legacy (flagged) logged-hours section.
-interface HoursAccordionProps {
-  title: string
-  expanded: boolean
-  onToggle: () => void
-  chevron: React.ReactNode
-  className?: string
-}
-
-const HoursAccordion: React.FC<HoursAccordionProps> = ({
-  title,
-  expanded,
-  onToggle,
-  chevron,
-  className = ''
-}) => (
-  <div className={`accordion-section ${className}`}>
-    <h3 className="department-title" onClick={onToggle}>
-      {title} <span className={`chevron ${expanded ? 'expanded' : ''}`}>{chevron}</span>
-    </h3>
-
-    {expanded && (
-      <div className="card-box table-box">
-        <div className="table-header-grid">
-          <span>Date</span>
-          <span>Start</span>
-          <span>End</span>
-          <span>Duration</span>
-        </div>
-        {MOCK_LOGGED_HOURS.map((log, i) => (
-          <div key={i} className="table-row-grid">
-            <span>{log.date}</span>
-            <span>{log.start}</span>
-            <span>{log.end}</span>
-            <span>{log.duration}</span>
-          </div>
-        ))}
-        <div className="table-footer-actions">
-          <button className="btn-tiny-pill">show more</button>
-          <button className="btn-tiny-pill">show less</button>
-        </div>
-      </div>
-    )}
-  </div>
-)
 
 // A single row in the "Logged hours" table. The clickable/edit wiring is
 // identical across rows, so it lives here to avoid duplicating the wrapper.
@@ -360,22 +310,6 @@ const ProfilePage: React.FC = () => {
             </>
           )}
         </div>
-      )}
-
-      {/* Legacy "Logged hours" accordion, gated by SHOW_HOURS_TABLES. */}
-      {SHOW_HOURS_TABLES && (
-        <HoursAccordion
-          title="Logged hours"
-          expanded={loggedExpanded}
-          onToggle={() => setLoggedExpanded(!loggedExpanded)}
-          chevron={
-            <img
-              src={blackTriangleIcon}
-              alt=""
-              className={`chevron ${loggedExpanded ? 'expanded' : ''}`}
-            />
-          }
-        />
       )}
     </div>
   )

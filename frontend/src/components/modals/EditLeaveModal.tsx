@@ -58,9 +58,16 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
       setValidationError('A reason is required for personal leave.')
       return
     }
+    // The API expects a numeric id; bail out clearly rather than sending
+    // `/api/leave-requests/NaN` if the id is ever non-numeric.
+    const id = Number(selectedRequest.id)
+    if (!Number.isInteger(id)) {
+      setValidationError('This leave request has an invalid identifier and cannot be updated.')
+      return
+    }
     updateLeave.mutate(
       {
-        id: Number(selectedRequest.id),
+        id,
         payload: {
           type: LEAVE_TYPE_TO_API[leaveType],
           paid: paymentType === 'Paid',
