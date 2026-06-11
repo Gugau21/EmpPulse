@@ -5,8 +5,11 @@ import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import com.oman.EmpPulse.user.dto.EmployeeListResponse;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -41,6 +44,13 @@ public class EmployeeService implements EmployeeApi {
   @Transactional(readOnly = true)
   public Optional<EmployeeSummaryResponse> findSummaryById(Long employeeId) {
     return employeeRepository.findById(employeeId).map(this::toEmployeeSummaryResponse);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Map<Long, EmployeeSummaryResponse> findSummariesByIds(Collection<Long> employeeIds) {
+    return employeeRepository.findAllById(employeeIds).stream()
+        .collect(Collectors.toMap(Employee::getId, this::toEmployeeSummaryResponse));
   }
 
   @Transactional(readOnly = true)

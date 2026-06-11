@@ -1,10 +1,13 @@
 package com.oman.EmpPulse.leave.internal;
 
 import com.oman.EmpPulse.leave.dto.LeaveCreateRequest;
+import com.oman.EmpPulse.leave.dto.LeaveListResponse;
 import com.oman.EmpPulse.leave.dto.LeaveResponse;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
+import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,6 +94,42 @@ public class LeaveService {
                 adminReviewerId,
                 req.getAdminComment()));
     return toLeaveResponse(leave, employee);
+  }
+
+  /**
+   * Lists the leave requests visible to the caller, sorted by last change, newest first.
+   *
+   * <p>Admins see the requests of employees in departments they oversee plus their own (the owner
+   * sees all); everyone else (employees) sees only their own.
+   *
+   * @param callerId the user ID of the authenticated caller
+   * @param isAdmin whether the caller has the ADMIN authority
+   * @return the visible leave requests
+   */
+  @Transactional(readOnly = true)
+  public LeaveListResponse listLeaveRequests(Long callerId, boolean isAdmin) {
+    List<Long> deptIds = isAdmin ? adminApi.departmentIdsForAdminUser(callerId) : List.of();
+    List<Leave> leaves =
+        deptIds.isEmpty()
+            ? leaveRepository.findAllByEmployeeIdOrderByUpdatedAtDesc(callerId)
+            : leaveRepository.findVisibleToAdmin(callerId, deptIds);
+
+    List<Long> employeeIds = leaves.stream().map(Leave::getEmployeeId).distinct().toList();
+    Map<Long, EmployeeSummaryResponse> summaries = employeeApi.findSummariesByIds(employeeIds);
+
+    List<LeaveResponse> items =
+        leaves.stream()
+            .map(
+                leave -> {
+                  EmployeeSummaryResponse employee = summaries.get(leave.getEmployeeId());
+                  if (employee == null) {
+                    throw new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency");
+                  }
+                  return toLeaveResponse(leave, employee);
+                })
+            .toList();
+    return new LeaveListResponse(items);
   }
 
   private void ensureRequiredFieldsPresent(LeaveCreateRequest req) {
