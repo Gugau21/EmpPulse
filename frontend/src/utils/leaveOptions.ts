@@ -8,3 +8,12 @@ export const LEAVE_TYPE_FILTERS: { value: LeaveRequest['type']; label: string }[
   { value: 'Sick', label: 'Sick' },
   { value: 'Personal', label: 'Personal' }
 ]
+
+// The request lifecycle states, offered as a second "Filter by status" dropdown on
+// the request lists. APPROVED is shown as "Accepted" to match the in-app wording.
+export const LEAVE_STATUS_FILTERS: { value: LeaveRequest['status']; label: string }[] = [
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'APPROVED', label: 'Accepted' },
+  { value: 'REJECTED', label: 'Rejected' },
+  { value: 'CANCELLED', label: 'Cancelled' }
+]

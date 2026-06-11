@@ -14,9 +14,17 @@ interface FilterDropdownProps {
   options: readonly FilterOption[]
   selected: string[]
   onChange: (selected: string[]) => void
+  // Button caption. Defaults to "Filter by"; pages that show several dropdowns
+  // side by side pass a specific label (e.g. "Filter by status") to tell them apart.
+  label?: string
 }
 
-const FilterDropdown: React.FC<FilterDropdownProps> = ({ options, selected, onChange }) => {
+const FilterDropdown: React.FC<FilterDropdownProps> = ({
+  options,
+  selected,
+  onChange,
+  label = 'Filter by'
+}) => {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -36,7 +44,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ options, selected, onCh
   return (
     <div className="filter-dropdown" ref={ref}>
       <button type="button" className="filter-toggle" onClick={() => setOpen(o => !o)}>
-        Filter by{selected.length ? ` (${selected.length})` : ''}
+        {label}{selected.length ? ` (${selected.length})` : ''}
       </button>
 
       {open && (
