@@ -29,7 +29,8 @@ export interface Employee {
   email?: string
   department?: string
   role?: string
-  status?: 'Personal' | 'Sick' | 'Vacation' | 'Working'
+  // "Working" is not a status — an employee is working when this is absent.
+  status?: 'Personal' | 'Sick' | 'Vacation'
   untilDate?: string
 }
 

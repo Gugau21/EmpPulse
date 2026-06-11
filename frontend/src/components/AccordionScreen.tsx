@@ -13,6 +13,9 @@ interface AccordionScreenProps {
   onToggle: () => void
   children: React.ReactNode
   footer?: React.ReactNode
+  // The page's "Filter by" control, rendered in the header. Each page owns its
+  // own filter state, so the dropdown is passed in rather than built here.
+  filter?: React.ReactNode
 }
 
 const AccordionScreen: React.FC<AccordionScreenProps> = ({
@@ -21,14 +24,13 @@ const AccordionScreen: React.FC<AccordionScreenProps> = ({
   expanded,
   onToggle,
   children,
-  footer
+  footer,
+  filter
 }) => (
   <div className="screen-container">
     <header className="page-header">
       <h2>{pageTitle}</h2>
-      <div className="filter-dropdown">
-        <span>Filter by</span>...
-      </div>
+      {filter}
     </header>
 
     <div className="accordion-section">
