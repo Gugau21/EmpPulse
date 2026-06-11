@@ -5,6 +5,7 @@ import type { OutletContext } from '../components/AppLayout'
 import { MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
+import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { landingPath } from '../utils/guards'
 import blackTriangleIcon from '../assets/black_triangle.png'
 
@@ -76,6 +77,15 @@ const ProfilePage: React.FC = () => {
   const employeeProfile = targetUser?.employeeProfile ?? null
   const adminDepartmentIds = targetUser?.adminProfile?.departmentIds ?? []
 
+  // Resolve admin department IDs to real names. The list is gated to owners/admins
+  // and an admin only receives their own departments, so a name may be missing
+  // (e.g. an admin viewing another admin) — fall back to the ID in that case.
+  const { data: departments } = useDepartmentsList()
+  const departmentNamesById = new Map((departments ?? []).map((d) => [d.id, d.name]))
+  const adminDepartmentNames = adminDepartmentIds.map(
+    (id) => departmentNamesById.get(id) ?? `Department ${id}`
+  )
+
   // In employee mode, don't render the profile shell until the user is loaded:
   // the banner would otherwise show empty fields and the action buttons would
   // pass a null employee to their modals. Covers a malformed :userId, the
@@ -130,7 +140,7 @@ const ProfilePage: React.FC = () => {
               {!isOwnerPersonal && adminDepartmentIds.length > 0 && (
                 <div className="banner-stacked-detail">
                   <label>Administrator of:</label>
-                  <span>{`Department ${adminDepartmentIds.join(', ')}`}</span>
+                  <span>{adminDepartmentNames.join(', ')}</span>
                 </div>
               )}
             </div>

@@ -1,47 +1,15 @@
 import React, { useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import type { LeaveRequest } from '../types'
 import type { OutletContext } from '../components/AppLayout'
 import AccordionScreen from '../components/AccordionScreen'
+import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
+import { MY_REQUESTS } from '../utils/mockData'
 import trashIcon from '../assets/trash-icon.png.webp'
-
-// Placeholder leave records: there is no leave/requests API yet, so this page
-// renders static mock data to exercise the layout. Replace with a real query
-// (e.g. GET /api/me/leave-requests) once the leave feature is wired up.
-const myRecordsData: LeaveRequest[] = [
-  {
-    id: '1',
-    employeeName: 'Me',
-    type: 'Vacation',
-    dateRange: '20.06.2026 - 30.06.2026',
-    status: 'PENDING'
-  },
-  {
-    id: '2',
-    employeeName: 'Me',
-    type: 'Personal',
-    dateRange: '28.05.2026 - 30.05.2026',
-    status: 'REJECTED'
-  },
-  {
-    id: '3',
-    employeeName: 'Me',
-    type: 'Sick',
-    dateRange: '17.03.2026 - 21.03.2026',
-    status: 'APPROVED'
-  },
-  {
-    id: '4',
-    employeeName: 'Me',
-    type: 'Vacation',
-    dateRange: '20.12.2025 - 26.12.2025',
-    status: 'CANCELLED'
-  }
-]
 
 const MyRequestsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const [expanded, setExpanded] = useState(true)
+  const { visibleRequests, filterNode } = useRequestStatusFilter(MY_REQUESTS)
 
   return (
     <AccordionScreen
@@ -49,6 +17,7 @@ const MyRequestsScreen: React.FC = () => {
       accordionTitle="Last requests"
       expanded={expanded}
       onToggle={() => setExpanded(!expanded)}
+      filter={filterNode}
       footer={
         <div className="center-action">
           <button className="primary-btn" onClick={() => openModal('ADD_LEAVE')}>
@@ -58,7 +27,7 @@ const MyRequestsScreen: React.FC = () => {
       }
     >
       <div className="card-box list-box">
-        {myRecordsData.map(req => (
+        {visibleRequests.map(req => (
           <div
             key={req.id}
             className={`employee-row hover-slide-container clickable ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}

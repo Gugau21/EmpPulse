@@ -215,14 +215,53 @@ select {
 }
 
 .filter-dropdown {
+  position: relative;
+}
+
+/* "Filter by" button — keeps the look of the old static pill. */
+.filter-toggle {
   background-color: #eee;
   padding: 8px 16px;
+  border: none;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  font-family: Poppins, sans-serif;
   font-size: 14px;
   color: #666;
+  cursor: pointer;
+}
+
+/* Checkbox list that drops below the button; selecting tags keeps it open. */
+.filter-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  min-width: 160px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #444;
+  cursor: pointer;
+}
+
+.filter-option:hover {
+  background-color: #f4f4f4;
+}
+
+.filter-option input {
   cursor: pointer;
 }
 
@@ -345,7 +384,7 @@ select {
 
 /* Dashed border variants for unassigned / pending items */
 .dashed-row {
-  background-color: transparent;
+  background-color: #f0f1f3;
   border: 2px dashed #a0a0a0;
 }
 
