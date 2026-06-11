@@ -34,7 +34,7 @@ const RequestManagerPage: React.FC = () => {
           {visibleRequests.map(req => (
             <div
               key={req.id}
-              className="employee-row clickable dashed-row"
+              className={`employee-row clickable ${req.status === 'PENDING' ? 'dashed-row' : ''}`}
               onClick={() => openModal('ACCEPT_REQUEST', undefined, req)}
             >
               <span className="emp-name">{req.employeeName}</span>
