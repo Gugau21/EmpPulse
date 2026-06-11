@@ -65,9 +65,15 @@ public class UserService implements UserApi {
   @Override
   @Transactional
   public void ensureOwnerExists(String email, String rawPassword) {
-    if (userRepository.existsByIsOwnerTrue()) {
-      return;
+    User owner =
+        userRepository.findByIsOwnerTrue().orElseGet(() -> createOwnerUser(email, rawPassword));
+    if (adminRepository.findById(owner.getId()).isEmpty()) {
+      adminRepository.save(new Admin(owner.getId()));
     }
+    departmentApi.setAdminDepartments(owner.getId(), departmentApi.findAllDepartmentIds());
+  }
+
+  private User createOwnerUser(String email, String rawPassword) {
     User user =
         new User(
             "System",
@@ -77,7 +83,7 @@ public class UserService implements UserApi {
             UserTheme.light,
             UserLanguage.en);
     user.setOwner(true);
-    userRepository.save(user);
+    return userRepository.save(user);
   }
 
   private User getUserById(Long userId) {
@@ -92,7 +98,9 @@ public class UserService implements UserApi {
     if (user.isOwner()) {
       authorities.add("OWNER");
     }
-    if (adminRepository.findById(user.getId()).filter(Admin::isActive).isPresent()) {
+    boolean activeAdmin =
+        adminRepository.findById(user.getId()).filter(Admin::isActive).isPresent();
+    if (user.isOwner() || activeAdmin) { // .isOwner() in case there are no departments
       authorities.add("ADMIN");
     }
     if (employeeRepository.findById(user.getId()).filter(Employee::isActive).isPresent()) {
@@ -122,7 +130,7 @@ public class UserService implements UserApi {
 
     AdminProfileResponse adminProfile = null;
     Optional<Admin> adminOpt = adminRepository.findById(userId);
-    if (adminOpt.isPresent()) {
+    if (adminOpt.isPresent() && !user.isOwner()) {
       Admin admin = adminOpt.get();
       if (admin.isActive()) {
         List<Long> deptIds = admin.getDepartments().stream().map(Department::getId).toList();
@@ -200,9 +208,7 @@ public class UserService implements UserApi {
 
     if (reqToCreateEmployee) {
       requireDepartmentExists(req.getEmployeeDepartmentId());
-      if (!callerIsOwner) {
-        verifyAdminOverseesDepartment(callerUserId, req.getEmployeeDepartmentId());
-      }
+      verifyAdminOverseesDepartment(callerUserId, req.getEmployeeDepartmentId());
     }
 
     if (userRepository.findByEmailAndActiveTrue(req.getEmail()).isPresent()) {

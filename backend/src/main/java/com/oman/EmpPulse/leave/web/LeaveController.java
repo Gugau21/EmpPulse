@@ -19,16 +19,13 @@ public class LeaveController {
     this.leaveService = leaveService;
   }
 
-  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN', 'EMPLOYEE')")
+  @PreAuthorize("hasAnyAuthority('ADMIN', 'EMPLOYEE')")
   @PostMapping
   public ResponseEntity<?> createLeaveRequest(
       @RequestBody LeaveCreateRequest req, Authentication authentication) {
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(
             leaveService.createLeaveRequest(
-                req,
-                AuthUtils.getUserId(authentication),
-                AuthUtils.isAdmin(authentication),
-                AuthUtils.isOwner(authentication)));
+                req, AuthUtils.getUserId(authentication), AuthUtils.isAdmin(authentication)));
   }
 }

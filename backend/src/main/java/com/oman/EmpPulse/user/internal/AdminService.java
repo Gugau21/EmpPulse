@@ -36,6 +36,14 @@ public class AdminService implements AdminApi {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public Optional<Admin> getOwnerAdmin() {
+    return userRepository
+        .findByIsOwnerTrue()
+        .flatMap(owner -> adminRepository.findById(owner.getId()));
+  }
+
+  @Override
   public AdminSummaryResponse toAdminSummaryResponse(Admin admin) {
     User user =
         userRepository
@@ -73,8 +81,12 @@ public class AdminService implements AdminApi {
 
   @Transactional(readOnly = true)
   public AdminListResponse getAllAdmins() {
+    Long ownerId = userRepository.findByIsOwnerTrue().map(User::getId).orElse(null);
     List<AdminSummaryResponse> items =
-        adminRepository.findByActiveTrue().stream().map(this::toAdminSummaryResponse).toList();
+        adminRepository.findByActiveTrue().stream()
+            .filter(admin -> !admin.getId().equals(ownerId))
+            .map(this::toAdminSummaryResponse)
+            .toList();
     return new AdminListResponse(items);
   }
 }

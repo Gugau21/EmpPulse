@@ -28,25 +28,19 @@ public class LeaveService {
    *
    * <p>The target is the employee identified by {@code req.employeeId} (required); the on-behalf
    * path is taken when that id differs from {@code callerId}. Creating on behalf is allowed only
-   * for the owner or an admin who oversees the target's department, and such requests are always
-   * auto-approved.
+   * for an admin who oversees the target's department (the owner oversees every department).
    *
-   * <p>Self requests are created as {@code pending}, unless the caller is an admin who oversees the
-   * department their own employee profile is in; then they are auto-approved.
-   *
-   * <p>Auto-approved requests store the caller as {@code adminReviewerId} when the caller actually
-   * oversees the department. The owner has no admin row, so owner-created requests keep a null
-   * reviewer (see the TODO below).
+   * <p>A request is auto-approved when filed by an admin who oversees the employee's department
+   * (including on-behalf creation and an admin's own request in a department they manage), and that
+   * admin is recorded as the reviewer; an employee's self-request stays {@code pending}.
    *
    * @param req the request payload; employeeId selects the target employee
    * @param callerId the user ID of the authenticated caller
    * @param isAdmin whether the caller has the ADMIN authority; only gates {@code adminComment}
-   * @param isOwner whether the caller has the OWNER authority
    * @return the created leave request
    */
   @Transactional
-  public LeaveResponse createLeaveRequest(
-      LeaveCreateRequest req, Long callerId, boolean isAdmin, boolean isOwner) {
+  public LeaveResponse createLeaveRequest(LeaveCreateRequest req, Long callerId, boolean isAdmin) {
     ensureRequiredFieldsPresent(req);
     EmployeeSummaryResponse employee =
         employeeApi
@@ -55,7 +49,7 @@ public class LeaveService {
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
     requireActive(employee);
 
-    if (req.getAdminComment() != null && !isAdmin && !isOwner) {
+    if (req.getAdminComment() != null && !isAdmin) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "adminComment is allowed only for administrators");
     }
@@ -76,16 +70,12 @@ public class LeaveService {
     boolean onBehalf = !req.getEmployeeId().equals(callerId);
     boolean adminOversees = adminApi.overseesDepartment(callerId, employee.getDepartmentId());
 
-    if (onBehalf && !isOwner && !adminOversees) { // can remove isOwner after migration
+    if (onBehalf && !adminOversees) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this employee");
     }
 
-    // TODO(simplify): onBehalf here implies the caller is the owner or an overseeing admin, so it
-    // always approves.
-    LeaveStatus status = adminOversees || onBehalf ? LeaveStatus.approved : LeaveStatus.pending;
-    // TODO: Migration — the owner has no admin row, so the admin_reviewer_id FK forbids storing
-    // their id. Once the owner becomes an admin of every department, oversees becomes true for
-    // them and this naturally stores callerId.
+    // adminOversees here means an Admin who manages himself
+    LeaveStatus status = adminOversees ? LeaveStatus.approved : LeaveStatus.pending;
     Long adminReviewerId = adminOversees ? callerId : null;
 
     Leave leave =

@@ -44,11 +44,6 @@ public class EmployeeService implements EmployeeApi {
   }
 
   @Transactional(readOnly = true)
-  public EmployeeListResponse getAllEmployees() {
-    return toListResponse(employeeRepository.findByActiveTrue());
-  }
-
-  @Transactional(readOnly = true)
   public EmployeeListResponse getEmployeesForAdmin(Long id) {
     List<Long> deptIds = adminApi.departmentIdsForAdminUser(id);
     return toListResponse(employeeRepository.findByDepartmentIdIn(deptIds));
