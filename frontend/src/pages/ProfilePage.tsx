@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import type { Employee } from '../types'
 import type { OutletContext } from '../components/AppLayout'
 import { MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
@@ -85,6 +85,14 @@ const ProfilePage: React.FC = () => {
   const adminDepartmentNames = adminDepartmentIds.map(
     (id) => departmentNamesById.get(id) ?? `Department ${id}`
   )
+
+  // Viewing your own id in employee mode (e.g. an admin who appears in the
+  // employees list and clicks themselves) is really the personal profile —
+  // send it to /profile so the own-profile view (log out, change password)
+  // renders instead of the read-only employee one.
+  if (!isMyProfile && currentUser != null && employeeId === currentUser.id) {
+    return <Navigate to="/profile" replace />
+  }
 
   // In employee mode, don't render the profile shell until the user is loaded:
   // the banner would otherwise show empty fields and the action buttons would
