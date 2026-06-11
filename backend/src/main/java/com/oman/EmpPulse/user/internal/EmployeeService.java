@@ -3,9 +3,10 @@ package com.oman.EmpPulse.user.internal;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
+import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import com.oman.EmpPulse.user.dto.EmployeeListResponse;
-import com.oman.EmpPulse.user.dto.EmployeeSummaryResponse;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,12 @@ public class EmployeeService implements EmployeeApi {
     return employeeRepository.existsByDepartmentId(departmentId);
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<EmployeeSummaryResponse> findSummaryById(Long employeeId) {
+    return employeeRepository.findById(employeeId).map(this::toEmployeeSummaryResponse);
+  }
+
   @Transactional(readOnly = true)
   public EmployeeListResponse getAllEmployees() {
     return toListResponse(employeeRepository.findByActiveTrue());
@@ -64,6 +71,11 @@ public class EmployeeService implements EmployeeApi {
     String deptName = departmentApi.findNameById(employee.getDepartmentId()).orElse(null);
 
     return new EmployeeSummaryResponse(
-        employee.getId(), user.getName(), user.getSurname(), employee.getDepartmentId(), deptName);
+        employee.getId(),
+        user.getName(),
+        user.getSurname(),
+        employee.getDepartmentId(),
+        deptName,
+        employee.isActive());
   }
 }
