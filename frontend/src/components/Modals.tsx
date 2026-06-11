@@ -96,9 +96,7 @@ const Modals: React.FC<Props> = ({
           <LogHoursModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
         )}
 
-        {(activeModal === 'ADD_LEAVE' ||
-          activeModal === 'EDIT_LEAVE' ||
-          activeModal === 'CREATE_REQUEST') && (
+        {(activeModal === 'ADD_LEAVE' || activeModal === 'CREATE_REQUEST') && (
           <LeaveModal activeModal={activeModal} closeModal={closeModal} />
         )}
 

@@ -7,8 +7,6 @@ import blackTriangleIcon from '../assets/black_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useAuth } from '../context/useAuth'
-import FilterDropdown from '../components/FilterDropdown'
-import { STATUS_FILTERS, WORKING_TAG, mockEmployeeStatus } from '../utils/mockData'
 
 // Employees grouped by their department NAME (admins are sourced separately from
 // the departments list). Employees with no department are not shown — this page
@@ -45,24 +43,16 @@ const EmployeesPage: React.FC = () => {
   } = useDepartmentsList()
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({})
   const [search, setSearch] = useState('')
-  // Selected status tags; empty means "show everyone". Each person's status is a
-  // deterministic mock derived from their id (see mockEmployeeStatus) since the
-  // employees API carries no status field yet.
-  const [statusFilter, setStatusFilter] = useState<string[]>([])
 
   const isLoading = employeesLoading || departmentsLoading
   const isError = employeesError || departmentsError
   const error = employeesErr ?? departmentsErr
 
   const query = search.trim().toLowerCase()
-  const matchesSearch = (surname: string) => !query || surname.toLowerCase().includes(query)
-  // A person with no leave is "Working"; that tag matches the absence of a status.
-  const matchesStatus = (id: string) =>
-    !statusFilter.length || statusFilter.includes(mockEmployeeStatus(id) ?? WORKING_TAG)
-  const matchesPerson = (id: string, surname: string) => matchesSearch(surname) && matchesStatus(id)
+  const matchesPerson = (surname: string) => !query || surname.toLowerCase().includes(query)
 
   const employeesByDept = groupByDepartment(
-    employees.filter(emp => matchesPerson(emp.id, emp.surname ?? ''))
+    employees.filter(emp => matchesPerson(emp.surname ?? ''))
   )
 
   const toggle = (deptId: number) => setCollapsed(prev => ({ ...prev, [deptId]: !prev[deptId] }))
@@ -76,7 +66,6 @@ const EmployeesPage: React.FC = () => {
     deleteEmployee?: Employee
   ) => {
     const deletable = isOwner && deleteEmployee != null
-    const status = mockEmployeeStatus(person.id)
     return (
       <div
         key={`${keyPrefix}-${person.id}`}
@@ -85,9 +74,6 @@ const EmployeesPage: React.FC = () => {
       >
         <span className="emp-name">{[person.name, person.surname].filter(Boolean).join(' ')}</span>
         <div className="emp-meta">
-          {/* Mock status tag — drives the "Filter by" testing until a real
-              leave/status API exists. A working employee has no badge. */}
-          {status && <span className={`badge badge-${status.toLowerCase()}`}>{status}</span>}
           {/* Removing an employee from a department is owner-only. */}
           {deletable && (
             <button
@@ -120,11 +106,6 @@ const EmployeesPage: React.FC = () => {
               maxLength={50}
             />
           </div>
-          <FilterDropdown
-            options={STATUS_FILTERS}
-            selected={statusFilter}
-            onChange={setStatusFilter}
-          />
         </div>
       </header>
 
@@ -135,9 +116,7 @@ const EmployeesPage: React.FC = () => {
         const expanded = !collapsed[dept.id]
         // A user who is both an admin and an employee of this department appears
         // in both lists by design.
-        const admins = dept.admins.filter(a =>
-          matchesPerson(String(a.user.id), a.user.surname ?? '')
-        )
+        const admins = dept.admins.filter(a => matchesPerson(a.user.surname ?? ''))
         const deptEmployees = employeesByDept.get(dept.name) ?? []
         return (
           <div className="accordion-section" key={dept.id}>

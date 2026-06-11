@@ -1,16 +1,11 @@
 import React from 'react'
-import blackTriangleIcon from '../assets/black_triangle.png'
 
-// The requests pages (My requests / Requests) share the same outer shell: a
-// page header with a "Filter by" dropdown, and a single collapsible accordion
-// section. Kept in one place so the two pages don't drift (and don't trip the
-// copy-paste linter). Each page supplies its own list as `children` plus an
-// optional `footer` (e.g. a "+ create request" button) below the accordion.
+// The requests pages (My requests / Requests) share the same outer shell: a page
+// header with a "Filter by" dropdown, the list itself, and an optional `footer`
+// (e.g. a "+ create request" button) below it. Kept in one place so the two pages
+// don't drift (and don't trip the copy-paste linter).
 interface AccordionScreenProps {
   pageTitle: string
-  accordionTitle: string
-  expanded: boolean
-  onToggle: () => void
   children: React.ReactNode
   footer?: React.ReactNode
   // The page's "Filter by" control, rendered in the header. Each page owns its
@@ -20,9 +15,6 @@ interface AccordionScreenProps {
 
 const AccordionScreen: React.FC<AccordionScreenProps> = ({
   pageTitle,
-  accordionTitle,
-  expanded,
-  onToggle,
   children,
   footer,
   filter
@@ -33,18 +25,7 @@ const AccordionScreen: React.FC<AccordionScreenProps> = ({
       {filter}
     </header>
 
-    <div className="accordion-section">
-      <h3 className="department-title" onClick={onToggle}>
-        {accordionTitle}{' '}
-        <img
-          src={blackTriangleIcon}
-          alt={`Toggle ${accordionTitle.toLowerCase()}`}
-          className={`chevron ${expanded ? 'expanded' : ''}`}
-        />
-      </h3>
-
-      {expanded && children}
-    </div>
+    {children}
 
     {footer}
   </div>

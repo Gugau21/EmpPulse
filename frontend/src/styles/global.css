@@ -978,6 +978,49 @@ select {
   margin: -8px 0 16px;
 }
 
+/* Type-ahead employee picker in the admin "Create request" modal. The menu drops
+   directly under the text input, so the label is the positioning context. */
+.employee-picker {
+  position: relative;
+}
+
+.autocomplete-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
+  margin-top: 4px;
+}
+
+.autocomplete-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.autocomplete-option:hover {
+  background-color: #f4f4f4;
+}
+
+.autocomplete-empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #888;
+}
+
 /* Request detail summary shown in the accept-request modal */
 .request-summary-box {
   background-color: #f8f9fa;

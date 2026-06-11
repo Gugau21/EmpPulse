@@ -1,5 +1,8 @@
-import React, { useState } from 'react'
-import type { ModalType } from '../../types'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import type { LeaveRequest, ModalType } from '../../types'
+import { useAuth } from '../../context/useAuth'
+import { useEmployeesList } from '../../hooks/useEmployeesList'
+import { useUserDetail } from '../../hooks/useUserDetail'
 
 interface Props {
   activeModal: ModalType
@@ -8,56 +11,189 @@ interface Props {
 
 const REASON_MAX = 300
 
+// Today as a local ISO `yyyy-mm-dd`, used as the `min` for the date pickers when
+// the caller may not back-date (employees filing their own request).
+function todayISO(): string {
+  const now = new Date()
+  const off = now.getTimezoneOffset()
+  return new Date(now.getTime() - off * 60_000).toISOString().slice(0, 10)
+}
+
+// Type-ahead picker the admin/owner uses to choose whose request they're filing.
+// The list it draws from is already scoped server-side: an admin receives only
+// employees in the departments they oversee, the owner receives everyone — so no
+// extra filtering by role is needed here, just narrowing by the typed text.
+interface EmployeePickerProps {
+  selectedId: number | null
+  onSelect: (id: number | null) => void
+}
+
+const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect }) => {
+  const { data: employees = [] } = useEmployeesList()
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLLabelElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onClickAway = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickAway)
+    return () => document.removeEventListener('mousedown', onClickAway)
+  }, [open])
+
+  const q = query.trim().toLowerCase()
+  const matches = q
+    ? employees.filter(e => `${e.name} ${e.surname}`.toLowerCase().includes(q))
+    : employees
+
+  return (
+    <label className="employee-picker" ref={ref}>
+      Employee
+      <input
+        type="text"
+        placeholder="Type a name"
+        value={query}
+        maxLength={101}
+        onFocus={() => setOpen(true)}
+        onChange={e => {
+          setQuery(e.target.value)
+          setOpen(true)
+          // Editing the text invalidates any prior pick until one is chosen again.
+          if (selectedId !== null) onSelect(null)
+        }}
+      />
+      {open && (
+        <div className="autocomplete-menu">
+          {matches.length ? (
+            matches.map(e => (
+              <button
+                type="button"
+                key={e.id}
+                className="autocomplete-option"
+                onClick={() => {
+                  onSelect(Number(e.id))
+                  setQuery(`${e.name} ${e.surname}`)
+                  setOpen(false)
+                }}
+              >
+                {e.name} {e.surname}
+              </button>
+            ))
+          ) : (
+            <div className="autocomplete-empty">No matching employees</div>
+          )}
+        </div>
+      )}
+    </label>
+  )
+}
+
 const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
+  const { currentUser, isOwner, isAdmin } = useAuth()
+  // CREATE_REQUEST is the admin/owner flow (filing on behalf of an employee);
+  // ADD_LEAVE is the caller filing their own request.
+  const isCreate = activeModal === 'CREATE_REQUEST'
+
+  const [paymentType, setPaymentType] = useState('Paid')
+  const [leaveType, setLeaveType] = useState<LeaveRequest['type']>('Vacation')
+  const [employeeId, setEmployeeId] = useState<number | null>(null)
+  const [from, setFrom] = useState('')
+  const [till, setTill] = useState('')
   const [reason, setReason] = useState('')
+  const [validationError, setValidationError] = useState<string | null>(null)
+
+  // Admins and the owner may back-date a request; an employee filing their own
+  // cannot, so their pickers are floored at today.
+  const canSetPastDates = isOwner || isAdmin
+  const minDate = useMemo(() => (canSetPastDates ? undefined : todayISO()), [canSetPastDates])
+
+  // The selected employee's vacation balance (admin flow); the caller's own
+  // balance feeds the self flow. Treated as "days left" to match the profile page.
+  const { data: selectedEmployee } = useUserDetail(isCreate ? employeeId : null)
+  const vacationDaysLeft = isCreate
+    ? selectedEmployee?.employeeProfile?.yearlyVacationBalance
+    : currentUser?.employeeProfile?.yearlyVacationBalance
+
+  // The balance hint only makes sense for a vacation request, and in the admin
+  // flow only once an employee (whose balance we show) has been chosen.
+  const showVacationHint =
+    leaveType === 'Vacation' && (!isCreate || employeeId !== null)
+
+  const handleSubmit = () => {
+    setValidationError(null)
+    if (isCreate && employeeId === null) {
+      setValidationError('Select an employee.')
+      return
+    }
+    if (!from || !till) {
+      setValidationError('Both dates are required.')
+      return
+    }
+    if (from > till) {
+      setValidationError('The "From" date must not be after the "Till" date.')
+      return
+    }
+    if (!canSetPastDates && minDate && from < minDate) {
+      setValidationError('Leave cannot start in the past.')
+      return
+    }
+    // Reason is mandatory for personal leave for every role; optional otherwise.
+    if (leaveType === 'Personal' && !reason.trim()) {
+      setValidationError('A reason is required for personal leave.')
+      return
+    }
+    // TODO: POST /api/leave-requests once the create endpoint is wired up.
+    closeModal()
+  }
 
   return (
     <div className="modal-form">
-      <h2>
-        {activeModal === 'EDIT_LEAVE'
-          ? 'Edit leave'
-          : activeModal === 'CREATE_REQUEST'
-            ? 'Create request'
-            : 'Add request'}
-      </h2>
-      {activeModal === 'CREATE_REQUEST' && (
-        <>
-          <label>
-            First name
-            <input type="text" maxLength={50} />
-          </label>
-          <label>
-            Surname
-            <input type="text" maxLength={50} />
-          </label>
-        </>
-      )}
+      <h2>{isCreate ? 'Create request' : 'Add request'}</h2>
+
+      {isCreate && <EmployeePicker selectedId={employeeId} onSelect={setEmployeeId} />}
+
       <label>
         Type of leave (by payment)
-        <select>
-          <option>Paid</option>
-          <option>Unpaid</option>
+        <select value={paymentType} onChange={e => setPaymentType(e.target.value)}>
+          <option value="Paid">Paid</option>
+          <option value="Unpaid">Unpaid</option>
         </select>
       </label>
+
       <label>
         Type of leave
-        <select>
-          <option>Vacation</option>
-          <option>Sick</option>
-          <option>Personal</option>
+        <select
+          value={leaveType}
+          onChange={e => setLeaveType(e.target.value as LeaveRequest['type'])}
+        >
+          <option value="Vacation">Vacation</option>
+          <option value="Sick">Sick</option>
+          <option value="Personal">Personal</option>
         </select>
       </label>
-      <div className="balance-hint">If vacation: you have 15 days left</div>
+
+      {showVacationHint && (
+        <div className="balance-hint">
+          {vacationDaysLeft != null
+            ? `You have ${vacationDaysLeft} vacation days left`
+            : 'Vacation balance unavailable'}
+        </div>
+      )}
+
       <label>
         From
-        <input type="date" />
+        <input type="date" min={minDate} value={from} onChange={e => setFrom(e.target.value)} />
       </label>
+
       <label>
         Till
-        <input type="date" />
+        <input type="date" min={minDate} value={till} onChange={e => setTill(e.target.value)} />
       </label>
+
       <label>
-        Reason
+        Reason{leaveType === 'Personal' ? ' *' : ''}
         <textarea
           rows={2}
           maxLength={REASON_MAX}
@@ -66,8 +202,11 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
         />
         <span className="char-counter">{REASON_MAX - reason.length} characters left</span>
       </label>
-      <button className="primary-btn full-width" onClick={closeModal}>
-        {activeModal === 'EDIT_LEAVE' ? 'edit leave' : '+ create request'}
+
+      {validationError && <p className="form-error">{validationError}</p>}
+
+      <button className="primary-btn full-width" onClick={handleSubmit}>
+        + create request
       </button>
     </div>
   )
