@@ -3,13 +3,19 @@ import { useOutletContext } from 'react-router-dom'
 import type { OutletContext } from '../components/AppLayout'
 import AccordionScreen from '../components/AccordionScreen'
 import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
-import type { LeaveRequest } from '../types'
+import { useLeaveRequests } from '../hooks/useLeaveRequests'
+import { useAuth } from '../context/useAuth'
 import trashIcon from '../assets/trash-icon.png.webp'
 
 const MyRequestsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
-  // TODO: wire to GET /api/leave-requests (the caller's own requests).
-  const myRequests: LeaveRequest[] = []
+  const { currentUser } = useAuth()
+  const { data: requests = [], isLoading, isError, error } = useLeaveRequests()
+  // The shared query may also carry requests this user oversees (when they are
+  // an admin/owner too); this page is only the caller's own, keyed by employee id.
+  const myEmployeeId = currentUser?.employeeProfile?.employeeId
+  const myRequests =
+    myEmployeeId != null ? requests.filter(req => req.employeeId === myEmployeeId) : []
   const { visibleRequests, filterNode } = useRequestStatusFilter(myRequests)
 
   return (
@@ -24,6 +30,11 @@ const MyRequestsScreen: React.FC = () => {
         </div>
       }
     >
+      {isLoading && <p className="muted">Loading requests…</p>}
+      {isError && (
+        <p className="form-error">{error?.message ?? 'Failed to load requests.'}</p>
+      )}
+
       {visibleRequests.length > 0 && (
         <div className="card-box list-box">
           {visibleRequests.map(req => (

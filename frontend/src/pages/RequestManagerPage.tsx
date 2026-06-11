@@ -1,15 +1,16 @@
 import React from 'react'
 import { useOutletContext } from 'react-router-dom'
 import type { OutletContext } from '../components/AppLayout'
-import type { LeaveRequest } from '../types'
 import AccordionScreen from '../components/AccordionScreen'
 import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
+import { useLeaveRequests } from '../hooks/useLeaveRequests'
 
 const RequestManagerPage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
-  // TODO: wire to GET /api/leave-requests (pending requests in overseen departments).
-  const pendingRequests: LeaveRequest[] = []
-  const { visibleRequests, filterNode } = useRequestStatusFilter(pendingRequests)
+  // The server already scopes this to what the caller manages: an admin gets
+  // their overseen departments' requests (plus their own); the owner gets all.
+  const { data: requests = [], isLoading, isError, error } = useLeaveRequests()
+  const { visibleRequests, filterNode } = useRequestStatusFilter(requests)
 
   return (
     <AccordionScreen
@@ -23,6 +24,11 @@ const RequestManagerPage: React.FC = () => {
         </div>
       }
     >
+      {isLoading && <p className="muted">Loading requests…</p>}
+      {isError && (
+        <p className="form-error">{error?.message ?? 'Failed to load requests.'}</p>
+      )}
+
       {visibleRequests.length > 0 && (
         <div className="card-box list-box">
           {visibleRequests.map(req => (

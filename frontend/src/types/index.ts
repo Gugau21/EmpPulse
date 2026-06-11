@@ -36,6 +36,9 @@ export interface Employee {
 
 export interface LeaveRequest {
   id: string
+  // The id of the employee the request belongs to. Lets "My requests" narrow the
+  // shared list to the caller's own rows (an admin/owner is served everyone's).
+  employeeId: number
   employeeName: string
   type: 'Vacation' | 'Personal' | 'Sick'
   dateRange: string

@@ -1,4 +1,4 @@
-import type { MeUser, Department, DepartmentAdmin, Employee } from '../types'
+import type { MeUser, Department, DepartmentAdmin, Employee, LeaveRequest } from '../types'
 
 // Abort a request that hasn't responded in this long so a hung backend surfaces as
 // a retryable failure rather than an indefinite spinner. React Query then retries
@@ -253,10 +253,93 @@ export interface LeaveRequestUpdatePayload {
   reason?: string | null
 }
 
+// POST /api/leave-requests body (LeaveCreateRequest in the API contract). The
+// wire enum is lower-cased to match the server's LeaveType; dates are ISO
+// yyyy-mm-dd. reason is required server-side when type is personal; adminComment
+// is accepted only from administrators (filing on behalf of an employee).
+export interface LeaveRequestCreatePayload {
+  employeeId: number
+  type: 'vacation' | 'sick' | 'personal'
+  paid: boolean
+  startDate: string
+  endDate: string
+  reason?: string | null
+  adminComment?: string | null
+}
+
+// Raw item from GET /api/leave-requests (LeaveResponse). The wire enums are
+// lower-cased (the server serializes its LeaveType/LeaveStatus by name); the UI
+// uses display-cased types and upper-cased statuses, so both are mapped below.
+interface LeaveResponseDto {
+  id: number
+  employee: EmployeeSummaryDto & { active: boolean }
+  type: 'vacation' | 'sick' | 'personal'
+  paid: boolean
+  startDate: string
+  endDate: string
+  reason: string | null
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
+  adminReviewerId: number | null
+  adminComment: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+const LEAVE_TYPE_FROM_API: Record<LeaveResponseDto['type'], LeaveRequest['type']> = {
+  vacation: 'Vacation',
+  sick: 'Sick',
+  personal: 'Personal'
+}
+
+// ISO yyyy-mm-dd → the dd.mm.yyyy display the request rows and edit modal expect.
+function isoToDisplayDate(iso: string): string {
+  const [y, m, d] = iso.split('-')
+  return `${d}.${m}.${y}`
+}
+
+function mapLeaveResponse(dto: LeaveResponseDto): LeaveRequest {
+  return {
+    id: String(dto.id),
+    employeeId: dto.employee.id,
+    employeeName: `${dto.employee.name} ${dto.employee.surname}`,
+    type: LEAVE_TYPE_FROM_API[dto.type],
+    dateRange: `${isoToDisplayDate(dto.startDate)} - ${isoToDisplayDate(dto.endDate)}`,
+    status: dto.status.toUpperCase() as LeaveRequest['status'],
+    reason: dto.reason ?? undefined
+  }
+}
+
 export const leaveRequestService = {
+  // GET /api/leave-requests — the requests visible to the caller, scoped
+  // server-side by role: an employee receives only their own; an admin receives
+  // their own plus those of employees in departments they oversee; the owner
+  // receives everyone's. Mapped into the app's LeaveRequest shape.
+  list: async (signal?: AbortSignal): Promise<LeaveRequest[]> => {
+    const res = await apiRequest('/api/leave-requests', {
+      signal,
+      errorFallback: 'Failed to load leave requests.'
+    })
+    const data = await res.json()
+    const items = (data.items ?? []) as LeaveResponseDto[]
+    return items.map(mapLeaveResponse)
+  },
+
+  // POST /api/leave-requests — an employee files their own request (stays
+  // pending); an admin/owner may file on behalf of an employee in a department
+  // they oversee (auto-approved). The server rejects overlapping ranges (409).
+  create: async (payload: LeaveRequestCreatePayload): Promise<void> => {
+    await apiRequest('/api/leave-requests', {
+      method: 'POST',
+      body: payload,
+      errorFallback: 'Failed to create leave request.',
+      errorOverrides: {
+        409: 'This leave overlaps an existing request. Please choose different dates.'
+      }
+    })
+  },
+
   // PATCH /api/leave-requests/{id} — employees edit their own PENDING request;
-  // admins update any request in their departments in-place. The list/create/
-  // delete endpoints exist in the contract but aren't consumed by the UI yet.
+  // admins update any request in their departments in-place.
   update: async (id: number, payload: LeaveRequestUpdatePayload): Promise<void> => {
     await apiRequest(`/api/leave-requests/${id}`, {
       method: 'PATCH',

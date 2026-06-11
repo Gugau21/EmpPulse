@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import type { LeaveRequest, ModalType } from '../../types'
+import type { LeaveRequestCreatePayload } from '../../services/api'
 import { useAuth } from '../../context/useAuth'
 import { useEmployeesList } from '../../hooks/useEmployeesList'
 import { useUserDetail } from '../../hooks/useUserDetail'
+import { useCreateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 
 interface Props {
   activeModal: ModalType
@@ -10,6 +12,13 @@ interface Props {
 }
 
 const REASON_MAX = 300
+
+// The UI shows display-cased leave types; the API takes the lower-cased wire enum.
+const LEAVE_TYPE_TO_API: Record<LeaveRequest['type'], LeaveRequestCreatePayload['type']> = {
+  Vacation: 'vacation',
+  Sick: 'sick',
+  Personal: 'personal'
+}
 
 // Today as a local ISO `yyyy-mm-dd`, used as the `min` for the date pickers when
 // the caller may not back-date (employees filing their own request).
@@ -103,6 +112,7 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
   const [till, setTill] = useState('')
   const [reason, setReason] = useState('')
   const [validationError, setValidationError] = useState<string | null>(null)
+  const createLeave = useCreateLeaveRequest()
 
   // Admins and the owner may back-date a request; an employee filing their own
   // cannot, so their pickers are floored at today.
@@ -144,8 +154,23 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
       setValidationError('A reason is required for personal leave.')
       return
     }
-    // TODO: POST /api/leave-requests once the create endpoint is wired up.
-    closeModal()
+    // The target is the picked employee (admin flow) or the caller themselves.
+    const targetEmployeeId = isCreate ? employeeId : (currentUser?.employeeProfile?.employeeId ?? null)
+    if (targetEmployeeId == null) {
+      setValidationError('You do not have an employee profile to file a request for.')
+      return
+    }
+    createLeave.mutate(
+      {
+        employeeId: targetEmployeeId,
+        type: LEAVE_TYPE_TO_API[leaveType],
+        paid: paymentType === 'Paid',
+        startDate: from,
+        endDate: till,
+        reason: reason.trim() || null
+      },
+      { onSuccess: () => closeModal() }
+    )
   }
 
   return (
@@ -203,9 +228,15 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
         <span className="char-counter">{REASON_MAX - reason.length} characters left</span>
       </label>
 
-      {validationError && <p className="form-error">{validationError}</p>}
+      {(validationError || createLeave.error) && (
+        <p className="form-error">{validationError ?? createLeave.error?.message}</p>
+      )}
 
-      <button className="primary-btn full-width" onClick={handleSubmit}>
+      <button
+        className="primary-btn full-width"
+        onClick={handleSubmit}
+        disabled={createLeave.isPending}
+      >
         + create request
       </button>
     </div>
