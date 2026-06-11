@@ -38,9 +38,12 @@ const RequestManagerPage: React.FC = () => {
               onClick={() => openModal('ACCEPT_REQUEST', undefined, req)}
             >
               <span className="emp-name">{req.employeeName}</span>
+              <span className="date-span">{req.dateRange}</span>
               <div className="emp-meta">
                 <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
-                <span className="until-text">{req.dateRange}</span>
+                <span className={`status-label status-${req.status.toLowerCase()}`}>
+                  {req.status}
+                </span>
               </div>
             </div>
           ))}
