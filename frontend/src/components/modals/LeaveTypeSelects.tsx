@@ -8,7 +8,7 @@ interface Props {
   onLeaveTypeChange: (value: LeaveRequest['type']) => void
 }
 
-// The paid/unpaid and leave-kind pickers shared by the create (LeaveModal) and
+// The paid/unpaid and leave-kind pickers shared by the create (AddLeaveModal) and
 // edit (EditLeaveModal) forms. State lives in the parent form; this only renders
 // the two <select>s so both forms offer the same options in the same order.
 const LeaveTypeSelects: React.FC<Props> = ({

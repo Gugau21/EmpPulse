@@ -40,7 +40,17 @@ const MyRequestsScreen: React.FC = () => {
           <div
             key={req.id}
             className={`employee-row hover-slide-container clickable ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}
-            onClick={() => openModal('EDIT_LEAVE_FORM', undefined, req)}
+            onClick={() =>
+              openModal(
+                // Cancelled/rejected requests are final, so they open read-only;
+                // anything still actionable opens the editable form.
+                req.status === 'CANCELLED' || req.status === 'REJECTED'
+                  ? 'VIEW_LEAVE_FORM'
+                  : 'EDIT_LEAVE_FORM',
+                undefined,
+                req
+              )
+            }
           >
             <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
             <span className="date-span">{req.dateRange}</span>

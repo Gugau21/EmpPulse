@@ -84,6 +84,7 @@ export type ModalType =
   | 'ACCEPT_REQUEST'
   | 'ADD_REQUEST_FORM'
   | 'EDIT_LEAVE_FORM'
+  | 'VIEW_LEAVE_FORM'
   | 'DELETE_LEAVE'
   | 'CANCEL_LEAVE'
   | 'LOGOUT'

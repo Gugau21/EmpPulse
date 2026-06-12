@@ -94,11 +94,11 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect })
   )
 }
 
-const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
+const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
   const { currentUser, isOwner, isAdmin } = useAuth()
-  // CREATE_REQUEST is the admin/owner flow (filing on behalf of an employee);
-  // ADD_LEAVE is the caller filing their own request.
-  const isCreate = activeModal === 'CREATE_REQUEST'
+  // ADD_LEAVE is the caller filing their own request ("mine"); CREATE_REQUEST is
+  // the admin/owner flow, filing on behalf of another employee.
+  const isMine = activeModal === 'ADD_LEAVE'
 
   const [paymentType, setPaymentType] = useState('Paid')
   const [leaveType, setLeaveType] = useState<LeaveRequest['type']>('Vacation')
@@ -114,20 +114,20 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
   const canSetPastDates = isOwner || isAdmin
   const minDate = useMemo(() => (canSetPastDates ? undefined : todayISO()), [canSetPastDates])
 
-  // The selected employee's vacation balance (admin flow); the caller's own
+  // The selected employee's vacation balance (on-behalf flow); the caller's own
   // balance feeds the self flow. Treated as "days left" to match the profile page.
-  const { data: selectedEmployee } = useUserDetail(isCreate ? employeeId : null)
-  const vacationDaysLeft = isCreate
-    ? selectedEmployee?.employeeProfile?.yearlyVacationBalance
-    : currentUser?.employeeProfile?.yearlyVacationBalance
+  const { data: selectedEmployee } = useUserDetail(isMine ? null : employeeId)
+  const vacationDaysLeft = isMine
+    ? currentUser?.employeeProfile?.yearlyVacationBalance
+    : selectedEmployee?.employeeProfile?.yearlyVacationBalance
 
-  // The balance hint only makes sense for a vacation request, and in the admin
+  // The balance hint only makes sense for a vacation request, and in the on-behalf
   // flow only once an employee (whose balance we show) has been chosen.
-  const showVacationHint = leaveType === 'Vacation' && (!isCreate || employeeId !== null)
+  const showVacationHint = leaveType === 'Vacation' && (isMine || employeeId !== null)
 
   const handleSubmit = () => {
     setValidationError(null)
-    if (isCreate && employeeId === null) {
+    if (!isMine && employeeId === null) {
       setValidationError('Select an employee.')
       return
     }
@@ -148,10 +148,10 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
       setValidationError('A reason is required for personal leave.')
       return
     }
-    // The target is the picked employee (admin flow) or the caller themselves.
-    const targetEmployeeId = isCreate
-      ? employeeId
-      : (currentUser?.employeeProfile?.employeeId ?? null)
+    // The target is the caller themselves (self flow) or the picked employee.
+    const targetEmployeeId = isMine
+      ? (currentUser?.employeeProfile?.employeeId ?? null)
+      : employeeId
     if (targetEmployeeId == null) {
       setValidationError('You do not have an employee profile to file a request for.')
       return
@@ -171,9 +171,9 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
 
   return (
     <div className="modal-form">
-      <h2>{isCreate ? 'Create request' : 'Add request'}</h2>
+      <h2>{isMine ? 'Add request' : 'Create request'}</h2>
 
-      {isCreate && <EmployeePicker selectedId={employeeId} onSelect={setEmployeeId} />}
+      {!isMine && <EmployeePicker selectedId={employeeId} onSelect={setEmployeeId} />}
 
       <LeaveTypeSelects
         paymentType={paymentType}
@@ -226,4 +226,4 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
   )
 }
 
-export default LeaveModal
+export default AddLeaveModal

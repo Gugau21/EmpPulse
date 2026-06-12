@@ -4,7 +4,7 @@ import ConfirmModal from './modals/ConfirmModal'
 import AddEmployeeModal from './modals/AddEmployeeModal'
 import EditAdminsModal from './modals/EditAdminsModal'
 import LogHoursModal from './modals/LogHoursModal'
-import LeaveModal from './modals/LeaveModal'
+import AddLeaveModal from './modals/AddLeaveModal'
 import AcceptRequestModal from './modals/AcceptRequestModal'
 import AddDepartmentModal from './modals/AddDepartmentModal'
 import EditDepartmentModal from './modals/EditDepartmentModal'
@@ -12,6 +12,7 @@ import AddDefaultWorkingHoursModal from './modals/AddDefaultWorkingHoursModal'
 import EditEmployeeModal from './modals/EditEmployeeModal'
 import EditHoursModal from './modals/EditHoursModal'
 import EditLeaveModal from './modals/EditLeaveModal'
+import ViewLeaveModal from './modals/ViewLeaveModal'
 import ChangePasswordFormModal from './modals/ChangePasswordModal'
 
 interface Props {
@@ -99,7 +100,7 @@ const Modals: React.FC<Props> = ({
         )}
 
         {(activeModal === 'ADD_LEAVE' || activeModal === 'CREATE_REQUEST') && (
-          <LeaveModal activeModal={activeModal} closeModal={closeModal} />
+          <AddLeaveModal activeModal={activeModal} closeModal={closeModal} />
         )}
 
         {activeModal === 'EDIT_LEAVE_FORM' && (
@@ -112,6 +113,10 @@ const Modals: React.FC<Props> = ({
               previousModal === 'ACCEPT_REQUEST' ? () => openModal('ACCEPT_REQUEST') : undefined
             }
           />
+        )}
+
+        {activeModal === 'VIEW_LEAVE_FORM' && (
+          <ViewLeaveModal closeModal={closeModal} selectedRequest={selectedRequest} />
         )}
 
         {activeModal === 'ACCEPT_REQUEST' && (
