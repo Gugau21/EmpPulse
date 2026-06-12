@@ -320,6 +320,7 @@ function mapLeaveResponse(dto: LeaveResponseDto): LeaveRequest {
     employeeName: `${dto.employee.name} ${dto.employee.surname}`,
     type: LEAVE_TYPE_FROM_API[dto.type],
     startDate: dto.startDate,
+    endDate: dto.endDate,
     // When the request has never been edited the server leaves updatedAt null,
     // so fall back to its creation time as the "last edit".
     lastEditedAt: dto.updatedAt ?? dto.createdAt,

@@ -6,6 +6,7 @@ import { useEmployeesList } from '../../hooks/useEmployeesList'
 import { useUserDetail } from '../../hooks/useUserDetail'
 import { useCreateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import { useOutsideClick } from '../../hooks/useOutsideClick'
+import { todayISO } from '../../utils/date'
 import LeaveTypeSelects from './LeaveTypeSelects'
 
 interface Props {
@@ -14,14 +15,6 @@ interface Props {
 }
 
 const REASON_MAX = 300
-
-// Today as a local ISO `yyyy-mm-dd`, used as the `min` for the date pickers when
-// the caller may not back-date (employees filing their own request).
-function todayISO(): string {
-  const now = new Date()
-  const off = now.getTimezoneOffset()
-  return new Date(now.getTime() - off * 60_000).toISOString().slice(0, 10)
-}
 
 // Type-ahead picker the admin/owner uses to choose whose request they're filing.
 // The list it draws from is already scoped server-side: an admin receives only

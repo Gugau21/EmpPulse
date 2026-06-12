@@ -44,6 +44,9 @@ export interface LeaveRequest {
   // ISO yyyy-mm-dd start of the leave, kept alongside the display `dateRange`
   // so the request lists can sort by when the leave begins.
   startDate: string
+  // ISO yyyy-mm-dd end of the leave; with `startDate` it lets the lists bucket a
+  // request as current/future/past relative to today.
+  endDate: string
   // ISO timestamp of the last edit: the server's updatedAt, or its createdAt when
   // the request has never been edited. Lets the lists sort by most recently touched.
   lastEditedAt: string
