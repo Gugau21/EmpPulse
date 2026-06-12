@@ -101,8 +101,11 @@ export type ModalType =
 export type ModalPayload = Department | Employee
 
 // Shared signature for the openModal callback threaded through screens and modals.
+// `returnTo` records the modal to go back to, letting a modal opened from another
+// (e.g. the edit form launched from the accept/reject modal) show a back button.
 export type OpenModal = (
   modal: ModalType,
   payload?: ModalPayload,
-  requestObj?: LeaveRequest
+  requestObj?: LeaveRequest,
+  returnTo?: ModalType
 ) => void

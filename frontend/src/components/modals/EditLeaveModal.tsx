@@ -1,11 +1,16 @@
 import React, { useState } from 'react'
 import type { LeaveRequest } from '../../types'
 import type { ApiLeaveType } from '../../services/api'
+import { useAuth } from '../../context/useAuth'
+import { useUserDetail } from '../../hooks/useUserDetail'
 import { useUpdateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 
 interface Props {
   closeModal: () => void
   selectedRequest: LeaveRequest | null
+  // Present only when this form was opened from the accept/reject modal; renders a
+  // back arrow that returns there.
+  onBack?: () => void
 }
 
 // The UI shows display-cased leave types; the API takes the uppercase enum.
@@ -26,7 +31,7 @@ const formatDate = (dateStr?: string) => {
   return ''
 }
 
-const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
+const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }) => {
   const [startStr, endStr] = selectedRequest?.dateRange?.split(' - ') ?? []
 
   const [paymentType, setPaymentType] = useState('Paid')
@@ -36,6 +41,22 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
   const [reason, setReason] = useState(selectedRequest?.reason ?? '')
   const [validationError, setValidationError] = useState<string | null>(null)
   const updateLeave = useUpdateLeaveRequest()
+
+  // The vacation balance shown to the editor. When the request is the caller's
+  // own, the balance already lives on currentUser; otherwise only an admin/owner
+  // may fetch the target employee's detail (an employee can't read /api/users/{id}
+  // for someone else), so the lookup is gated on that.
+  const { currentUser, isOwner, isAdmin } = useAuth()
+  const requestEmployeeId = selectedRequest?.employeeId ?? null
+  const isOwnRequest =
+    currentUser?.employeeProfile != null &&
+    currentUser.employeeProfile.employeeId === requestEmployeeId
+  const { data: requestEmployee } = useUserDetail(
+    !isOwnRequest && (isOwner || isAdmin) ? requestEmployeeId : null
+  )
+  const vacationDaysLeft = isOwnRequest
+    ? currentUser?.employeeProfile?.yearlyVacationBalance
+    : requestEmployee?.employeeProfile?.yearlyVacationBalance
 
   const handleSubmit = () => {
     setValidationError(null)
@@ -82,7 +103,12 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
 
   return (
     <div className="modal-form">
-      <h2>Edit leave</h2>
+      {onBack && (
+        <button className="modal-back" onClick={onBack} aria-label="Go back">
+          ‹
+        </button>
+      )}
+      <h2>{'Edit request'}</h2>
 
       <label>
         Type of leave (by payment)
@@ -105,7 +131,11 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
       </label>
 
       {leaveType === 'Vacation' && (
-        <div className="balance-hint">If vacation: you have 15 days left</div>
+        <div className="balance-hint">
+          {vacationDaysLeft != null
+            ? `You have ${vacationDaysLeft} vacation days left`
+            : 'Vacation balance unavailable'}
+        </div>
       )}
 
       <label>
@@ -132,7 +162,7 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest }) => {
         onClick={handleSubmit}
         disabled={updateLeave.isPending}
       >
-        edit leave
+        {onBack ? 'edit and auto approve request' : 'edit request'}
       </button>
     </div>
   )

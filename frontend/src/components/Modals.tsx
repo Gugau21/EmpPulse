@@ -16,6 +16,7 @@ import ChangePasswordFormModal from './modals/ChangePasswordModal'
 
 interface Props {
   activeModal: ModalType
+  previousModal: ModalType
   openModal: OpenModal
   closeModal: () => void
   confirmModal: () => void
@@ -38,6 +39,7 @@ const CONFIRM_MODALS: ModalType[] = [
 
 const Modals: React.FC<Props> = ({
   activeModal,
+  previousModal,
   closeModal,
   confirmModal,
   selectedEmployee,
@@ -101,11 +103,25 @@ const Modals: React.FC<Props> = ({
         )}
 
         {activeModal === 'EDIT_LEAVE_FORM' && (
-          <EditLeaveModal closeModal={closeModal} selectedRequest={selectedRequest} />
+          <EditLeaveModal
+            closeModal={closeModal}
+            selectedRequest={selectedRequest}
+            // Only show a back arrow when this form was reached from the
+            // accept/reject modal, so it can return there.
+            onBack={
+              previousModal === 'ACCEPT_REQUEST'
+                ? () => openModal('ACCEPT_REQUEST')
+                : undefined
+            }
+          />
         )}
 
         {activeModal === 'ACCEPT_REQUEST' && (
-          <AcceptRequestModal closeModal={closeModal} selectedRequest={selectedRequest} />
+          <AcceptRequestModal
+            closeModal={closeModal}
+            selectedRequest={selectedRequest}
+            openModal={openModal}
+          />
         )}
 
         {activeModal === 'ADD_DEPARTMENT' && <AddDepartmentModal closeModal={closeModal} />}

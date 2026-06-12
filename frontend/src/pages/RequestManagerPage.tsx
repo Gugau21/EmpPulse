@@ -34,8 +34,22 @@ const RequestManagerPage: React.FC = () => {
           {visibleRequests.map(req => (
             <div
               key={req.id}
-              className={`employee-row clickable ${req.status === 'PENDING' ? 'dashed-row' : ''}`}
-              onClick={() => openModal('ACCEPT_REQUEST', undefined, req)}
+              className={`employee-row ${
+                req.status === 'PENDING'
+                  ? 'clickable dashed-row'
+                  : req.status === 'APPROVED'
+                    ? 'clickable'
+                    : ''
+              }`}
+              // Pending rows open the accept/reject modal; approved rows open the
+              // edit form directly. Other statuses aren't clickable.
+              onClick={
+                req.status === 'PENDING'
+                  ? () => openModal('ACCEPT_REQUEST', undefined, req)
+                  : req.status === 'APPROVED'
+                    ? () => openModal('EDIT_LEAVE_FORM', undefined, req)
+                    : undefined
+              }
             >
               <span className="emp-name">{req.employeeName}</span>
               <span className="date-span">{req.dateRange}</span>

@@ -23,6 +23,8 @@ const AppLayout: React.FC = () => {
   const location = useLocation()
 
   const [activeModal, setActiveModal] = useState<ModalType>(null)
+  // The modal a back button should return to, set when one modal opens another.
+  const [previousModal, setPreviousModal] = useState<ModalType>(null)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
   // Full department object passed into modals (e.g. EditAdmins seeds from .admins).
@@ -38,7 +40,7 @@ const AppLayout: React.FC = () => {
   const deleteDepartment = useDeleteDepartment()
   const deleteEmployee = useDeleteEmployee()
 
-  const openModal: OpenModal = (modal, deptOrEmp, requestObj) => {
+  const openModal: OpenModal = (modal, deptOrEmp, requestObj, returnTo) => {
     if (deptOrEmp) {
       // Departments carry an `admins` array; employees don't — discriminate on it.
       if ('admins' in deptOrEmp) {
@@ -48,6 +50,7 @@ const AppLayout: React.FC = () => {
       }
     }
     if (requestObj) setSelectedRequest(requestObj)
+    setPreviousModal(returnTo ?? null)
     setActiveModal(modal)
   }
 
@@ -79,6 +82,7 @@ const AppLayout: React.FC = () => {
 
       <Modals
         activeModal={activeModal}
+        previousModal={previousModal}
         openModal={openModal}
         confirmModal={async () => {
           if (activeModal === 'LOGOUT') {

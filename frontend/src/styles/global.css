@@ -822,6 +822,31 @@ select {
   color: #666;
 }
 
+.modal-back {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+}
+
+/* Small text-only action (e.g. "edit request" under the accept/reject buttons) */
+.link-btn {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: #5932ea;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Confirmation dialog (delete / logout / change password) */
 .modal-confirm {
   text-align: center;
