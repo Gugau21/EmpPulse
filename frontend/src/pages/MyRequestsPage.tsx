@@ -3,7 +3,11 @@ import { useOutletContext } from 'react-router-dom'
 import type { LeaveRequest } from '../types'
 import type { OutletContext } from '../components/AppLayout'
 import AccordionScreen from '../components/AccordionScreen'
-import trashIcon from '../assets/trash-icon.png.webp'
+import trashIcon from '../assets/bin_icon_dark.png'
+import trashIconLight from '../assets/bin_icon_light.png'
+import crossIcon from '../assets/cross_icon_dark.png'
+import crossIconLight from '../assets/cross_icon_light.png'
+import { useTheme } from '../hooks/useTheme'
 
 // Placeholder leave records: there is no leave/requests API yet, so this page
 // renders static mock data to exercise the layout. Replace with a real query
@@ -42,6 +46,7 @@ const myRecordsData: LeaveRequest[] = [
 const MyRequestsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const [expanded, setExpanded] = useState(true)
+  const { theme } = useTheme()
 
   return (
     <AccordionScreen
@@ -85,9 +90,19 @@ const MyRequestsScreen: React.FC = () => {
               title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
             >
               {req.status === 'APPROVED' ? (
-                '✕'
+                <img
+                  src={theme === 'dark' ? crossIconLight : crossIcon}
+                  alt="Delete"
+                  width={30}
+                  height={30}
+                />
               ) : (
-                <img src={trashIcon} alt="Delete" width={30} height={30} />
+                <img
+                  src={theme === 'dark' ? trashIconLight : trashIcon}
+                  alt="Delete"
+                  width={30}
+                  height={30}
+                />
               )}
             </button>
           </div>

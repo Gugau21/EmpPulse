@@ -1,5 +1,7 @@
 import React from 'react'
 import blackTriangleIcon from '../assets/black_triangle.png'
+import whiteTriangleIcon from '../assets/white_triangle.png'
+import { useTheme } from '../hooks/useTheme'
 
 // The requests pages (My requests / Requests) share the same outer shell: a
 // page header with a "Filter by" dropdown, and a single collapsible accordion
@@ -22,30 +24,34 @@ const AccordionScreen: React.FC<AccordionScreenProps> = ({
   onToggle,
   children,
   footer
-}) => (
-  <div className="screen-container">
-    <header className="page-header">
-      <h2>{pageTitle}</h2>
-      <div className="filter-dropdown">
-        <span>Filter by</span>...
+}) => {
+  const { theme } = useTheme()
+
+  return (
+    <div className="screen-container">
+      <header className="page-header">
+        <h2>{pageTitle}</h2>
+        <div className="filter-dropdown">
+          <span>Filter by</span>...
+        </div>
+      </header>
+
+      <div className="accordion-section">
+        <h3 className="department-title" onClick={onToggle}>
+          {accordionTitle}{' '}
+          <img
+            src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
+            alt={`Toggle ${accordionTitle.toLowerCase()}`}
+            className={`chevron ${expanded ? 'expanded' : ''}`}
+          />
+        </h3>
+
+        {expanded && children}
       </div>
-    </header>
 
-    <div className="accordion-section">
-      <h3 className="department-title" onClick={onToggle}>
-        {accordionTitle}{' '}
-        <img
-          src={blackTriangleIcon}
-          alt={`Toggle ${accordionTitle.toLowerCase()}`}
-          className={`chevron ${expanded ? 'expanded' : ''}`}
-        />
-      </h3>
-
-      {expanded && children}
+      {footer}
     </div>
-
-    {footer}
-  </div>
-)
+  )
+}
 
 export default AccordionScreen
