@@ -3,6 +3,7 @@ package com.oman.EmpPulse.leave.internal;
 import com.oman.EmpPulse.leave.dto.LeaveCreateRequest;
 import com.oman.EmpPulse.leave.dto.LeaveListResponse;
 import com.oman.EmpPulse.leave.dto.LeaveResponse;
+import com.oman.EmpPulse.leave.dto.LeaveResponseRequest;
 import com.oman.EmpPulse.leave.dto.LeaveUpdateRequest;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
@@ -189,6 +190,49 @@ public class LeaveService {
     ResolvedFields fields = resolveFields(req, leave);
     validateLeaveUpdate(fields, leave.getEmployeeId(), leave.getId());
     applyLeaveUpdate(leave, fields, req.getAdminComment(), adminOversees, callerId);
+    return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
+  }
+
+  /**
+   * Records an admin's decision on a pending leave request, setting its status to {@code approved}
+   * or {@code rejected} and stamping the caller as the reviewer.
+   *
+   * <p>Allowed only for an admin who oversees the employee's department (the owner oversees every
+   * department). Only {@code pending} requests can be responded to; any other status is a 409. An
+   * optional {@code adminComment} is attached when present.
+   *
+   * @param leaveRequestId the leave request ID to respond to
+   * @param req the decision payload; status must be {@code approved} or {@code rejected}
+   * @param callerId the user ID of the authenticated caller
+   * @return the updated leave request
+   */
+  @Transactional
+  public LeaveResponse respondToLeaveRequest(
+      Long leaveRequestId, LeaveResponseRequest req, Long callerId) {
+    Leave leave = findLeaveOrThrow(leaveRequestId);
+    EmployeeSummaryResponse employee = findEmployeeForLeave(leave);
+
+    if (!adminApi.overseesDepartment(callerId, employee.getDepartmentId())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this leave request");
+    }
+    if (req.getStatus() != LeaveStatus.approved && req.getStatus() != LeaveStatus.rejected) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Decision must be approved or rejected");
+    }
+    if (leave.getStatus() != LeaveStatus.pending) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Only pending leave requests can be approved or rejected");
+    }
+
+    // TODO(modification requests): once POST /{id}/modifications exists, approving/rejecting a
+    // request that carries a modificationId must resolve the linked modification (approve
+    // overwrites the original and deletes the mod row; reject unlinks it to a standalone rejected
+    // request).
+    leave.setStatus(req.getStatus());
+    leave.setAdminReviewerId(callerId);
+    if (req.getAdminComment() != null) {
+      leave.setAdminComment(req.getAdminComment());
+    }
     return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
   }
 
