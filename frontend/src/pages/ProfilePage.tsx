@@ -82,9 +82,9 @@ const ProfilePage: React.FC = () => {
   // (e.g. an admin viewing another admin) — fall back to the ID in that case.
   const { data: departments } = useDepartmentsList()
   const departmentNamesById = new Map((departments ?? []).map(d => [d.id, d.name]))
-  const adminDepartmentNames = adminDepartmentIds.map(
-    id => departmentNamesById.get(id) ?? `Department ${id}`
-  )
+  const adminDepartmentNames = adminDepartmentIds
+    .map(id => departmentNamesById.get(id) ?? `Department ${id}`)
+    .sort((a, b) => a.localeCompare(b))
 
   // Viewing your own id in employee mode (e.g. an admin who appears in the
   // employees list and clicks themselves) is really the personal profile —
