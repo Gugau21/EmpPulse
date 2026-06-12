@@ -170,14 +170,7 @@ const ProfilePage: React.FC = () => {
           </div>
 
           <div className="banner-center-action">
-            {isMyProfile ? (
-              <button
-                className="btn-change-password"
-                onClick={() => openModal('CHANGE_PASSWORD_FORM')}
-              >
-                Change password
-              </button>
-            ) : (
+            {!isMyProfile && (
               <button
                 className="btn-change-password"
                 onClick={() => openModal('EDIT_EMPLOYEE', employee as Employee)}
