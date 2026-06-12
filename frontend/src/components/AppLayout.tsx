@@ -7,10 +7,7 @@ import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useDeleteDepartment } from '../hooks/useDepartmentMutations'
 import { useDeleteEmployee } from '../hooks/useEmployeeMutations'
-import {
-  useCancelLeaveRequest,
-  useDeleteLeaveRequest
-} from '../hooks/useLeaveRequestMutations'
+import { useCancelLeaveRequest, useDeleteLeaveRequest } from '../hooks/useLeaveRequestMutations'
 
 // Context shared with child pages via <Outlet>. Pages pull `openModal` from here
 // instead of receiving it as a prop, so the modal state can live in one place.

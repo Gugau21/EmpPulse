@@ -253,6 +253,14 @@ export interface LeaveRequestUpdatePayload {
   reason?: string | null
 }
 
+// PATCH /api/leave-requests/{id}/response body (LeaveResponseRequest in the API
+// contract). The decision must be 'approved' or 'rejected' (the server rejects
+// any other value); adminComment is an optional note recorded with the decision.
+export interface LeaveResponsePayload {
+  status: 'approved' | 'rejected'
+  adminComment?: string | null
+}
+
 // POST /api/leave-requests body (LeaveCreateRequest in the API contract). The
 // wire enum is lower-cased to match the server's LeaveType; dates are ISO
 // yyyy-mm-dd. reason is required server-side when type is personal; adminComment
@@ -363,6 +371,22 @@ export const leaveRequestService = {
       errorFallback: 'Failed to update leave request.',
       errorOverrides: {
         409: 'This request was changed elsewhere. Please refresh and retry.'
+      }
+    })
+  },
+
+  // PATCH /api/leave-requests/{id}/response — an admin approves or rejects a
+  // PENDING request for an employee in a department they oversee. The decision
+  // moves the request to APPROVED/REJECTED; the server rejects admins without
+  // access to it (403) and a request that is no longer pending (409).
+  respond: async (id: number, payload: LeaveResponsePayload): Promise<void> => {
+    await apiRequest(`/api/leave-requests/${id}/response`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to respond to leave request.',
+      errorOverrides: {
+        403: 'You do not have access to this leave request.',
+        409: 'Only pending requests can be approved or rejected.'
       }
     })
   },

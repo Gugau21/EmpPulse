@@ -3,10 +3,9 @@ import type { LeaveRequest } from '../../types'
 import type { ApiLeaveType } from '../../services/api'
 import { useAuth } from '../../context/useAuth'
 import { useUserDetail } from '../../hooks/useUserDetail'
-import { useLeaveRequestDetail } from '../../hooks/useLeaveRequestDetail'
 import { useUpdateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import LeaveTypeSelects from './LeaveTypeSelects'
-import LeaveRequestLoadState from './LeaveRequestLoadState'
+import LeaveRequestModalShell from './LeaveRequestModalShell'
 
 interface Props {
   closeModal: () => void
@@ -34,27 +33,18 @@ const formatDate = (dateStr?: string) => {
   return ''
 }
 
-// Only the id is taken from the selected row; the request's own fields are fetched
-// from the API so the form opens on the server's current state. The form itself is
-// a child that mounts only once the request has loaded, so its initial state seeds
-// cleanly from the fetched values.
+// The request's fields are fetched from the API so the form opens on the server's
+// current state. The form itself is a child that mounts only once the request has
+// loaded, so its initial state seeds cleanly from the fetched values.
 const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }) => {
-  const rawId = selectedRequest ? Number(selectedRequest.id) : NaN
-  const id = Number.isInteger(rawId) ? rawId : null
-  const { data: request, isLoading, error } = useLeaveRequestDetail(id)
-
   return (
-    <div className="modal-form">
-      {onBack && (
-        <button className="modal-back" onClick={onBack} aria-label="Go back">
-          ‹
-        </button>
-      )}
-      <h2>Edit request</h2>
-
-      <LeaveRequestLoadState isLoading={isLoading} error={error} loaded={!!request} />
-      {request && <EditLeaveForm request={request} closeModal={closeModal} onBack={onBack} />}
-    </div>
+    <LeaveRequestModalShell
+      selectedRequest={selectedRequest}
+      heading="Edit request"
+      onBack={onBack}
+    >
+      {request => <EditLeaveForm request={request} closeModal={closeModal} onBack={onBack} />}
+    </LeaveRequestModalShell>
   )
 }
 
