@@ -18,7 +18,7 @@ export const useTheme = () => {
   // 2. Ensure the HTML tag gets set properly on the very first page load
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-  }, [])
+  }, [theme])
 
   // 3. Update the state, save it, and broadcast the change to the app
   const toggleTheme = () => {
