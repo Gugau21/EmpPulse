@@ -1,13 +1,16 @@
 import React, { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
-import trashIcon from '../assets/trash-icon.png.webp'
+import trashIcon from '../assets/bin_icon_dark.png'
+import trashIconLight from '../assets/bin_icon_light.png'
 import type { OutletContext } from '../components/AppLayout'
 import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
+import { useTheme } from '../hooks/useTheme'
 
 const DepartmentsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
+  const { theme } = useTheme()
   const { currentUser, isOwner } = useAuth()
   const departmentsQuery = useDepartmentsList()
   const departments = departmentsQuery.data ?? []
@@ -67,7 +70,7 @@ const DepartmentsScreen: React.FC = () => {
                     }}
                     title="Delete Department"
                   >
-                    <img src={trashIcon} alt="Delete" width={30} height={30} />
+                    <img src={theme === 'dark'? trashIconLight : trashIcon} alt="Delete" width={30} height={30} />
                   </button>
                 )}
               </div>

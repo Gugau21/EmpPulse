@@ -7,6 +7,8 @@ import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
 import { landingPath } from '../utils/guards'
 import blackTriangleIcon from '../assets/black_triangle.png'
+import whiteTriangleIcon from '../assets/white_triangle.png'
+import { useTheme } from '../hooks/useTheme'
 
 // A single row in the "Logged hours" table. The clickable/edit wiring is
 // identical across rows, so it lives here to avoid duplicating the wrapper.
@@ -31,6 +33,7 @@ const LoggedHoursRow: React.FC<LoggedHoursRowProps> = ({ isMyProfile, onEdit, ch
 const ProfilePage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
+  const { theme } = useTheme()
   // A :userId param means we're viewing someone else's profile (employee mode);
   // no param means the signed-in user's own profile.
   const { userId } = useParams()
@@ -84,7 +87,7 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="screen-container">
         <button className="btn-pill-secondary" onClick={onBack}>
-          <img src={blackTriangleIcon} alt="Back to employees list" />
+          <img src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon} alt="Back to employees list" />
         </button>
         {employeeId == null ? (
           <p className="form-error">This profile does not exist.</p>
@@ -100,7 +103,7 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="screen-container">
       <button className="btn-pill-secondary" onClick={onBack}>
-        <img src={blackTriangleIcon} alt="Back to employees list" />
+        <img src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon} alt="Back to employees list" />
       </button>
       <header className="page-header profile-header">
         <h2>{isMyProfile ? 'My Profile' : 'User Profile'}</h2>
@@ -196,7 +199,7 @@ const ProfilePage: React.FC = () => {
           >
             Default working hours
             <img
-              src={blackTriangleIcon}
+              src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
               alt="Toggle working hours"
               className={`chevron ${workingHoursExpanded ? 'expanded' : ''}`}
             />
@@ -251,7 +254,7 @@ const ProfilePage: React.FC = () => {
           >
             Logged hours
             <img
-              src={blackTriangleIcon}
+              src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
               alt="Toggle logged hours"
               className={`chevron ${loggedExpanded ? 'expanded' : ''}`}
             />
