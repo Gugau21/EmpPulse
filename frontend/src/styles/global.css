@@ -25,7 +25,7 @@
   --btn-remove-text: #fff;
 }
 
-[data-theme='dark'] {
+[data-theme="dark"] {
   /* Existing Structure Variables */
   --bg-dashboard: #3d3c42;
   --bg-surface: #2c2b2f;

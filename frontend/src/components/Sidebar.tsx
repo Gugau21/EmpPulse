@@ -2,7 +2,7 @@ import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import { landingPath } from '../utils/guards'
-import moonIcon from '../assets/Moon_icon.png'
+import moonIcon from '../assets/moon_icon.png'
 import sunIcon from '../assets/sun_icon.png'
 import { useTheme } from '../hooks/useTheme'
 
