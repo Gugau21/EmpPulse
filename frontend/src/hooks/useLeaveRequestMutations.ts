@@ -33,6 +33,17 @@ export function useDeleteLeaveRequest() {
   })
 }
 
+// Proposes changes to an APPROVED request as a pending modification the admin then
+// reviews (employee only); see leaveRequestService.modify.
+export function useModifyLeaveRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (vars: { id: number; payload: LeaveRequestUpdatePayload }) =>
+      leaveRequestService.modify(vars.id, vars.payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: leaveRequestKeys.all })
+  })
+}
+
 // Approves or rejects a PENDING request, admin only (it moves to APPROVED/REJECTED);
 // see leaveRequestService.respond.
 export function useRespondToLeaveRequest() {

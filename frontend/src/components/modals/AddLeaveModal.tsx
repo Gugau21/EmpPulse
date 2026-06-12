@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react'
 import type { LeaveRequest, ModalType } from '../../types'
-import type { LeaveRequestCreatePayload } from '../../services/api'
+import { LEAVE_TYPE_TO_API } from '../../services/api'
 import { useAuth } from '../../context/useAuth'
 import { useEmployeesList } from '../../hooks/useEmployeesList'
 import { useUserDetail } from '../../hooks/useUserDetail'
@@ -14,13 +14,6 @@ interface Props {
 }
 
 const REASON_MAX = 300
-
-// The UI shows display-cased leave types; the API takes the lower-cased wire enum.
-const LEAVE_TYPE_TO_API: Record<LeaveRequest['type'], LeaveRequestCreatePayload['type']> = {
-  Vacation: 'vacation',
-  Sick: 'sick',
-  Personal: 'personal'
-}
 
 // Today as a local ISO `yyyy-mm-dd`, used as the `min` for the date pickers when
 // the caller may not back-date (employees filing their own request).

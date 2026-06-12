@@ -238,9 +238,17 @@ export const employeeService = {
   }
 }
 
-// Wire format for leave types (LeaveType in the API contract); the UI's
-// display values ('Vacation' | 'Sick' | 'Personal') must be mapped to these.
-export type ApiLeaveType = 'SICK' | 'VACATION' | 'PERSONAL'
+// Wire format for leave types (LeaveType in the API contract). The server's enum
+// is lower-cased and matched case-sensitively, so these must be lower-case too.
+export type ApiLeaveType = 'sick' | 'vacation' | 'personal'
+
+// Maps the UI's display-cased leave type to the wire enum. Shared by every form
+// that sends a type (create, update, modification) so the casing lives in one place.
+export const LEAVE_TYPE_TO_API: Record<LeaveRequest['type'], ApiLeaveType> = {
+  Vacation: 'vacation',
+  Sick: 'sick',
+  Personal: 'personal'
+}
 
 // PATCH /api/leave-requests/{id} body (LeaveRequestUpdate in the API contract).
 // All fields optional; dates are ISO yyyy-mm-dd. reason is required server-side
@@ -267,7 +275,7 @@ export interface LeaveResponsePayload {
 // is accepted only from administrators (filing on behalf of an employee).
 export interface LeaveRequestCreatePayload {
   employeeId: number
-  type: 'vacation' | 'sick' | 'personal'
+  type: ApiLeaveType
   paid: boolean
   startDate: string
   endDate: string
@@ -371,6 +379,25 @@ export const leaveRequestService = {
       errorFallback: 'Failed to update leave request.',
       errorOverrides: {
         409: 'This request was changed elsewhere. Please refresh and retry.'
+      }
+    })
+  },
+
+  // POST /api/leave-requests/{id}/modifications — an employee proposes changes to
+  // their own APPROVED request. The server creates a pending modification linked to
+  // the original (an admin then approves or rejects it via the response endpoint);
+  // it rejects callers who don't own the request (403), a request that is not
+  // approved or already has a pending modification (409), and a proposal that
+  // changes nothing (400). Fields left undefined inherit the original's value.
+  modify: async (id: number, payload: LeaveRequestUpdatePayload): Promise<void> => {
+    await apiRequest(`/api/leave-requests/${id}/modifications`, {
+      method: 'POST',
+      body: payload,
+      errorFallback: 'Failed to submit modification request.',
+      errorOverrides: {
+        400: 'Change at least one field before submitting the modification.',
+        403: 'Only the employee the request belongs to can modify it.',
+        409: 'This approved request already has a pending change awaiting review.'
       }
     })
   },

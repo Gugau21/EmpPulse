@@ -36,50 +36,49 @@ const MyRequestsScreen: React.FC = () => {
       <RequestList
         state={myRequestsQuery}
         requests={visibleRequests}
-        renderRow={req => (
-          <div
-            key={req.id}
-            className={`employee-row hover-slide-container clickable ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}
-            onClick={() =>
-              openModal(
-                // Cancelled/rejected requests are final, so they open read-only;
-                // anything still actionable opens the editable form.
-                req.status === 'CANCELLED' || req.status === 'REJECTED'
-                  ? 'VIEW_LEAVE_FORM'
-                  : 'EDIT_LEAVE_FORM',
-                undefined,
-                req
-              )
-            }
-          >
-            <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
-            <span className="date-span">{req.dateRange}</span>
-            <div className="emp-meta">
-              <span className={`status-label status-${req.status.toLowerCase()}`}>
-                {req.status}
-              </span>
-            </div>
-
-            <button
-              className="slide-bin-btn"
-              onClick={e => {
-                e.stopPropagation() // Don't also open the row's edit modal
-                openModal(
-                  req.status === 'APPROVED' ? 'CANCEL_LEAVE' : 'DELETE_LEAVE',
-                  undefined,
-                  req
-                )
-              }}
-              title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
+        renderRow={req => {
+          // Cancelled/rejected requests are final: they open read-only and carry no
+          // row action, so the slide-out bin (and its hover reveal) is dropped.
+          const isFinal = req.status === 'CANCELLED' || req.status === 'REJECTED'
+          return (
+            <div
+              key={req.id}
+              className={`employee-row clickable ${isFinal ? '' : 'hover-slide-container'} ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}
+              onClick={() =>
+                openModal(isFinal ? 'VIEW_LEAVE_FORM' : 'EDIT_LEAVE_FORM', undefined, req)
+              }
             >
-              {req.status === 'APPROVED' ? (
-                '✕'
-              ) : (
-                <img src={trashIcon} alt="Delete" width={30} height={30} />
+              <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
+              <span className="date-span">{req.dateRange}</span>
+              <div className="emp-meta">
+                <span className={`status-label status-${req.status.toLowerCase()}`}>
+                  {req.status}
+                </span>
+              </div>
+
+              {!isFinal && (
+                <button
+                  className="slide-bin-btn"
+                  onClick={e => {
+                    e.stopPropagation() // Don't also open the row's edit modal
+                    openModal(
+                      req.status === 'APPROVED' ? 'CANCEL_LEAVE' : 'DELETE_LEAVE',
+                      undefined,
+                      req
+                    )
+                  }}
+                  title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
+                >
+                  {req.status === 'APPROVED' ? (
+                    '✕'
+                  ) : (
+                    <img src={trashIcon} alt="Delete" width={30} height={30} />
+                  )}
+                </button>
               )}
-            </button>
-          </div>
-        )}
+            </div>
+          )
+        }}
       />
     </AccordionScreen>
   )

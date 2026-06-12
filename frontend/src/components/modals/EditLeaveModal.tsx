@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import type { LeaveRequest } from '../../types'
-import type { ApiLeaveType } from '../../services/api'
+import { LEAVE_TYPE_TO_API } from '../../services/api'
 import { useAuth } from '../../context/useAuth'
 import { useUserDetail } from '../../hooks/useUserDetail'
-import { useUpdateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
+import { useUpdateLeaveRequest, useModifyLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import LeaveTypeSelects from './LeaveTypeSelects'
 import LeaveRequestModalShell from './LeaveRequestModalShell'
 
@@ -13,13 +13,6 @@ interface Props {
   // Present only when this form was opened from the accept/reject modal; renders a
   // back arrow that returns there.
   onBack?: () => void
-}
-
-// The UI shows display-cased leave types; the API takes the uppercase enum.
-const LEAVE_TYPE_TO_API: Record<LeaveRequest['type'], ApiLeaveType> = {
-  Vacation: 'VACATION',
-  Sick: 'SICK',
-  Personal: 'PERSONAL'
 }
 
 // Stored leave dates are display-formatted as `dd.mm.yyyy`, but a native
@@ -64,6 +57,7 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
   const [reason, setReason] = useState(request.reason ?? '')
   const [validationError, setValidationError] = useState<string | null>(null)
   const updateLeave = useUpdateLeaveRequest()
+  const modifyLeave = useModifyLeaveRequest()
 
   // The vacation balance shown to the editor. When the request is the caller's
   // own, the balance already lives on currentUser; otherwise only an admin/owner
@@ -84,6 +78,12 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
     ? currentUser?.employeeProfile?.yearlyVacationBalance
     : requestEmployee?.employeeProfile?.yearlyVacationBalance
 
+  // An employee can't edit their own APPROVED request in place — the server only
+  // accepts that as a modification request an admin then reviews. Pending requests,
+  // and admins editing a request they oversee, go through the normal update.
+  const isModification = isMine && request.status === 'APPROVED'
+  const activeMutation = isModification ? modifyLeave : updateLeave
+
   const handleSubmit = () => {
     setValidationError(null)
     if (!from || !till) {
@@ -99,19 +99,17 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
       setValidationError('A reason is required for personal leave.')
       return
     }
-    updateLeave.mutate(
-      {
-        id: Number(request.id),
-        payload: {
-          type: LEAVE_TYPE_TO_API[leaveType],
-          paid: paymentType === 'Paid',
-          startDate: from,
-          endDate: till,
-          reason: reason.trim() || null
-        }
-      },
-      { onSuccess: () => closeModal() }
-    )
+    const vars = {
+      id: Number(request.id),
+      payload: {
+        type: LEAVE_TYPE_TO_API[leaveType],
+        paid: paymentType === 'Paid',
+        startDate: from,
+        endDate: till,
+        reason: reason.trim() || null
+      }
+    }
+    activeMutation.mutate(vars, { onSuccess: () => closeModal() })
   }
 
   return (
@@ -148,16 +146,26 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
         <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)}></textarea>
       </label>
 
-      {(validationError || updateLeave.error) && (
-        <p className="form-error">{validationError ?? updateLeave.error?.message}</p>
+      {(validationError || activeMutation.error) && (
+        <p className="form-error">{validationError ?? activeMutation.error?.message}</p>
+      )}
+
+      {isModification && (
+        <div className="balance-hint">
+          Editing an approved request submits the change for admin approval.
+        </div>
       )}
 
       <button
         className="primary-btn full-width"
         onClick={handleSubmit}
-        disabled={updateLeave.isPending}
+        disabled={activeMutation.isPending}
       >
-        {onBack ? 'edit and auto approve request' : 'edit request'}
+        {isModification
+          ? 'request change'
+          : onBack
+            ? 'edit and auto approve request'
+            : 'edit request'}
       </button>
     </>
   )
