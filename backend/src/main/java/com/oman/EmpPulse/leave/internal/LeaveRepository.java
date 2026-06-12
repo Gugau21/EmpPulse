@@ -3,6 +3,7 @@ package com.oman.EmpPulse.leave.internal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,7 +31,7 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
       @Param("endDate") LocalDate endDate);
 
   /**
-   * Same as {@link #existsActiveOverlap}, but ignores the leave identified by {@code excludeId}.
+   * Same as {@link #existsActiveOverlap}, but ignores the leaves identified by {@code excludeIds}.
    */
   @Query(
       value =
@@ -38,17 +39,23 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
           select exists(
               select 1 from leave
               where employee_id = :employeeId
-                and id <> :excludeId
+                and id not in (:excludeIds)
                 and status in ('pending', 'approved')
                 and start_date <= :endDate
                 and end_date >= :startDate)
           """,
       nativeQuery = true)
-  boolean existsActiveOverlapExcluding(
+  boolean existsActiveOverlapExcludingIds(
       @Param("employeeId") Long employeeId,
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate,
-      @Param("excludeId") Long excludeId);
+      @Param("excludeIds") Collection<Long> excludeIds);
+
+  /** Whether a pending modification request is currently linked to the given original leave. */
+  boolean existsByModificationId(Long modificationId);
+
+  /** The (at most one) pending modification request linked to the given original leave. */
+  Optional<Leave> findByModificationId(Long modificationId);
 
   List<Leave> findAllByEmployeeIdOrderByUpdatedAtDesc(Long employeeId);
 
