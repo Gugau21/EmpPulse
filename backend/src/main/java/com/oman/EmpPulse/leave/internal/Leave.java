@@ -91,32 +91,64 @@ public class Leave {
     return type;
   }
 
+  public void setType(LeaveType type) {
+    this.type = type;
+  }
+
   public LocalDate getStartDate() {
     return startDate;
+  }
+
+  public void setStartDate(LocalDate startDate) {
+    this.startDate = startDate;
   }
 
   public LocalDate getEndDate() {
     return endDate;
   }
 
+  public void setEndDate(LocalDate endDate) {
+    this.endDate = endDate;
+  }
+
   public boolean isPaid() {
     return paid;
+  }
+
+  public void setPaid(boolean paid) {
+    this.paid = paid;
   }
 
   public LeaveStatus getStatus() {
     return status;
   }
 
+  public void setStatus(LeaveStatus status) {
+    this.status = status;
+  }
+
   public String getDescription() {
     return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
   }
 
   public Long getAdminReviewerId() {
     return adminReviewerId;
   }
 
+  public void setAdminReviewerId(Long adminReviewerId) {
+    this.adminReviewerId = adminReviewerId;
+  }
+
   public String getAdminComment() {
     return adminComment;
+  }
+
+  public void setAdminComment(String adminComment) {
+    this.adminComment = adminComment;
   }
 
   public Long getModificationId() {

@@ -29,6 +29,27 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
       @Param("startDate") LocalDate startDate,
       @Param("endDate") LocalDate endDate);
 
+  /**
+   * Same as {@link #existsActiveOverlap}, but ignores the leave identified by {@code excludeId}.
+   */
+  @Query(
+      value =
+          """
+          select exists(
+              select 1 from leave
+              where employee_id = :employeeId
+                and id <> :excludeId
+                and status in ('pending', 'approved')
+                and start_date <= :endDate
+                and end_date >= :startDate)
+          """,
+      nativeQuery = true)
+  boolean existsActiveOverlapExcluding(
+      @Param("employeeId") Long employeeId,
+      @Param("startDate") LocalDate startDate,
+      @Param("endDate") LocalDate endDate,
+      @Param("excludeId") Long excludeId);
+
   List<Leave> findAllByEmployeeIdOrderByUpdatedAtDesc(Long employeeId);
 
   /**

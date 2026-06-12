@@ -3,9 +3,11 @@ package com.oman.EmpPulse.leave.internal;
 import com.oman.EmpPulse.leave.dto.LeaveCreateRequest;
 import com.oman.EmpPulse.leave.dto.LeaveListResponse;
 import com.oman.EmpPulse.leave.dto.LeaveResponse;
+import com.oman.EmpPulse.leave.dto.LeaveUpdateRequest;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -50,21 +52,12 @@ public class LeaveService {
             .findSummaryById(req.getEmployeeId())
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
-    requireActive(employee);
 
-    if (req.getAdminComment() != null && !isAdmin) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "adminComment is allowed only for administrators");
-    }
-    if (req.getEndDate().isBefore(req.getStartDate())) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "End date must not be before start date");
-    }
-    if (req.getType() == LeaveType.personal
-        && (req.getReason() == null || req.getReason().isBlank())) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Reason is required for personal leave");
-    }
+    requireActive(employee);
+    validateAdminComment(req.getAdminComment(), isAdmin);
+    validateDateRange(req.getStartDate(), req.getEndDate());
+    validatePersonalLeaveReason(req.getType(), req.getReason());
+
     if (leaveRepository.existsActiveOverlap(
         employee.getId(), req.getStartDate(), req.getEndDate())) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Overlapping leave request exists");
@@ -135,18 +128,11 @@ public class LeaveService {
   @Transactional(readOnly = true)
   public LeaveResponse getLeaveRequest(Long leaveRequestId, Long callerId) {
     Leave leave = findLeaveOrThrow(leaveRequestId);
-    EmployeeSummaryResponse employee =
-        employeeApi
-            .findSummaryById(leave.getEmployeeId())
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
+    EmployeeSummaryResponse employee = findEmployeeForLeave(leave);
 
-    boolean own = leave.getEmployeeId().equals(callerId);
-    if (!own && !adminApi.overseesDepartment(callerId, employee.getDepartmentId())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this leave request");
-    }
+    boolean ownRequest = leave.getEmployeeId().equals(callerId);
+    boolean adminOversees = adminApi.overseesDepartment(callerId, employee.getDepartmentId());
+    requireLeaveAccess(ownRequest, adminOversees);
     return toLeaveResponse(leave, employee);
   }
 
@@ -174,6 +160,108 @@ public class LeaveService {
     leaveRepository.delete(leave);
   }
 
+  /**
+   * Applies a partial in-place update to a leave request; fields left null keep their value.
+   *
+   * <p>Employees can edit only their own {@code pending} requests. Admins who oversee the
+   * employee's department can edit {@code pending} and {@code approved} requests; their edit
+   * approves a pending request and records them as the reviewer. An employee's own {@code approved}
+   * request is not editable in place (a modification request will cover that), and {@code
+   * rejected}/{@code cancelled} requests are never editable.
+   *
+   * @param leaveRequestId the leave request ID to update
+   * @param req the partial update payload
+   * @param callerId the user ID of the authenticated caller
+   * @param isAdmin whether the caller has the ADMIN authority; only gates {@code adminComment}
+   * @return the updated leave request
+   */
+  @Transactional
+  public LeaveResponse updateLeaveRequest(
+      Long leaveRequestId, LeaveUpdateRequest req, Long callerId, boolean isAdmin) {
+    Leave leave = findLeaveOrThrow(leaveRequestId);
+    EmployeeSummaryResponse employee = findEmployeeForLeave(leave);
+
+    boolean ownRequest = leave.getEmployeeId().equals(callerId);
+    boolean adminOversees = adminApi.overseesDepartment(callerId, employee.getDepartmentId());
+    validateUpdatePermissions(
+        ownRequest, adminOversees, isAdmin, leave.getStatus(), req.getAdminComment());
+
+    ResolvedFields fields = resolveFields(req, leave);
+    validateLeaveUpdate(fields, leave.getEmployeeId(), leave.getId());
+    applyLeaveUpdate(leave, fields, req.getAdminComment(), adminOversees, callerId);
+    return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
+  }
+
+  private void validateUpdatePermissions(
+      boolean ownRequest,
+      boolean adminOversees,
+      boolean isAdmin,
+      LeaveStatus status,
+      String adminComment) {
+    requireLeaveAccess(ownRequest, adminOversees);
+    if (status == LeaveStatus.rejected || status == LeaveStatus.cancelled) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Rejected or cancelled requests cannot be edited");
+    }
+    validateAdminComment(adminComment, isAdmin);
+    // TODO(modification requests): once POST /{id}/modifications exists, reject edits with 409
+    // when a pending modification request references this leave (existsByModificationId).
+    if (!adminOversees && status == LeaveStatus.approved) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Approved requests are edited via a modification request");
+    }
+  }
+
+  private record ResolvedFields(
+      LeaveType type, boolean paid, LocalDate startDate, LocalDate endDate, String reason) {}
+
+  private ResolvedFields resolveFields(LeaveUpdateRequest req, Leave leave) {
+    return new ResolvedFields(
+        req.getType() != null ? req.getType() : leave.getType(),
+        req.getPaid() != null ? req.getPaid() : leave.isPaid(),
+        req.getStartDate() != null ? req.getStartDate() : leave.getStartDate(),
+        req.getEndDate() != null ? req.getEndDate() : leave.getEndDate(),
+        req.getReason() != null ? req.getReason() : leave.getDescription());
+  }
+
+  private void validateLeaveUpdate(ResolvedFields fields, Long employeeId, Long excludeLeaveId) {
+    validateDateRange(fields.startDate(), fields.endDate());
+    validatePersonalLeaveReason(fields.type(), fields.reason());
+    if (leaveRepository.existsActiveOverlapExcluding(
+        employeeId, fields.startDate(), fields.endDate(), excludeLeaveId)) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Overlapping leave request exists");
+    }
+  }
+
+  private void applyLeaveUpdate(
+      Leave leave,
+      ResolvedFields fields,
+      String adminComment,
+      boolean adminOversees,
+      Long callerId) {
+    leave.setType(fields.type());
+    leave.setPaid(fields.paid());
+    leave.setStartDate(fields.startDate());
+    leave.setEndDate(fields.endDate());
+    leave.setDescription(fields.reason());
+    if (adminComment != null) {
+      leave.setAdminComment(adminComment);
+    }
+    if (adminOversees) {
+      leave.setStatus(LeaveStatus.approved);
+      leave.setAdminReviewerId(callerId);
+    }
+  }
+
+  private EmployeeSummaryResponse findEmployeeForLeave(Leave leave) {
+    return employeeApi
+        .findSummaryById(leave.getEmployeeId())
+        .orElseThrow(
+            () ->
+                new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
+  }
+
   private Leave findLeaveOrThrow(Long leaveRequestId) {
     return leaveRepository
         .findById(leaveRequestId)
@@ -189,6 +277,33 @@ public class LeaveService {
         || req.getEndDate() == null) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "employeeId, type, paid, startDate and endDate are required");
+    }
+  }
+
+  private void requireLeaveAccess(boolean ownRequest, boolean adminOversees) {
+    if (!ownRequest && !adminOversees) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this leave request");
+    }
+  }
+
+  private void validateAdminComment(String adminComment, boolean isAdmin) {
+    if (adminComment != null && !isAdmin) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "adminComment is allowed only for administrators");
+    }
+  }
+
+  private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+    if (endDate.isBefore(startDate)) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "End date must not be before start date");
+    }
+  }
+
+  private void validatePersonalLeaveReason(LeaveType type, String reason) {
+    if (type == LeaveType.personal && (reason == null || reason.isBlank())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Reason is required for personal leave");
     }
   }
 

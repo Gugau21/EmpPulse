@@ -1,6 +1,7 @@
 package com.oman.EmpPulse.leave.web;
 
 import com.oman.EmpPulse.leave.dto.LeaveCreateRequest;
+import com.oman.EmpPulse.leave.dto.LeaveUpdateRequest;
 import com.oman.EmpPulse.leave.internal.LeaveService;
 import com.oman.EmpPulse.shared.security.AuthUtils;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,20 @@ public class LeaveController {
       @PathVariable Long leaveRequestId, Authentication authentication) {
     return ResponseEntity.ok(
         leaveService.getLeaveRequest(leaveRequestId, AuthUtils.getUserId(authentication)));
+  }
+
+  @PreAuthorize("hasAnyAuthority('ADMIN', 'EMPLOYEE')")
+  @PatchMapping("/{leaveRequestId}")
+  public ResponseEntity<?> updateLeaveRequest(
+      @PathVariable Long leaveRequestId,
+      @RequestBody LeaveUpdateRequest req,
+      Authentication authentication) {
+    return ResponseEntity.ok(
+        leaveService.updateLeaveRequest(
+            leaveRequestId,
+            req,
+            AuthUtils.getUserId(authentication),
+            AuthUtils.isAdmin(authentication)));
   }
 
   @PreAuthorize("hasAuthority('EMPLOYEE')")
