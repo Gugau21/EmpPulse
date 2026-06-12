@@ -67,7 +67,7 @@ interface FormProps {
 const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => {
   const [startStr, endStr] = request.dateRange?.split(' - ') ?? []
 
-  const [paymentType, setPaymentType] = useState('Paid')
+  const [paymentType, setPaymentType] = useState(request.paid ? 'Paid' : 'Unpaid')
   const [leaveType, setLeaveType] = useState(request.type)
   const [from, setFrom] = useState(formatDate(startStr))
   const [till, setTill] = useState(formatDate(endStr))

@@ -31,21 +31,16 @@ const RequestManagerPage: React.FC = () => {
         renderRow={req => (
           <div
             key={req.id}
-            className={`employee-row ${
-              req.status === 'PENDING'
-                ? 'clickable dashed-row'
-                : req.status === 'APPROVED'
-                  ? 'clickable'
-                  : ''
-            }`}
+            className={`employee-row clickable ${req.status === 'PENDING' ? 'dashed-row' : ''}`}
             // Pending rows open the accept/reject modal; approved rows open the
-            // edit form directly. Other statuses aren't clickable.
+            // edit form directly; finalized (cancelled/rejected) rows open the
+            // read-only view.
             onClick={
               req.status === 'PENDING'
                 ? () => openModal('ACCEPT_REQUEST', undefined, req)
                 : req.status === 'APPROVED'
                   ? () => openModal('EDIT_LEAVE_FORM', undefined, req)
-                  : undefined
+                  : () => openModal('VIEW_LEAVE_FORM', undefined, req)
             }
           >
             <span className="emp-name">{req.employeeName}</span>

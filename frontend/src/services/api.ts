@@ -309,6 +309,7 @@ function mapLeaveResponse(dto: LeaveResponseDto): LeaveRequest {
     lastEditedAt: dto.updatedAt ?? dto.createdAt,
     dateRange: `${isoToDisplayDate(dto.startDate)} - ${isoToDisplayDate(dto.endDate)}`,
     status: dto.status.toUpperCase() as LeaveRequest['status'],
+    paid: dto.paid,
     reason: dto.reason ?? undefined
   }
 }
@@ -362,6 +363,34 @@ export const leaveRequestService = {
       errorFallback: 'Failed to update leave request.',
       errorOverrides: {
         409: 'This request was changed elsewhere. Please refresh and retry.'
+      }
+    })
+  },
+
+  // DELETE /api/leave-requests/{id} — an employee permanently removes their own
+  // request. The server allows this only while it is still PENDING (409 once it
+  // has been approved/rejected/cancelled) and only for the owner (403 otherwise).
+  delete: async (id: number): Promise<void> => {
+    await apiRequest(`/api/leave-requests/${id}`, {
+      method: 'DELETE',
+      errorFallback: 'Failed to delete leave request.',
+      errorOverrides: {
+        403: 'Only the employee the request belongs to can delete it.',
+        409: 'Only pending requests can be deleted.'
+      }
+    })
+  },
+
+  // PATCH /api/leave-requests/{id}/cancel — an employee cancels their own request.
+  // The server allows this only while it is APPROVED (409 otherwise) and only for
+  // the owner (403 otherwise); the request moves to CANCELLED rather than deleted.
+  cancel: async (id: number): Promise<void> => {
+    await apiRequest(`/api/leave-requests/${id}/cancel`, {
+      method: 'PATCH',
+      errorFallback: 'Failed to cancel leave request.',
+      errorOverrides: {
+        403: 'Only the employee the request belongs to can cancel it.',
+        409: 'Only approved requests can be cancelled.'
       }
     })
   }

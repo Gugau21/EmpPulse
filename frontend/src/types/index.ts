@@ -49,6 +49,8 @@ export interface LeaveRequest {
   lastEditedAt: string
   dateRange: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+  // Whether the leave is paid; the view modal surfaces this as "Paid"/"Unpaid".
+  paid: boolean
   reason?: string
 }
 

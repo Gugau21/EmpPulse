@@ -19,6 +19,7 @@ const AcceptRequestModal: React.FC<Props> = ({ closeModal, selectedRequest, open
         <h3>{selectedRequest?.employeeName}</h3>
         <p>From: {from}</p>
         <p>Till: {till}</p>
+        <p>Payment: {selectedRequest?.paid ? 'Paid' : 'Unpaid'}</p>
         <label>
           Reason<div className="reason-box">{selectedRequest?.reason ?? ''}</div>
         </label>

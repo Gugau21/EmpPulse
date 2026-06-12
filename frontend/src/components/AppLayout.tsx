@@ -7,6 +7,10 @@ import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useDeleteDepartment } from '../hooks/useDepartmentMutations'
 import { useDeleteEmployee } from '../hooks/useEmployeeMutations'
+import {
+  useCancelLeaveRequest,
+  useDeleteLeaveRequest
+} from '../hooks/useLeaveRequestMutations'
 
 // Context shared with child pages via <Outlet>. Pages pull `openModal` from here
 // instead of receiving it as a prop, so the modal state can live in one place.
@@ -39,6 +43,8 @@ const AppLayout: React.FC = () => {
   const departments = departmentsQuery.data ?? []
   const deleteDepartment = useDeleteDepartment()
   const deleteEmployee = useDeleteEmployee()
+  const deleteLeaveRequest = useDeleteLeaveRequest()
+  const cancelLeaveRequest = useCancelLeaveRequest()
 
   const openModal: OpenModal = (modal, deptOrEmp, requestObj, returnTo) => {
     if (deptOrEmp) {
@@ -102,6 +108,20 @@ const AppLayout: React.FC = () => {
                   navigate('/employees')
                 }
               },
+              onError: err => setConfirmError(err.message)
+            })
+            return
+          }
+          if (activeModal === 'DELETE_LEAVE' && selectedRequest) {
+            deleteLeaveRequest.mutate(Number(selectedRequest.id), {
+              onSuccess: () => setActiveModal(null),
+              onError: err => setConfirmError(err.message)
+            })
+            return
+          }
+          if (activeModal === 'CANCEL_LEAVE' && selectedRequest) {
+            cancelLeaveRequest.mutate(Number(selectedRequest.id), {
+              onSuccess: () => setActiveModal(null),
               onError: err => setConfirmError(err.message)
             })
             return

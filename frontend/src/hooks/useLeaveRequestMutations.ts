@@ -22,3 +22,21 @@ export function useUpdateLeaveRequest() {
     onSuccess: () => qc.invalidateQueries({ queryKey: leaveRequestKeys.all })
   })
 }
+
+// Deletes a PENDING request outright (the row disappears); see leaveRequestService.delete.
+export function useDeleteLeaveRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => leaveRequestService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: leaveRequestKeys.all })
+  })
+}
+
+// Cancels an APPROVED request (it moves to CANCELLED); see leaveRequestService.cancel.
+export function useCancelLeaveRequest() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => leaveRequestService.cancel(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: leaveRequestKeys.all })
+  })
+}
