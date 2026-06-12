@@ -134,11 +134,7 @@ public class LeaveService {
 
   @Transactional(readOnly = true)
   public LeaveResponse getLeaveRequest(Long leaveRequestId, Long callerId) {
-    Leave leave =
-        leaveRepository
-            .findById(leaveRequestId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Leave request not found"));
+    Leave leave = findLeaveOrThrow(leaveRequestId);
     EmployeeSummaryResponse employee =
         employeeApi
             .findSummaryById(leave.getEmployeeId())
@@ -152,6 +148,37 @@ public class LeaveService {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this leave request");
     }
     return toLeaveResponse(leave, employee);
+  }
+
+  /**
+   * Hard deletes a pending leave request.
+   *
+   * <p>Deletion is allowed only for the employee the request belongs to and only while the request
+   * is {@code pending}; admins and the owner cannot delete requests (they reject them instead).
+   *
+   * @param leaveRequestId the leave request ID to delete
+   * @param callerId the user ID of the authenticated caller
+   */
+  @Transactional
+  public void deleteLeaveRequest(Long leaveRequestId, Long callerId) {
+    Leave leave = findLeaveOrThrow(leaveRequestId);
+
+    if (!leave.getEmployeeId().equals(callerId)) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the employee the request belongs to can delete it");
+    }
+    if (leave.getStatus() != LeaveStatus.pending) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Only pending leave requests can be deleted");
+    }
+    leaveRepository.delete(leave);
+  }
+
+  private Leave findLeaveOrThrow(Long leaveRequestId) {
+    return leaveRepository
+        .findById(leaveRequestId)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Leave request not found"));
   }
 
   private void ensureRequiredFieldsPresent(LeaveCreateRequest req) {

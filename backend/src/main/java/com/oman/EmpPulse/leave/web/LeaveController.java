@@ -35,6 +35,14 @@ public class LeaveController {
         leaveService.getLeaveRequest(leaveRequestId, AuthUtils.getUserId(authentication)));
   }
 
+  @PreAuthorize("hasAuthority('EMPLOYEE')")
+  @DeleteMapping("/{leaveRequestId}")
+  public ResponseEntity<?> deleteLeaveRequest(
+      @PathVariable Long leaveRequestId, Authentication authentication) {
+    leaveService.deleteLeaveRequest(leaveRequestId, AuthUtils.getUserId(authentication));
+    return ResponseEntity.noContent().build();
+  }
+
   @PreAuthorize("hasAnyAuthority('ADMIN', 'EMPLOYEE')")
   @PostMapping
   public ResponseEntity<?> createLeaveRequest(
