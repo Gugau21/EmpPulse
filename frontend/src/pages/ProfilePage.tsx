@@ -81,9 +81,9 @@ const ProfilePage: React.FC = () => {
   // and an admin only receives their own departments, so a name may be missing
   // (e.g. an admin viewing another admin) — fall back to the ID in that case.
   const { data: departments } = useDepartmentsList()
-  const departmentNamesById = new Map((departments ?? []).map((d) => [d.id, d.name]))
+  const departmentNamesById = new Map((departments ?? []).map(d => [d.id, d.name]))
   const adminDepartmentNames = adminDepartmentIds.map(
-    (id) => departmentNamesById.get(id) ?? `Department ${id}`
+    id => departmentNamesById.get(id) ?? `Department ${id}`
   )
 
   // Viewing your own id in employee mode (e.g. an admin who appears in the

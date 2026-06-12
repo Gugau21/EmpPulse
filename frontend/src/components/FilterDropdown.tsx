@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
+import { useOutsideClick } from '../hooks/useOutsideClick'
 
 // A "Filter by" tag picker shared by the Employees, My requests and Requests
 // pages. Clicking the button opens a dropdown of checkboxes; toggling a checkbox
@@ -29,14 +30,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   const ref = useRef<HTMLDivElement>(null)
 
   // Close on an outside click; the chosen tags are kept.
-  useEffect(() => {
-    if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [open])
+  useOutsideClick(ref, open, () => setOpen(false))
 
   const toggleOption = (value: string) =>
     onChange(selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value])
@@ -44,7 +38,8 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   return (
     <div className="filter-dropdown" ref={ref}>
       <button type="button" className="filter-toggle" onClick={() => setOpen(o => !o)}>
-        {label}{selected.length ? ` (${selected.length})` : ''}
+        {label}
+        {selected.length ? ` (${selected.length})` : ''}
       </button>
 
       {open && (

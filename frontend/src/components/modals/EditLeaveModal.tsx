@@ -4,6 +4,7 @@ import type { ApiLeaveType } from '../../services/api'
 import { useAuth } from '../../context/useAuth'
 import { useUserDetail } from '../../hooks/useUserDetail'
 import { useUpdateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
+import LeaveTypeSelects from './LeaveTypeSelects'
 
 interface Props {
   closeModal: () => void
@@ -110,25 +111,12 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }
       )}
       <h2>{'Edit request'}</h2>
 
-      <label>
-        Type of leave (by payment)
-        <select value={paymentType} onChange={e => setPaymentType(e.target.value)}>
-          <option value="Paid">Paid</option>
-          <option value="Unpaid">Unpaid</option>
-        </select>
-      </label>
-
-      <label>
-        Type of leave
-        <select
-          value={leaveType}
-          onChange={e => setLeaveType(e.target.value as LeaveRequest['type'])}
-        >
-          <option value="Vacation">Vacation</option>
-          <option value="Sick">Sick</option>
-          <option value="Personal">Personal</option>
-        </select>
-      </label>
+      <LeaveTypeSelects
+        paymentType={paymentType}
+        onPaymentTypeChange={setPaymentType}
+        leaveType={leaveType}
+        onLeaveTypeChange={setLeaveType}
+      />
 
       {leaveType === 'Vacation' && (
         <div className="balance-hint">

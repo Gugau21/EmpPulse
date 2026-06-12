@@ -109,9 +109,7 @@ const Modals: React.FC<Props> = ({
             // Only show a back arrow when this form was reached from the
             // accept/reject modal, so it can return there.
             onBack={
-              previousModal === 'ACCEPT_REQUEST'
-                ? () => openModal('ACCEPT_REQUEST')
-                : undefined
+              previousModal === 'ACCEPT_REQUEST' ? () => openModal('ACCEPT_REQUEST') : undefined
             }
           />
         )}

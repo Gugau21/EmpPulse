@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import type { LeaveRequest, ModalType } from '../../types'
 import type { LeaveRequestCreatePayload } from '../../services/api'
 import { useAuth } from '../../context/useAuth'
 import { useEmployeesList } from '../../hooks/useEmployeesList'
 import { useUserDetail } from '../../hooks/useUserDetail'
 import { useCreateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
+import { useOutsideClick } from '../../hooks/useOutsideClick'
+import LeaveTypeSelects from './LeaveTypeSelects'
 
 interface Props {
   activeModal: ModalType
@@ -43,14 +45,7 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect })
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLLabelElement>(null)
 
-  useEffect(() => {
-    if (!open) return
-    const onClickAway = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onClickAway)
-    return () => document.removeEventListener('mousedown', onClickAway)
-  }, [open])
+  useOutsideClick(ref, open, () => setOpen(false))
 
   const q = query.trim().toLowerCase()
   const matches = q
@@ -128,8 +123,7 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
 
   // The balance hint only makes sense for a vacation request, and in the admin
   // flow only once an employee (whose balance we show) has been chosen.
-  const showVacationHint =
-    leaveType === 'Vacation' && (!isCreate || employeeId !== null)
+  const showVacationHint = leaveType === 'Vacation' && (!isCreate || employeeId !== null)
 
   const handleSubmit = () => {
     setValidationError(null)
@@ -155,7 +149,9 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
       return
     }
     // The target is the picked employee (admin flow) or the caller themselves.
-    const targetEmployeeId = isCreate ? employeeId : (currentUser?.employeeProfile?.employeeId ?? null)
+    const targetEmployeeId = isCreate
+      ? employeeId
+      : (currentUser?.employeeProfile?.employeeId ?? null)
     if (targetEmployeeId == null) {
       setValidationError('You do not have an employee profile to file a request for.')
       return
@@ -179,25 +175,12 @@ const LeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
 
       {isCreate && <EmployeePicker selectedId={employeeId} onSelect={setEmployeeId} />}
 
-      <label>
-        Type of leave (by payment)
-        <select value={paymentType} onChange={e => setPaymentType(e.target.value)}>
-          <option value="Paid">Paid</option>
-          <option value="Unpaid">Unpaid</option>
-        </select>
-      </label>
-
-      <label>
-        Type of leave
-        <select
-          value={leaveType}
-          onChange={e => setLeaveType(e.target.value as LeaveRequest['type'])}
-        >
-          <option value="Vacation">Vacation</option>
-          <option value="Sick">Sick</option>
-          <option value="Personal">Personal</option>
-        </select>
-      </label>
+      <LeaveTypeSelects
+        paymentType={paymentType}
+        onPaymentTypeChange={setPaymentType}
+        leaveType={leaveType}
+        onLeaveTypeChange={setLeaveType}
+      />
 
       {showVacationHint && (
         <div className="balance-hint">

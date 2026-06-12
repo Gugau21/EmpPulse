@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
+import { useOutsideClick } from '../hooks/useOutsideClick'
 
 // A "Sort by" picker sitting next to the "Filter by" dropdowns on the request
 // lists. Unlike FilterDropdown it is single-select: choosing an option applies
@@ -26,14 +27,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   const ref = useRef<HTMLDivElement>(null)
 
   // Close on an outside click; the chosen option is kept.
-  useEffect(() => {
-    if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [open])
+  useOutsideClick(ref, open, () => setOpen(false))
 
   const pick = (value: string) => {
     onChange(selected === value ? null : value)
@@ -45,7 +39,8 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   return (
     <div className="filter-dropdown" ref={ref}>
       <button type="button" className="filter-toggle" onClick={() => setOpen(o => !o)}>
-        {label}{activeLabel ? `: ${activeLabel}` : ''}
+        {label}
+        {activeLabel ? `: ${activeLabel}` : ''}
       </button>
 
       {open && (
