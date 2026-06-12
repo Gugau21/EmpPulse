@@ -328,6 +328,17 @@ export const leaveRequestService = {
     return items.map(mapLeaveResponse)
   },
 
+  // GET /api/leave-requests/{id} — a single request, scoped server-side by role
+  // exactly as the list is (404 when the caller may not see it). Mapped into the
+  // app's LeaveRequest shape.
+  getById: async (id: number, signal?: AbortSignal): Promise<LeaveRequest> => {
+    const res = await apiRequest(`/api/leave-requests/${id}`, {
+      signal,
+      errorFallback: 'Failed to load leave request.'
+    })
+    return mapLeaveResponse((await res.json()) as LeaveResponseDto)
+  },
+
   // POST /api/leave-requests — an employee files their own request (stays
   // pending); an admin/owner may file on behalf of an employee in a department
   // they oversee (auto-approved). The server rejects overlapping ranges (409).

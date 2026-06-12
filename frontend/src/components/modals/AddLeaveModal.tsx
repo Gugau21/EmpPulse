@@ -185,7 +185,9 @@ const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
       {showVacationHint && (
         <div className="balance-hint">
           {vacationDaysLeft != null
-            ? `You have ${vacationDaysLeft} vacation days left`
+            ? isMine
+              ? `You have ${vacationDaysLeft} vacation days left`
+              : `${selectedEmployee?.name} ${selectedEmployee?.surname} has ${vacationDaysLeft} vacation days left`
             : 'Vacation balance unavailable'}
         </div>
       )}

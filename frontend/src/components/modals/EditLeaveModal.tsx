@@ -3,8 +3,10 @@ import type { LeaveRequest } from '../../types'
 import type { ApiLeaveType } from '../../services/api'
 import { useAuth } from '../../context/useAuth'
 import { useUserDetail } from '../../hooks/useUserDetail'
+import { useLeaveRequestDetail } from '../../hooks/useLeaveRequestDetail'
 import { useUpdateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import LeaveTypeSelects from './LeaveTypeSelects'
+import LeaveRequestLoadState from './LeaveRequestLoadState'
 
 interface Props {
   closeModal: () => void
@@ -32,14 +34,44 @@ const formatDate = (dateStr?: string) => {
   return ''
 }
 
+// Only the id is taken from the selected row; the request's own fields are fetched
+// from the API so the form opens on the server's current state. The form itself is
+// a child that mounts only once the request has loaded, so its initial state seeds
+// cleanly from the fetched values.
 const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }) => {
-  const [startStr, endStr] = selectedRequest?.dateRange?.split(' - ') ?? []
+  const rawId = selectedRequest ? Number(selectedRequest.id) : NaN
+  const id = Number.isInteger(rawId) ? rawId : null
+  const { data: request, isLoading, error } = useLeaveRequestDetail(id)
+
+  return (
+    <div className="modal-form">
+      {onBack && (
+        <button className="modal-back" onClick={onBack} aria-label="Go back">
+          ‹
+        </button>
+      )}
+      <h2>Edit request</h2>
+
+      <LeaveRequestLoadState isLoading={isLoading} error={error} loaded={!!request} />
+      {request && <EditLeaveForm request={request} closeModal={closeModal} onBack={onBack} />}
+    </div>
+  )
+}
+
+interface FormProps {
+  request: LeaveRequest
+  closeModal: () => void
+  onBack?: () => void
+}
+
+const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => {
+  const [startStr, endStr] = request.dateRange?.split(' - ') ?? []
 
   const [paymentType, setPaymentType] = useState('Paid')
-  const [leaveType, setLeaveType] = useState(selectedRequest?.type ?? 'Vacation')
+  const [leaveType, setLeaveType] = useState(request.type)
   const [from, setFrom] = useState(formatDate(startStr))
   const [till, setTill] = useState(formatDate(endStr))
-  const [reason, setReason] = useState(selectedRequest?.reason ?? '')
+  const [reason, setReason] = useState(request.reason ?? '')
   const [validationError, setValidationError] = useState<string | null>(null)
   const updateLeave = useUpdateLeaveRequest()
 
@@ -48,25 +80,22 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }
   // may fetch the target employee's detail (an employee can't read /api/users/{id}
   // for someone else), so the lookup is gated on that.
   const { currentUser, isOwner, isAdmin } = useAuth()
-  const requestEmployeeId = selectedRequest?.employeeId ?? null
-  const isOwnRequest =
+  const requestEmployeeId = request.employeeId
+  // Same meaning as AddLeaveModal's isMine: is the request's subject the caller.
+  // Here it must be derived from the request's employeeId (one edit modal serves
+  // both own and others' requests), rather than from the modal type.
+  const isMine =
     currentUser?.employeeProfile != null &&
     currentUser.employeeProfile.employeeId === requestEmployeeId
   const { data: requestEmployee } = useUserDetail(
-    !isOwnRequest && (isOwner || isAdmin) ? requestEmployeeId : null
+    !isMine && (isOwner || isAdmin) ? requestEmployeeId : null
   )
-  const vacationDaysLeft = isOwnRequest
+  const vacationDaysLeft = isMine
     ? currentUser?.employeeProfile?.yearlyVacationBalance
     : requestEmployee?.employeeProfile?.yearlyVacationBalance
 
   const handleSubmit = () => {
     setValidationError(null)
-    if (!selectedRequest) {
-      // Shouldn't happen (the modal is opened from an existing request row),
-      // but without an id there is nothing to update.
-      closeModal()
-      return
-    }
     if (!from || !till) {
       setValidationError('Both dates are required.')
       return
@@ -80,16 +109,9 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }
       setValidationError('A reason is required for personal leave.')
       return
     }
-    // The API expects a numeric id; bail out clearly rather than sending
-    // `/api/leave-requests/NaN` if the id is ever non-numeric.
-    const id = Number(selectedRequest.id)
-    if (!Number.isInteger(id)) {
-      setValidationError('This leave request has an invalid identifier and cannot be updated.')
-      return
-    }
     updateLeave.mutate(
       {
-        id,
+        id: Number(request.id),
         payload: {
           type: LEAVE_TYPE_TO_API[leaveType],
           paid: paymentType === 'Paid',
@@ -103,14 +125,7 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }
   }
 
   return (
-    <div className="modal-form">
-      {onBack && (
-        <button className="modal-back" onClick={onBack} aria-label="Go back">
-          ‹
-        </button>
-      )}
-      <h2>{'Edit request'}</h2>
-
+    <>
       <LeaveTypeSelects
         paymentType={paymentType}
         onPaymentTypeChange={setPaymentType}
@@ -121,7 +136,9 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }
       {leaveType === 'Vacation' && (
         <div className="balance-hint">
           {vacationDaysLeft != null
-            ? `You have ${vacationDaysLeft} vacation days left`
+            ? isMine
+              ? `You have ${vacationDaysLeft} vacation days left`
+              : `${request.employeeName} has ${vacationDaysLeft} vacation days left`
             : 'Vacation balance unavailable'}
         </div>
       )}
@@ -152,7 +169,7 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }
       >
         {onBack ? 'edit and auto approve request' : 'edit request'}
       </button>
-    </div>
+    </>
   )
 }
 
