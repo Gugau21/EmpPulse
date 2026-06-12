@@ -4,7 +4,7 @@ import { useAuth } from '../context/useAuth'
 import { landingPath } from '../utils/guards'
 import moonIcon from '../assets/Moon_icon.png'
 import sunIcon from '../assets/sun_icon.png'
-import { useTheme } from '../hooks/useTheme';
+import { useTheme } from '../hooks/useTheme'
 
 const navItemClass = ({ isActive }: { isActive: boolean }) => `nav-item${isActive ? ' active' : ''}`
 
@@ -12,7 +12,7 @@ const Sidebar: React.FC = () => {
   const { currentUser, isOwner, isAdmin, isEmployee } = useAuth()
   const navigate = useNavigate()
 
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme()
 
   const showEmployees = isOwner || isAdmin
   const showRequestMgr = isOwner || isAdmin
@@ -20,7 +20,7 @@ const Sidebar: React.FC = () => {
   const showMyRequests = isEmployee
   const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : ''
   const displayRole = isOwner ? 'Owner' : isAdmin ? 'Administrator' : 'Employee'
-  const isLightMode = theme === 'light';
+  const isLightMode = theme === 'light'
 
   return (
     <aside className="sidebar">
@@ -63,17 +63,14 @@ const Sidebar: React.FC = () => {
 
         <div className="sidebar-controls">
           {/* Here is the perfectly structured toggle! */}
-          <div 
-            className={`theme-toggle ${isLightMode ? 'light' : ''}`} 
-            onClick={toggleTheme}
-          >
+          <div className={`theme-toggle ${isLightMode ? 'light' : ''}`} onClick={toggleTheme}>
             <div className="toggle-thumb">
               {!isLightMode ? (
                 // Solid Moon Icon
                 <img src={sunIcon} alt="Light mode" width={22} height={22} />
               ) : (
                 // Solid Center Sun Icon with thick rays
-                
+
                 <img src={moonIcon} alt="Dark mode" width={25} height={25} />
               )}
             </div>

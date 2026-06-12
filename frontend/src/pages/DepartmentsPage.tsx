@@ -70,7 +70,12 @@ const DepartmentsScreen: React.FC = () => {
                     }}
                     title="Delete Department"
                   >
-                    <img src={theme === 'dark'? trashIconLight : trashIcon} alt="Delete" width={30} height={30} />
+                    <img
+                      src={theme === 'dark' ? trashIconLight : trashIcon}
+                      alt="Delete"
+                      width={30}
+                      height={30}
+                    />
                   </button>
                 )}
               </div>

@@ -5,7 +5,7 @@ import { useAuth } from '../context/useAuth'
 import { useDepartmentDetail } from '../hooks/useDepartmentDetail'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import whiteTriangleIcon from '../assets/white_triangle.png'
-import EditIcon from '../assets/edit_icon.png' 
+import EditIcon from '../assets/edit_icon.png'
 import EditIconLight from '../assets/edit_icon_light.png'
 import { useTheme } from '../hooks/useTheme'
 
@@ -56,7 +56,10 @@ const DepartmentDetailScreen: React.FC = () => {
       <header className="page-header">
         <div className="department-detail-title">
           <button className="btn-pill-secondary" onClick={onBack}>
-            <img src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon} alt="Back to departments list" />
+            <img
+              src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
+              alt="Back to departments list"
+            />
           </button>
           <div className="department-detail-title-row">
             <h2>{department.name}</h2>
@@ -65,10 +68,10 @@ const DepartmentDetailScreen: React.FC = () => {
                 className="btn-edit-action"
                 onClick={() => openModal('EDIT_DEPARTMENT', department)}
               >
-                <img 
-                  src={theme === 'dark' ? EditIconLight : EditIcon} 
-                  alt="Edit department name" 
-                  width={30} 
+                <img
+                  src={theme === 'dark' ? EditIconLight : EditIcon}
+                  alt="Edit department name"
+                  width={30}
                   height={30}
                 />
               </button>

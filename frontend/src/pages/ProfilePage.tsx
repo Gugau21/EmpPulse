@@ -87,7 +87,10 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="screen-container">
         <button className="btn-pill-secondary" onClick={onBack}>
-          <img src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon} alt="Back to employees list" />
+          <img
+            src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
+            alt="Back to employees list"
+          />
         </button>
         {employeeId == null ? (
           <p className="form-error">This profile does not exist.</p>
@@ -103,7 +106,10 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="screen-container">
       <button className="btn-pill-secondary" onClick={onBack}>
-        <img src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon} alt="Back to employees list" />
+        <img
+          src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
+          alt="Back to employees list"
+        />
       </button>
       <header className="page-header profile-header">
         <h2>{isMyProfile ? 'My Profile' : 'User Profile'}</h2>

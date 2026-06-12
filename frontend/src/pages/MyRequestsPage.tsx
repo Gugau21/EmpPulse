@@ -90,9 +90,19 @@ const MyRequestsScreen: React.FC = () => {
               title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
             >
               {req.status === 'APPROVED' ? (
-                <img src={theme === 'dark' ? crossIconLight : crossIcon} alt="Delete" width={30} height={30} />
+                <img
+                  src={theme === 'dark' ? crossIconLight : crossIcon}
+                  alt="Delete"
+                  width={30}
+                  height={30}
+                />
               ) : (
-                <img src={theme === 'dark' ? trashIconLight : trashIcon} alt="Delete" width={30} height={30} />
+                <img
+                  src={theme === 'dark' ? trashIconLight : trashIcon}
+                  alt="Delete"
+                  width={30}
+                  height={30}
+                />
               )}
             </button>
           </div>

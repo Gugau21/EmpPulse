@@ -27,31 +27,31 @@ const AccordionScreen: React.FC<AccordionScreenProps> = ({
 }) => {
   const { theme } = useTheme()
 
-return (
-  <div className="screen-container">
-    <header className="page-header">
-      <h2>{pageTitle}</h2>
-      <div className="filter-dropdown">
-        <span>Filter by</span>...
+  return (
+    <div className="screen-container">
+      <header className="page-header">
+        <h2>{pageTitle}</h2>
+        <div className="filter-dropdown">
+          <span>Filter by</span>...
+        </div>
+      </header>
+
+      <div className="accordion-section">
+        <h3 className="department-title" onClick={onToggle}>
+          {accordionTitle}{' '}
+          <img
+            src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
+            alt={`Toggle ${accordionTitle.toLowerCase()}`}
+            className={`chevron ${expanded ? 'expanded' : ''}`}
+          />
+        </h3>
+
+        {expanded && children}
       </div>
-    </header>
 
-    <div className="accordion-section">
-      <h3 className="department-title" onClick={onToggle}>
-        {accordionTitle}{' '}
-        <img
-          src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
-          alt={`Toggle ${accordionTitle.toLowerCase()}`}
-          className={`chevron ${expanded ? 'expanded' : ''}`}
-        />
-      </h3>
-
-      {expanded && children}
+      {footer}
     </div>
-
-    {footer}
-  </div>
-)
+  )
 }
 
 export default AccordionScreen
