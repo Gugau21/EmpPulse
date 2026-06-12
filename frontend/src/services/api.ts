@@ -282,7 +282,7 @@ interface LeaveResponseDto {
   adminReviewerId: number | null
   adminComment: string | null
   createdAt: string
-  updatedAt: string
+  updatedAt: string | null
 }
 
 const LEAVE_TYPE_FROM_API: Record<LeaveResponseDto['type'], LeaveRequest['type']> = {
@@ -303,6 +303,10 @@ function mapLeaveResponse(dto: LeaveResponseDto): LeaveRequest {
     employeeId: dto.employee.id,
     employeeName: `${dto.employee.name} ${dto.employee.surname}`,
     type: LEAVE_TYPE_FROM_API[dto.type],
+    startDate: dto.startDate,
+    // When the request has never been edited the server leaves updatedAt null,
+    // so fall back to its creation time as the "last edit".
+    lastEditedAt: dto.updatedAt ?? dto.createdAt,
     dateRange: `${isoToDisplayDate(dto.startDate)} - ${isoToDisplayDate(dto.endDate)}`,
     status: dto.status.toUpperCase() as LeaveRequest['status'],
     reason: dto.reason ?? undefined

@@ -117,6 +117,7 @@ const EmployeesPage: React.FC = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               maxLength={50}
+              style={{ width: '16ch' }}
             />
           </div>
           <FilterDropdown

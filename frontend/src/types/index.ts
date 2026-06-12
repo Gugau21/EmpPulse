@@ -41,6 +41,12 @@ export interface LeaveRequest {
   employeeId: number
   employeeName: string
   type: 'Vacation' | 'Personal' | 'Sick'
+  // ISO yyyy-mm-dd start of the leave, kept alongside the display `dateRange`
+  // so the request lists can sort by when the leave begins.
+  startDate: string
+  // ISO timestamp of the last edit: the server's updatedAt, or its createdAt when
+  // the request has never been edited. Lets the lists sort by most recently touched.
+  lastEditedAt: string
   dateRange: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
   reason?: string
