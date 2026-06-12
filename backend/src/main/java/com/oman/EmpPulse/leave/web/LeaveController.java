@@ -63,6 +63,14 @@ public class LeaveController {
   }
 
   @PreAuthorize("hasAuthority('EMPLOYEE')")
+  @PatchMapping("/{leaveRequestId}/cancel")
+  public ResponseEntity<?> cancelLeaveRequest(
+      @PathVariable Long leaveRequestId, Authentication authentication) {
+    return ResponseEntity.ok(
+        leaveService.cancelLeaveRequest(leaveRequestId, AuthUtils.getUserId(authentication)));
+  }
+
+  @PreAuthorize("hasAuthority('EMPLOYEE')")
   @DeleteMapping("/{leaveRequestId}")
   public ResponseEntity<?> deleteLeaveRequest(
       @PathVariable Long leaveRequestId, Authentication authentication) {

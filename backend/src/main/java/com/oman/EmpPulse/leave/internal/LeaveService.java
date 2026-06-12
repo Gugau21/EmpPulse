@@ -236,6 +236,39 @@ public class LeaveService {
     return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
   }
 
+  /**
+   * Cancels the caller's own approved leave request, setting its status to {@code cancelled}.
+   *
+   * <p>Allowed only for the employee the request belongs to and only while the request is {@code
+   * approved}.
+   *
+   * @param leaveRequestId the leave request ID to cancel
+   * @param callerId the user ID of the authenticated caller
+   * @return the cancelled leave request
+   */
+  @Transactional
+  public LeaveResponse cancelLeaveRequest(Long leaveRequestId, Long callerId) {
+    Leave leave = findLeaveOrThrow(leaveRequestId);
+
+    if (!leave.getEmployeeId().equals(callerId)) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the employee the request belongs to can cancel it");
+    }
+    if (leave.getStatus() != LeaveStatus.approved) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Only approved leave requests can be cancelled");
+    }
+
+    // TODO(modification requests): once POST /{id}/modifications exists, cancelling a request that
+    // has a pending modification linked via modificationId should set the modificationId of that
+    // pending
+    // modifcation to null. In short: in this case the pending modification becomes like any normal
+    // pending request
+    leave.setStatus(LeaveStatus.cancelled);
+    EmployeeSummaryResponse employee = findEmployeeForLeave(leave);
+    return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
+  }
+
   private void validateUpdatePermissions(
       boolean ownRequest,
       boolean adminOversees,
