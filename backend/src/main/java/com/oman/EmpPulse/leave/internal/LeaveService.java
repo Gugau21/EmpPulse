@@ -132,6 +132,28 @@ public class LeaveService {
     return new LeaveListResponse(items);
   }
 
+  @Transactional(readOnly = true)
+  public LeaveResponse getLeaveRequest(Long leaveRequestId, Long callerId) {
+    Leave leave =
+        leaveRepository
+            .findById(leaveRequestId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Leave request not found"));
+    EmployeeSummaryResponse employee =
+        employeeApi
+            .findSummaryById(leave.getEmployeeId())
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
+
+    boolean own = leave.getEmployeeId().equals(callerId);
+    if (!own && !adminApi.overseesDepartment(callerId, employee.getDepartmentId())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this leave request");
+    }
+    return toLeaveResponse(leave, employee);
+  }
+
   private void ensureRequiredFieldsPresent(LeaveCreateRequest req) {
     if (req.getEmployeeId() == null
         || req.getType() == null
