@@ -25,6 +25,11 @@ const Sidebar: React.FC = () => {
           EmpPulse
         </h1>
         <nav className="sidebar-nav">
+          {showDepartments && (
+            <NavLink to="/departments" className={navItemClass}>
+              Department list
+            </NavLink>
+          )}
           {showEmployees && (
             <NavLink to="/employees" className={navItemClass}>
               Employees
@@ -38,11 +43,6 @@ const Sidebar: React.FC = () => {
           {showMyRequests && (
             <NavLink to="/my-requests" className={navItemClass}>
               My requests
-            </NavLink>
-          )}
-          {showDepartments && (
-            <NavLink to="/departments" className={navItemClass}>
-              Department list
             </NavLink>
           )}
         </nav>
