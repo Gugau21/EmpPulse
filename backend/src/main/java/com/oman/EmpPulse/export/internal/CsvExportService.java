@@ -11,12 +11,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 @Service
 public class CsvExportService {
 
-    public byte[] departmentsToCsv(List<Department> departments) {
+    public byte[] departmentsToCsv(Iterable<Department> departments) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              CSVPrinter printer = new CSVPrinter(
                  new OutputStreamWriter(out, StandardCharsets.UTF_8),
@@ -36,7 +35,7 @@ public class CsvExportService {
         }
     }
 
-    public byte[] usersToCsv(List<User> users) {
+    public byte[] usersToCsv(Iterable<User> users) {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
             CSVPrinter printer = new CSVPrinter(
                 new OutputStreamWriter(out, StandardCharsets.UTF_8),
@@ -65,7 +64,7 @@ public class CsvExportService {
         }
     }
 
-    public byte[] employeesToCsv(List<Employee> employees) {
+    public byte[] employeesToCsv(Iterable<Employee> employees) {
     try (ByteArrayOutputStream out = new ByteArrayOutputStream();
          CSVPrinter printer = new CSVPrinter(
              new OutputStreamWriter(out, StandardCharsets.UTF_8),

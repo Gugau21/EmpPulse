@@ -14,6 +14,7 @@ import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.session.FindByIndexNameSessionRepository;
@@ -78,6 +79,18 @@ public class UserService implements UserApi {
             UserLanguage.en);
     user.setOwner(true);
     userRepository.save(user);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<User> findByIdIn(Collection<Long> userIds) {
+    return userRepository.findByIdIn(userIds);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<User> findById(Long userId) {
+    return userRepository.findById(userId);
   }
 
   private User getUserById(Long userId) {

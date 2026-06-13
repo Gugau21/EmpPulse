@@ -6,6 +6,7 @@ import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.dto.EmployeeListResponse;
 import com.oman.EmpPulse.user.dto.EmployeeSummaryResponse;
 import java.util.List;
+import java.util.Collection;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,11 @@ public class EmployeeService implements EmployeeApi {
   @Override
   public boolean hasEmployeesInDepartment(Long departmentId) {
     return employeeRepository.existsByDepartmentId(departmentId);
+  }
+
+  @Override
+  public Collection<Employee> findAllByDepartmentIdIn(Collection<Long> departmentIds) {
+    return employeeRepository.findByDepartmentIdIn(departmentIds);
   }
 
   @Transactional(readOnly = true)
