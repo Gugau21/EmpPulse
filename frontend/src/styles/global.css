@@ -539,6 +539,22 @@ select {
   text-align: right;
 }
 
+/* Status badge + return date stacked at the right of the banner. */
+.banner-status {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* The until date sits on the purple banner, so it needs light text rather than
+   the dark default used in the (light) employee list. */
+.banner-status .until-text {
+  color: inherit;
+  opacity: 0.9;
+  min-width: 0;
+}
+
 .banner-center-action {
   display: flex;
   justify-content: center;

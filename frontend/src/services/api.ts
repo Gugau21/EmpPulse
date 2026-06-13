@@ -1,4 +1,13 @@
-import type { MeUser, Department, DepartmentAdmin, Employee, LeaveRequest } from '../types'
+import type {
+  ActiveLeave,
+  MeUser,
+  Department,
+  DepartmentAdmin,
+  Employee,
+  LeaveRequest
+} from '../types'
+import { isoToDisplayDate } from '../utils/date'
+import { describeActiveLeave } from '../utils/activeLeave'
 
 // Abort a request that hasn't responded in this long so a hung backend surfaces as
 // a retryable failure rather than an indefinite spinner. React Query then retries
@@ -218,22 +227,30 @@ interface EmployeeSummaryDto {
   departmentName: string | null
 }
 
+// Raw item shape from GET /api/employees (EmployeeListItemResponse): the summary
+// plus the employee's active state and current approved leave (null when working).
+interface EmployeeListItemDto extends EmployeeSummaryDto {
+  active: boolean
+  activeLeave: ActiveLeave | null
+}
+
 export const employeeService = {
   // GET /api/employees (OWNER lists all; ADMIN receives only employees in their
   // departments — filtered server-side). Mapped into the app's Employee shape;
-  // the API summary carries no leave/status data, so those fields stay absent.
+  // activeLeave (null when the employee is working) becomes the status badge.
   getAll: async (signal?: AbortSignal): Promise<Employee[]> => {
     const res = await apiRequest('/api/employees', {
       signal,
       errorFallback: 'Failed to load employees.'
     })
     const data = await res.json()
-    const items = (data.items ?? []) as EmployeeSummaryDto[]
+    const items = (data.items ?? []) as EmployeeListItemDto[]
     return items.map(e => ({
       id: String(e.id),
       name: e.name,
       surname: e.surname,
-      department: e.departmentName ?? undefined
+      department: e.departmentName ?? undefined,
+      ...describeActiveLeave(e.activeLeave)
     }))
   }
 }
@@ -305,12 +322,6 @@ const LEAVE_TYPE_FROM_API: Record<LeaveResponseDto['type'], LeaveRequest['type']
   vacation: 'Vacation',
   sick: 'Sick',
   personal: 'Personal'
-}
-
-// ISO yyyy-mm-dd → the dd.mm.yyyy display the request rows and edit modal expect.
-function isoToDisplayDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}.${m}.${y}`
 }
 
 function mapLeaveResponse(dto: LeaveResponseDto): LeaveRequest {

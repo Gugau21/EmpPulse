@@ -7,6 +7,7 @@ import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { landingPath } from '../utils/guards'
+import { describeActiveLeave } from '../utils/activeLeave'
 import blackTriangleIcon from '../assets/black_triangle.png'
 
 // A single row in the "Logged hours" table. The clickable/edit wiring is
@@ -76,6 +77,8 @@ const ProfilePage: React.FC = () => {
   const targetUser = isMyProfile ? currentUser : employeeUser
   const employeeProfile = targetUser?.employeeProfile ?? null
   const adminDepartmentIds = targetUser?.adminProfile?.departmentIds ?? []
+  // Current leave from the profile's active leave (null = working, no badge).
+  const { status, untilDate } = describeActiveLeave(employeeProfile?.activeLeave)
 
   // Resolve admin department IDs to real names. The list is gated to owners/admins
   // and an admin only receives their own departments, so a name may be missing
@@ -153,20 +156,23 @@ const ProfilePage: React.FC = () => {
               )}
             </div>
 
-            {/*
-              HIDDEN FOR NOW: current leave status. Neither GET /api/me nor
-              GET /api/users/{id} returns a status field, so there is nothing
-              real to render. Restore once a leave/status API is wired:
-
-              {!isOwnerPersonal && (
-                <div className="banner-side-info">
-                  <div className="banner-stacked-detail">
-                    <label>Status:</label>
-                    <span>{targetUser?.status}</span>
-                  </div>
+            {/* Current leave status. Only employees have one; a working employee
+                (no active leave) shows "Working" rather than a badge. */}
+            {!isOwnerPersonal && employeeProfile && (
+              <div className="banner-side-info">
+                <div className="banner-stacked-detail">
+                  <label>Status:</label>
+                  {status ? (
+                    <span className="banner-status">
+                      <span className={`badge badge-${status.toLowerCase()}`}>{status}</span>
+                      {untilDate && <span className="until-text">until {untilDate}</span>}
+                    </span>
+                  ) : (
+                    <span>Working</span>
+                  )}
                 </div>
-              )}
-            */}
+              </div>
+            )}
           </div>
 
           <div className="banner-center-action">

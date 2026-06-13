@@ -73,8 +73,10 @@ const EmployeesPage: React.FC = () => {
   // A single person row. `deleteEmployee` is passed only for employee rows owned
   // by the owner, who may remove them from the department; admin rows are never
   // deletable here (admin assignment is managed via the department's admins modal).
+  // `status`/`untilDate` come from the employee's active leave (absent = working,
+  // and admins are listed without a status).
   const renderPersonRow = (
-    person: { id: string; name: string; surname: string },
+    person: { id: string; name: string; surname: string } & Pick<Employee, 'status' | 'untilDate'>,
     keyPrefix: string,
     deleteEmployee?: Employee
   ) => {
@@ -87,6 +89,12 @@ const EmployeesPage: React.FC = () => {
       >
         <span className="emp-name">{[person.name, person.surname].filter(Boolean).join(' ')}</span>
         <div className="emp-meta">
+          {/* On-leave employees show a type badge and the date they return; a
+              working employee (no active leave) shows nothing. */}
+          {person.status && (
+            <span className={`badge badge-${person.status.toLowerCase()}`}>{person.status}</span>
+          )}
+          {person.untilDate && <span className="until-text">until {person.untilDate}</span>}
           {/* Removing an employee from a department is owner-only. */}
           {deletable && (
             <button
