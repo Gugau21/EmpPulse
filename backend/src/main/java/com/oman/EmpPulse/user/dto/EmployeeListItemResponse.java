@@ -1,19 +1,31 @@
 package com.oman.EmpPulse.user.dto;
 
-public class EmployeeSummaryResponse {
+import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
+
+public class EmployeeListItemResponse {
   private Long id;
   private String name;
   private String surname;
   private Long departmentId;
   private String departmentName;
+  private boolean active;
+  private ActiveLeaveResponse activeLeave;
 
-  public EmployeeSummaryResponse(
-      Long id, String name, String surname, Long departmentId, String departmentName) {
+  public EmployeeListItemResponse(
+      Long id,
+      String name,
+      String surname,
+      Long departmentId,
+      String departmentName,
+      boolean active,
+      ActiveLeaveResponse activeLeave) {
     this.id = id;
     this.name = name;
     this.surname = surname;
     this.departmentId = departmentId;
     this.departmentName = departmentName;
+    this.active = active;
+    this.activeLeave = activeLeave;
   }
 
   public Long getId() {
@@ -34,5 +46,13 @@ public class EmployeeSummaryResponse {
 
   public String getDepartmentName() {
     return departmentName;
+  }
+
+  public boolean isActive() {
+    return active;
+  }
+
+  public ActiveLeaveResponse getActiveLeave() {
+    return activeLeave;
   }
 }

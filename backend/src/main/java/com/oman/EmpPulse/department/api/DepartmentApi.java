@@ -1,6 +1,7 @@
 package com.oman.EmpPulse.department.api;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface DepartmentApi {
@@ -12,6 +13,14 @@ public interface DepartmentApi {
    * @return the department name, or empty if not found
    */
   Optional<String> findNameById(Long departmentId);
+
+  /**
+   * Returns the IDs of all departments. Used to attach the owner to every department during
+   * seeding.
+   *
+   * @return the list of all department IDs
+   */
+  List<Long> findAllDepartmentIds();
 
   /**
    * Replaces the full set of departments an existing admin oversees with the given set, mutating
@@ -30,6 +39,18 @@ public interface DepartmentApi {
    *     {@code 404 NOT_FOUND} if any ID does not correspond to an existing department
    */
   void setAdminDepartments(Long adminId, Collection<Long> departmentIds);
+
+  /**
+   * Ensures a Default Department exists within the system. This department cannot be deleted from
+   * the system.
+   *
+   * <p>Called during bootstrap to seed the application with a Default Department. If a department
+   * with {@code is_default = true} already exists, the method returns without modification.
+   *
+   * <p>Must run before {@link com.oman.EmpPulse.user.api.UserApi#ensureOwnerExists} so that the
+   * owner is automatically assigned to the default department when the owner account is created.
+   */
+  void ensureDefaultDepartmentExists();
 
   /**
    * Finds all departments in the system. Owners get all departments; admins get only those they

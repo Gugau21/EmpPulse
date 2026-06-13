@@ -3,13 +3,13 @@ package com.oman.EmpPulse.user.dto;
 import java.util.List;
 
 public class EmployeeListResponse {
-  private List<EmployeeSummaryResponse> items;
+  private List<EmployeeListItemResponse> items;
 
-  public EmployeeListResponse(List<EmployeeSummaryResponse> items) {
+  public EmployeeListResponse(List<EmployeeListItemResponse> items) {
     this.items = items;
   }
 
-  public List<EmployeeSummaryResponse> getItems() {
+  public List<EmployeeListItemResponse> getItems() {
     return items;
   }
 }

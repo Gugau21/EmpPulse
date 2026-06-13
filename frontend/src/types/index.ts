@@ -22,6 +22,16 @@ export interface Department {
   admins: DepartmentAdmin[]
 }
 
+// A currently-active approved leave, as returned on the employee list and the
+// user profile. The wire `type` is the lower-cased LeaveType enum; the UI maps it
+// to a display-cased status badge and an "until …" label (see describeActiveLeave).
+export interface ActiveLeave {
+  type: 'vacation' | 'sick' | 'personal'
+  // ISO yyyy-mm-dd bounds of the leave; endDate drives the "until …" label.
+  startDate: string
+  endDate: string
+}
+
 export interface Employee {
   id: string
   name: string
@@ -29,16 +39,32 @@ export interface Employee {
   email?: string
   department?: string
   role?: string
-  status?: 'Personal' | 'Sick' | 'Vacation' | 'Working'
+  // "Working" is not a status — an employee is working when this is absent.
+  status?: 'Personal' | 'Sick' | 'Vacation'
+  // dd.mm.yyyy end date of the active leave, paired with `status`.
   untilDate?: string
 }
 
 export interface LeaveRequest {
   id: string
+  // The id of the employee the request belongs to. Lets "My requests" narrow the
+  // shared list to the caller's own rows (an admin/owner is served everyone's).
+  employeeId: number
   employeeName: string
   type: 'Vacation' | 'Personal' | 'Sick'
+  // ISO yyyy-mm-dd start of the leave, kept alongside the display `dateRange`
+  // so the request lists can sort by when the leave begins.
+  startDate: string
+  // ISO yyyy-mm-dd end of the leave; with `startDate` it lets the lists bucket a
+  // request as current/future/past relative to today.
+  endDate: string
+  // ISO timestamp of the last edit: the server's updatedAt, or its createdAt when
+  // the request has never been edited. Lets the lists sort by most recently touched.
+  lastEditedAt: string
   dateRange: string
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+  // Whether the leave is paid; the view modal surfaces this as "Paid"/"Unpaid".
+  paid: boolean
   reason?: string
 }
 
@@ -54,6 +80,8 @@ export interface MeUser {
     departmentId: number | null
     departmentName: string | null
     yearlyVacationBalance: number
+    // The employee's current approved leave, or null when they are working.
+    activeLeave: ActiveLeave | null
   } | null
   adminProfile: { id: number; departmentIds: number[] } | null
 }
@@ -74,6 +102,7 @@ export type ModalType =
   | 'ACCEPT_REQUEST'
   | 'ADD_REQUEST_FORM'
   | 'EDIT_LEAVE_FORM'
+  | 'VIEW_LEAVE_FORM'
   | 'DELETE_LEAVE'
   | 'CANCEL_LEAVE'
   | 'LOGOUT'
@@ -91,8 +120,11 @@ export type ModalType =
 export type ModalPayload = Department | Employee
 
 // Shared signature for the openModal callback threaded through screens and modals.
+// `returnTo` records the modal to go back to, letting a modal opened from another
+// (e.g. the edit form launched from the accept/reject modal) show a back button.
 export type OpenModal = (
   modal: ModalType,
   payload?: ModalPayload,
-  requestObj?: LeaveRequest
+  requestObj?: LeaveRequest,
+  returnTo?: ModalType
 ) => void

@@ -41,6 +41,16 @@ public class DepartmentService implements DepartmentApi {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public List<Long> findAllDepartmentIds() {
+    return departmentRepository.findAll().stream().map(Department::getId).toList();
+  }
+
+  private Long ownerAdminId() {
+    return adminApi.getOwnerAdmin().map(Admin::getId).orElse(null);
+  }
+
+  @Override
   @Transactional
   public void setAdminDepartments(Long adminId, Collection<Long> departmentIds) {
     Admin admin =
@@ -71,6 +81,17 @@ public class DepartmentService implements DepartmentApi {
   }
 
   @Override
+  @Transactional
+  public void ensureDefaultDepartmentExists() {
+    if (departmentRepository.existsByIsDefaultTrue()) {
+      return;
+    }
+    Department department = new Department("Default Department");
+    department.setDefault(true);
+    departmentRepository.save(department);
+  }
+
+  @Override
   @Transactional(readOnly = true)
   public List<Department> findAll() {
       return departmentRepository.findAll();
@@ -84,12 +105,7 @@ public class DepartmentService implements DepartmentApi {
 
   @Transactional(readOnly = true)
   public DepartmentResponse getDepartment(Long departmentId) {
-    Department department =
-        departmentRepository
-            .findById(departmentId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
-    return toDepartmentResponse(department);
+    return toDepartmentResponse(findDepartmentById(departmentId));
   }
 
   @Transactional(readOnly = true)
@@ -99,27 +115,23 @@ public class DepartmentService implements DepartmentApi {
 
   @Transactional
   public void deleteDepartment(Long departmentId) {
-    Department department =
-        departmentRepository
-            .findById(departmentId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+    Department department = findDepartmentById(departmentId);
+    if (department.isDefault()) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Cannot delete the default department");
+    }
     if (employeeApi.hasEmployeesInDepartment(departmentId)) {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Cannot delete department: employees are assigned");
     }
-    if (!department.getAdmins().isEmpty()) {
+    Long ownerId = ownerAdminId();
+    boolean hasNonOwnerAdmin =
+        department.getAdmins().stream().anyMatch(admin -> !admin.getId().equals(ownerId));
+    if (hasNonOwnerAdmin) { // owner is admin of every department
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Cannot delete department: administrators are assigned");
     }
     departmentRepository.delete(department);
-  }
-
-  @Transactional(readOnly = true)
-  public DepartmentListResponse getAllDepartments() {
-    List<DepartmentResponse> items =
-        departmentRepository.findAll().stream().map(this::toDepartmentResponse).toList();
-    return new DepartmentListResponse(items);
   }
 
   @Transactional(readOnly = true)
@@ -138,20 +150,17 @@ public class DepartmentService implements DepartmentApi {
 
     Department department = new Department(req.getName());
 
-    if (req.getAdminIds() != null) {
-      department.setAdmins(loadAdminsFromIds(req.getAdminIds()));
-    }
+    Set<Admin> admins =
+        (req.getAdminIds() != null) ? loadAdminsFromIds(req.getAdminIds()) : new HashSet<>();
+    adminApi.getOwnerAdmin().ifPresent(admins::add); // owner is admin of every department
+    department.setAdmins(admins);
 
     departmentRepository.save(department);
   }
 
   @Transactional
   public void updateDepartment(Long departmentId, DepartmentUpdateRequest req) {
-    Department department =
-        departmentRepository
-            .findById(departmentId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+    Department department = findDepartmentById(departmentId);
 
     if (req.getName() != null) {
       validateNameAvailable(req.getName(), department.getName());
@@ -160,8 +169,17 @@ public class DepartmentService implements DepartmentApi {
 
     if (req.getAdminIds() != null) {
       rejectDetachThatDeactivatesAdmin(department.getAdmins(), req.getAdminIds());
-      department.setAdmins(loadAdminsFromIds(req.getAdminIds()));
+      Set<Admin> newAdmins = loadAdminsFromIds(req.getAdminIds());
+      adminApi.getOwnerAdmin().ifPresent(newAdmins::add); // owner is always preserved
+      department.setAdmins(newAdmins);
     }
+  }
+
+  private Department findDepartmentById(Long departmentId) {
+    return departmentRepository
+        .findById(departmentId)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
   }
 
   private void validateNameAvailable(String newName, String currentName) {
@@ -188,7 +206,11 @@ public class DepartmentService implements DepartmentApi {
    */
   private void rejectDetachThatDeactivatesAdmin(Set<Admin> currentAdmins, List<Long> newAdminIds) {
     Set<Long> newAdminIdSet = new HashSet<>(newAdminIds);
+    Long ownerId = ownerAdminId();
     for (Admin admin : currentAdmins) {
+      if (admin.getId().equals(ownerId)) {
+        continue;
+      }
       if (!newAdminIdSet.contains(admin.getId()) && admin.getDepartments().size() <= 1) {
         throw new ResponseStatusException(
             HttpStatus.CONFLICT,
@@ -209,8 +231,12 @@ public class DepartmentService implements DepartmentApi {
   }
 
   private DepartmentResponse toDepartmentResponse(Department department) {
+    Long ownerId = ownerAdminId();
     List<AdminSummaryResponse> admins =
-        department.getAdmins().stream().map(adminApi::toAdminSummaryResponse).toList();
+        department.getAdmins().stream()
+            .filter(admin -> !admin.getId().equals(ownerId))
+            .map(adminApi::toAdminSummaryResponse)
+            .toList();
     return new DepartmentResponse(department.getId(), department.getName(), admins);
   }
 }

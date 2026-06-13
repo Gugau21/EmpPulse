@@ -54,7 +54,8 @@ public class SecurityConfig {
                         "/*.ico",
                         "/api/auth/login",
                         "/api/auth/logout",
-                        "/actuator/health")
+                        "/actuator/health",
+                        "/error")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

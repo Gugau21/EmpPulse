@@ -16,6 +16,9 @@ public class Department {
   @Column(unique = true, nullable = false)
   private String name;
 
+  @Column(name = "is_default", nullable = false)
+  private boolean isDefault = false;
+
   @Column(name = "week_schedule_id")
   private Long weekScheduleId;
 
@@ -42,6 +45,14 @@ public class Department {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public boolean isDefault() {
+    return isDefault;
+  }
+
+  public void setDefault(boolean isDefault) {
+    this.isDefault = isDefault;
   }
 
   public Long getWeekScheduleId() {

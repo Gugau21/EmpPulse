@@ -1,19 +1,22 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useOutletContext } from 'react-router-dom'
 import type { OutletContext } from '../components/AppLayout'
-import { PENDING_REQUESTS } from '../utils/mockData'
 import AccordionScreen from '../components/AccordionScreen'
+import RequestList from '../components/RequestList'
+import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
+import { useLeaveRequests } from '../hooks/useLeaveRequests'
 
 const RequestManagerPage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
-  const [expanded, setExpanded] = useState(true)
+  // The server already scopes this to what the caller manages: an admin gets
+  // their overseen departments' requests (plus their own); the owner gets all.
+  const managedRequestsQuery = useLeaveRequests()
+  const { visibleRequests, filterNode } = useRequestStatusFilter(managedRequestsQuery.data ?? [])
 
   return (
     <AccordionScreen
       pageTitle="Requests"
-      accordionTitle="Pending Requests"
-      expanded={expanded}
-      onToggle={() => setExpanded(!expanded)}
+      filter={filterNode}
       footer={
         <div className="center-action">
           <button className="primary-btn" onClick={() => openModal('CREATE_REQUEST')}>
@@ -22,21 +25,35 @@ const RequestManagerPage: React.FC = () => {
         </div>
       }
     >
-      <div className="card-box list-box dashed-wrapper">
-        {PENDING_REQUESTS.map(req => (
+      <RequestList
+        state={managedRequestsQuery}
+        requests={visibleRequests}
+        renderRow={req => (
           <div
             key={req.id}
-            className="employee-row clickable"
-            onClick={() => openModal('ACCEPT_REQUEST', undefined, req)}
+            className={`employee-row clickable ${req.status === 'PENDING' ? 'dashed-row' : ''}`}
+            // Pending rows open the accept/reject modal; approved rows open the
+            // edit form directly; finalized (cancelled/rejected) rows open the
+            // read-only view.
+            onClick={
+              req.status === 'PENDING'
+                ? () => openModal('ACCEPT_REQUEST', undefined, req)
+                : req.status === 'APPROVED'
+                  ? () => openModal('EDIT_LEAVE_FORM', undefined, req)
+                  : () => openModal('VIEW_LEAVE_FORM', undefined, req)
+            }
           >
             <span className="emp-name">{req.employeeName}</span>
+            <span className="date-span">{req.dateRange}</span>
             <div className="emp-meta">
               <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
-              <span className="until-text">{req.dateRange}</span>
+              <span className={`status-label status-${req.status.toLowerCase()}`}>
+                {req.status}
+              </span>
             </div>
           </div>
-        ))}
-      </div>
+        )}
+      />
     </AccordionScreen>
   )
 }

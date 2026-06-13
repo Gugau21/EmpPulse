@@ -17,7 +17,9 @@ export const employeeKeys = {
 
 export const leaveRequestKeys = {
   all: ['leaveRequests'] as const,
-  lists: () => [...leaveRequestKeys.all, 'list'] as const
+  lists: () => [...leaveRequestKeys.all, 'list'] as const,
+  details: () => [...leaveRequestKeys.all, 'detail'] as const,
+  detail: (id: number) => [...leaveRequestKeys.details(), id] as const
 }
 
 export const userKeys = {

@@ -18,11 +18,8 @@ public class EmployeeController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('ADMIN')")
   public ResponseEntity<?> listEmployees(Authentication authentication) {
-    if (AuthUtils.isOwner(authentication)) {
-      return ResponseEntity.ok(employeeService.getAllEmployees());
-    }
     return ResponseEntity.ok(
         employeeService.getEmployeesForAdmin(AuthUtils.getUserId(authentication)));
   }

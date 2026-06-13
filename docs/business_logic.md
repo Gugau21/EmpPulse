@@ -302,7 +302,7 @@ Due to codependency, **User** and (**Employee** or **Admin**) must be created in
     of Pending their **Leave Request**
 5. **Employee** can create a modification request to their own Accepted Leave requests. This creates a request linked to existing one.
 6. A modification request can only be created if at least one field is changed.
-7. **Admin** can only edit active **Leave requests** with no modification request if they were created by an **Employee** of a **Department** which they oversee,.
+7. **Admin** can only edit active **Leave requests** with no modification request if they were created by an **Employee** of a **Department** which they oversee.
 8. **Administrator** can edit all fields of a **Leave request**.
 9. Pending **Leave request** modified by **Administrator** are Accepted status by default.
 10. **Administrator** can approve or reject **Leave requests**, which modifies status of the **Leave request**.
