@@ -1,5 +1,8 @@
 package com.oman.EmpPulse.user.api;
 
+import java.util.Collection;
+import com.oman.EmpPulse.user.internal.Employee;
+
 public interface EmployeeApi {
 
   /**
@@ -12,4 +15,12 @@ public interface EmployeeApi {
    * @return true if at least one employee is assigned to the department, false otherwise
    */
   boolean hasEmployeesInDepartment(Long departmentId);
+
+  /**
+   * Finds all employees assigned to any of the given departments.
+   *
+   * @param departmentIds the department IDs to look up
+   * @return a collection of Employee entities, possibly empty if no employees are found
+   */
+  Collection<Employee> findAllByDepartmentIdIn(Collection<Long> departmentIds);
 }
