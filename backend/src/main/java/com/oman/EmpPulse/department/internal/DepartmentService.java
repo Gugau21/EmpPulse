@@ -70,6 +70,18 @@ public class DepartmentService implements DepartmentApi {
     }
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public List<Department> findAll() {
+      return departmentRepository.findAll();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Department> findAllByIds(Collection<Long> ids) {
+      return departmentRepository.findAllById(ids);
+  }
+
   @Transactional(readOnly = true)
   public DepartmentResponse getDepartment(Long departmentId) {
     Department department =

@@ -72,7 +72,6 @@ services:
     networks:
       - emp-pulse-network
     restart: unless-stopped
-
   nginx:
     image: nginx:alpine
     profiles:

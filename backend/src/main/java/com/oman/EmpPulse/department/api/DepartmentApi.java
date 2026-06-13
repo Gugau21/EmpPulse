@@ -30,4 +30,22 @@ public interface DepartmentApi {
    *     {@code 404 NOT_FOUND} if any ID does not correspond to an existing department
    */
   void setAdminDepartments(Long adminId, Collection<Long> departmentIds);
+
+  /**
+   * Finds all departments in the system. Owners get all departments; admins get only those they
+   * oversee.
+   *
+   * @return the list of departments the caller has access to
+   */
+  Collection<Department> findAll();
+
+  /**
+   * Finds all departments matching the given IDs. Does not throw if some IDs do not exist. Returns
+   * only the found departments.
+   *
+   * @param ids the department IDs to look up
+   * @return a list of Department entities, possibly smaller than the input if some IDs were not
+   *     found
+   */
+  Collection<Department> findAllByIds(Collection<Long> ids);
 }
