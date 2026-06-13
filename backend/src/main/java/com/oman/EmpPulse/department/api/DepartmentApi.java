@@ -39,4 +39,16 @@ public interface DepartmentApi {
    *     {@code 404 NOT_FOUND} if any ID does not correspond to an existing department
    */
   void setAdminDepartments(Long adminId, Collection<Long> departmentIds);
+
+  /**
+   * Ensures a Default Department exists within the system. This department cannot be deleted from
+   * the system.
+   *
+   * <p>Called during bootstrap to seed the application with a Default Department. If a department
+   * with {@code is_default = true} already exists, the method returns without modification.
+   *
+   * <p>Must run before {@link com.oman.EmpPulse.user.api.UserApi#ensureOwnerExists} so that the
+   * owner is automatically assigned to the default department when the owner account is created.
+   */
+  void ensureDefaultDepartmentExists();
 }

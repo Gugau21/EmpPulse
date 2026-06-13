@@ -72,16 +72,10 @@ public class UserService implements UserApi {
   @Override
   @Transactional
   public void ensureOwnerExists(String email, String rawPassword) {
-    User owner =
-        userRepository.findByIsOwnerTrue().orElseGet(() -> createOwnerUser(email, rawPassword));
-    if (adminRepository.findById(owner.getId()).isEmpty()) {
-      adminRepository.save(new Admin(owner.getId()));
+    if (userRepository.existsByIsOwnerTrue()) {
+      return;
     }
-    departmentApi.setAdminDepartments(owner.getId(), departmentApi.findAllDepartmentIds());
-  }
-
-  private User createOwnerUser(String email, String rawPassword) {
-    User user =
+    User owner =
         new User(
             "System",
             "Owner",
@@ -89,8 +83,11 @@ public class UserService implements UserApi {
             passwordEncoder.encode(rawPassword),
             UserTheme.light,
             UserLanguage.en);
-    user.setOwner(true);
-    return userRepository.save(user);
+    owner.setOwner(true);
+    userRepository.save(owner);
+
+    adminRepository.save(new Admin(owner.getId()));
+    departmentApi.setAdminDepartments(owner.getId(), departmentApi.findAllDepartmentIds());
   }
 
   private User getUserById(Long userId) {
