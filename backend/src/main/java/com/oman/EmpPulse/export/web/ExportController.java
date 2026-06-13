@@ -20,14 +20,14 @@ public class ExportController {
         this.exportService = exportService;
     }
 
-    @GetMapping("/departments")
+    @GetMapping("")
     @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
     public ResponseEntity<byte[]> exportDepartments(Authentication authentication) {
-        byte[] zip = exportService.exportDepartments(authentication);
+        byte[] zip = exportService.export(authentication);
 
         return ResponseEntity.ok()
             .header(HttpHeaders.CONTENT_DISPOSITION,
-                    "attachment; filename=\"departments_export.zip\"")
+                    "attachment; filename=\"export.zip\"")
             .contentType(MediaType.parseMediaType("application/zip"))
             .body(zip);
     }
