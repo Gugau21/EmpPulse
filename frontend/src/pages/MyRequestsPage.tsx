@@ -7,6 +7,11 @@ import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
 import { useLeaveRequests } from '../hooks/useLeaveRequests'
 import { useAuth } from '../context/useAuth'
 import trashIcon from '../assets/trash-icon.png.webp'
+import trashIcon from '../assets/bin_icon_dark.png'
+import trashIconLight from '../assets/bin_icon_light.png'
+import crossIcon from '../assets/cross_icon_dark.png'
+import crossIconLight from '../assets/cross_icon_light.png'
+import { useTheme } from '../hooks/useTheme'
 
 const MyRequestsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
@@ -20,6 +25,8 @@ const MyRequestsScreen: React.FC = () => {
       ? (myRequestsQuery.data ?? []).filter(req => req.employeeId === myEmployeeId)
       : []
   const { visibleRequests, filterNode } = useRequestStatusFilter(myRequests)
+  const [expanded, setExpanded] = useState(true)
+  const { theme } = useTheme()
 
   return (
     <AccordionScreen
@@ -75,6 +82,20 @@ const MyRequestsScreen: React.FC = () => {
                     <img src={trashIcon} alt="Delete" width={30} height={30} />
                   )}
                 </button>
+              {req.status === 'APPROVED' ? (
+                <img
+                  src={theme === 'dark' ? crossIconLight : crossIcon}
+                  alt="Delete"
+                  width={30}
+                  height={30}
+                />
+              ) : (
+                <img
+                  src={theme === 'dark' ? trashIconLight : trashIcon}
+                  alt="Delete"
+                  width={30}
+                  height={30}
+                />
               )}
             </div>
           )

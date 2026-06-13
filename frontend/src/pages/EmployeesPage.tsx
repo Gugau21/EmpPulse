@@ -2,12 +2,15 @@ import React, { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import type { Employee } from '../types'
 import type { OutletContext } from '../components/AppLayout'
-import trashIcon from '../assets/trash-icon.png.webp'
+import trashIcon from '../assets/bin_icon_dark.png'
+import trashIconLight from '../assets/bin_icon_light.png'
 import blackTriangleIcon from '../assets/black_triangle.png'
+import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useAuth } from '../context/useAuth'
 import FilterDropdown from '../components/FilterDropdown'
+import { useTheme } from '../hooks/useTheme'
 
 // Employees grouped by their department NAME (admins are sourced separately from
 // the departments list). Employees with no department are not shown — this page
@@ -29,6 +32,7 @@ const EmployeesPage: React.FC = () => {
   // Only owners may remove employees from a department; admins see a plain,
   // non-sliding row with no delete affordance.
   const { isOwner } = useAuth()
+  const { theme } = useTheme()
   const {
     data: employees = [],
     isLoading: employeesLoading,
@@ -105,7 +109,12 @@ const EmployeesPage: React.FC = () => {
               }}
               title="Remove from department"
             >
-              <img src={trashIcon} alt="Delete" width={30} height={30} />
+              <img
+                src={theme === 'dark' ? trashIconLight : trashIcon}
+                alt="Delete"
+                width={30}
+                height={30}
+              />
             </button>
           )}
         </div>
@@ -151,7 +160,7 @@ const EmployeesPage: React.FC = () => {
             <h3 className="department-title" onClick={() => toggle(dept.id)}>
               {dept.name}
               <img
-                src={blackTriangleIcon}
+                src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
                 alt=""
                 className={`chevron ${expanded ? 'expanded' : ''}`}
               />
