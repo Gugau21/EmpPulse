@@ -40,7 +40,7 @@ public class CsvExportService {
             CSVPrinter printer = new CSVPrinter(
                 new OutputStreamWriter(out, StandardCharsets.UTF_8),
                 CSVFormat.DEFAULT.builder()
-                    .setHeader("ID", "Name", "Surname", "Email", "Theme", "Language", "Active")
+                    .setHeader("ID", "Name", "Surname", "Email", "Active")
                     .build())) {
 
             for (User u : users) {
@@ -49,8 +49,6 @@ public class CsvExportService {
                     u.getName(),
                     u.getSurname(),
                     u.getEmail(),
-                    u.getTheme(),
-                    u.getLanguage(),
                     u.isActive()
                 );
             }
