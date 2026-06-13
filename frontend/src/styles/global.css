@@ -25,7 +25,7 @@
   --btn-remove-text: #fff;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* Existing Structure Variables */
   --bg-dashboard: #3d3c42;
   --bg-surface: #2c2b2f;
@@ -271,13 +271,18 @@ select {
 }
 
 .filter-dropdown {
+  position: relative;
+}
+
+/* "Filter by"/"Sort by" button — keeps the look of the old static pill. */
+.filter-toggle {
   background-color: var(--bg-tertiary);
   padding: 8px 16px;
   border: none;
   border-radius: 8px;
   font-family: Poppins, sans-serif;
   font-size: 14px;
-  color: #666;
+  color: var(--text-muted);
   cursor: pointer;
 }
 
@@ -305,6 +310,14 @@ select {
   border-radius: 6px;
   font-size: 14px;
   color: var(--text-muted);
+  cursor: pointer;
+}
+
+.filter-option:hover {
+  background-color: #f4f4f4;
+}
+
+.filter-option input {
   cursor: pointer;
 }
 
