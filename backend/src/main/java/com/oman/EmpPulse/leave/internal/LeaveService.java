@@ -1,5 +1,7 @@
 package com.oman.EmpPulse.leave.internal;
 
+import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
+import com.oman.EmpPulse.leave.api.LeaveApi;
 import com.oman.EmpPulse.leave.dto.LeaveCreateRequest;
 import com.oman.EmpPulse.leave.dto.LeaveListResponse;
 import com.oman.EmpPulse.leave.dto.LeaveModificationRequest;
@@ -11,16 +13,18 @@ import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class LeaveService {
+public class LeaveService implements LeaveApi {
 
   private final LeaveRepository leaveRepository;
   private final EmployeeApi employeeApi;
@@ -30,6 +34,33 @@ public class LeaveService {
     this.leaveRepository = leaveRepository;
     this.employeeApi = employeeApi;
     this.adminApi = adminApi;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Map<Long, ActiveLeaveResponse> findActiveLeavesByEmployeeIds(
+      Collection<Long> employeeIds) {
+    if (employeeIds == null || employeeIds.isEmpty()) {
+      return Map.of();
+    }
+    List<Leave> activeLeaves =
+        leaveRepository.findActiveApprovedByEmployeeIds(employeeIds, LocalDate.now());
+    Map<Long, ActiveLeaveResponse> result = new HashMap<>();
+    activeLeaves.stream()
+        .collect(Collectors.groupingBy(Leave::getEmployeeId))
+        .forEach(
+            (employeeId, leaves) -> {
+              if (leaves.size() > 1) {
+                throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency");
+              }
+              result.put(employeeId, toActiveLeaveResponse(leaves.getFirst()));
+            });
+    return result;
+  }
+
+  private ActiveLeaveResponse toActiveLeaveResponse(Leave leave) {
+    return new ActiveLeaveResponse(leave.getType(), leave.getStartDate(), leave.getEndDate());
   }
 
   /**

@@ -77,4 +77,21 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
       nativeQuery = true)
   List<Leave> findVisibleToAdmin(
       @Param("callerId") Long callerId, @Param("departmentIds") Collection<Long> departmentIds);
+
+  /**
+   * Finds approved leaves currently in progress for the given employees ({@code startDate <= today
+   * <= endDate}).
+   */
+  @Query(
+      value =
+          """
+          select * from leave
+          where employee_id in (:employeeIds)
+            and status = 'approved'
+            and start_date <= :today
+            and end_date >= :today
+          """,
+      nativeQuery = true)
+  List<Leave> findActiveApprovedByEmployeeIds(
+      @Param("employeeIds") Collection<Long> employeeIds, @Param("today") LocalDate today);
 }
