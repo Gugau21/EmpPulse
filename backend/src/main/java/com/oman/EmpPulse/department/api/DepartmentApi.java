@@ -1,6 +1,7 @@
 package com.oman.EmpPulse.department.api;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface DepartmentApi {
@@ -12,6 +13,14 @@ public interface DepartmentApi {
    * @return the department name, or empty if not found
    */
   Optional<String> findNameById(Long departmentId);
+
+  /**
+   * Returns the IDs of all departments. Used to attach the owner to every department during
+   * seeding.
+   *
+   * @return the list of all department IDs
+   */
+  List<Long> findAllDepartmentIds();
 
   /**
    * Replaces the full set of departments an existing admin oversees with the given set, mutating

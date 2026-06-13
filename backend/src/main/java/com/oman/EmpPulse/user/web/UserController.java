@@ -23,7 +23,7 @@ public class UserController {
     return ResponseEntity.ok(userService.loadProfile(AuthUtils.getUserId(authentication)));
   }
 
-  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('ADMIN')")
   @PostMapping("/api/users")
   public ResponseEntity<?> createUser(
       @RequestBody UserCreateRequest req, Authentication authentication) {
@@ -32,7 +32,7 @@ public class UserController {
     return ResponseEntity.noContent().build();
   }
 
-  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('ADMIN')")
   @GetMapping("/api/users/{userId}")
   public ResponseEntity<?> getUserProfile(
       @PathVariable Long userId, Authentication authentication) {
@@ -48,7 +48,7 @@ public class UserController {
     return ResponseEntity.noContent().build();
   }
 
-  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('ADMIN')")
   @PatchMapping("/api/users/{userId}")
   public ResponseEntity<?> updateUser(
       @PathVariable Long userId,

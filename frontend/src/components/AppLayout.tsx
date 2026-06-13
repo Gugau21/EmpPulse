@@ -7,6 +7,7 @@ import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useDeleteDepartment } from '../hooks/useDepartmentMutations'
 import { useDeleteEmployee } from '../hooks/useEmployeeMutations'
+import { useCancelLeaveRequest, useDeleteLeaveRequest } from '../hooks/useLeaveRequestMutations'
 
 // Context shared with child pages via <Outlet>. Pages pull `openModal` from here
 // instead of receiving it as a prop, so the modal state can live in one place.
@@ -23,6 +24,8 @@ const AppLayout: React.FC = () => {
   const location = useLocation()
 
   const [activeModal, setActiveModal] = useState<ModalType>(null)
+  // The modal a back button should return to, set when one modal opens another.
+  const [previousModal, setPreviousModal] = useState<ModalType>(null)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
   // Full department object passed into modals (e.g. EditAdmins seeds from .admins).
@@ -37,8 +40,10 @@ const AppLayout: React.FC = () => {
   const departments = departmentsQuery.data ?? []
   const deleteDepartment = useDeleteDepartment()
   const deleteEmployee = useDeleteEmployee()
+  const deleteLeaveRequest = useDeleteLeaveRequest()
+  const cancelLeaveRequest = useCancelLeaveRequest()
 
-  const openModal: OpenModal = (modal, deptOrEmp, requestObj) => {
+  const openModal: OpenModal = (modal, deptOrEmp, requestObj, returnTo) => {
     if (deptOrEmp) {
       // Departments carry an `admins` array; employees don't — discriminate on it.
       if ('admins' in deptOrEmp) {
@@ -48,6 +53,7 @@ const AppLayout: React.FC = () => {
       }
     }
     if (requestObj) setSelectedRequest(requestObj)
+    setPreviousModal(returnTo ?? null)
     setActiveModal(modal)
   }
 
@@ -79,6 +85,7 @@ const AppLayout: React.FC = () => {
 
       <Modals
         activeModal={activeModal}
+        previousModal={previousModal}
         openModal={openModal}
         confirmModal={async () => {
           if (activeModal === 'LOGOUT') {
@@ -98,6 +105,20 @@ const AppLayout: React.FC = () => {
                   navigate('/employees')
                 }
               },
+              onError: err => setConfirmError(err.message)
+            })
+            return
+          }
+          if (activeModal === 'DELETE_LEAVE' && selectedRequest) {
+            deleteLeaveRequest.mutate(Number(selectedRequest.id), {
+              onSuccess: () => setActiveModal(null),
+              onError: err => setConfirmError(err.message)
+            })
+            return
+          }
+          if (activeModal === 'CANCEL_LEAVE' && selectedRequest) {
+            cancelLeaveRequest.mutate(Number(selectedRequest.id), {
+              onSuccess: () => setActiveModal(null),
               onError: err => setConfirmError(err.message)
             })
             return

@@ -9,6 +9,7 @@ import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useAuth } from '../context/useAuth'
+import FilterDropdown from '../components/FilterDropdown'
 import { useTheme } from '../hooks/useTheme'
 
 // Employees grouped by their department NAME (admins are sourced separately from
@@ -47,25 +48,39 @@ const EmployeesPage: React.FC = () => {
   } = useDepartmentsList()
   const [collapsed, setCollapsed] = useState<Record<number, boolean>>({})
   const [search, setSearch] = useState('')
+  // Department filter. Options are built from the departments the user can see —
+  // the list is already scoped server-side (the owner gets all, an admin only the
+  // departments they oversee), so it needs no extra role handling here.
+  const [deptFilter, setDeptFilter] = useState<string[]>([])
 
   const isLoading = employeesLoading || departmentsLoading
   const isError = employeesError || departmentsError
   const error = employeesErr ?? departmentsErr
 
   const query = search.trim().toLowerCase()
-  const matchesSearch = (surname: string) => !query || surname.toLowerCase().includes(query)
+  const matchesPerson = (surname: string) => !query || surname.toLowerCase().includes(query)
 
   const employeesByDept = groupByDepartment(
-    query ? employees.filter(emp => matchesSearch(emp.surname ?? '')) : employees
+    employees.filter(emp => matchesPerson(emp.surname ?? ''))
   )
 
   const toggle = (deptId: number) => setCollapsed(prev => ({ ...prev, [deptId]: !prev[deptId] }))
 
+  const departmentFilterOptions = departments.map(dept => ({
+    value: String(dept.id),
+    label: dept.name
+  }))
+  const visibleDepartments = deptFilter.length
+    ? departments.filter(dept => deptFilter.includes(String(dept.id)))
+    : departments
+
   // A single person row. `deleteEmployee` is passed only for employee rows owned
   // by the owner, who may remove them from the department; admin rows are never
   // deletable here (admin assignment is managed via the department's admins modal).
+  // `status`/`untilDate` come from the employee's active leave (absent = working,
+  // and admins are listed without a status).
   const renderPersonRow = (
-    person: { id: string; name: string; surname: string },
+    person: { id: string; name: string; surname: string } & Pick<Employee, 'status' | 'untilDate'>,
     keyPrefix: string,
     deleteEmployee?: Employee
   ) => {
@@ -78,6 +93,12 @@ const EmployeesPage: React.FC = () => {
       >
         <span className="emp-name">{[person.name, person.surname].filter(Boolean).join(' ')}</span>
         <div className="emp-meta">
+          {/* On-leave employees show a type badge and the date they return; a
+              working employee (no active leave) shows nothing. */}
+          {person.status && (
+            <span className={`badge badge-${person.status.toLowerCase()}`}>{person.status}</span>
+          )}
+          {person.untilDate && <span className="until-text">until {person.untilDate}</span>}
           {/* Removing an employee from a department is owner-only. */}
           {deletable && (
             <button
@@ -113,22 +134,26 @@ const EmployeesPage: React.FC = () => {
               value={search}
               onChange={e => setSearch(e.target.value)}
               maxLength={50}
+              style={{ width: '16ch' }}
             />
           </div>
-          <div className="filter-dropdown">
-            <span>Filter by</span>...
-          </div>
+          <FilterDropdown
+            label="Filter by department"
+            options={departmentFilterOptions}
+            selected={deptFilter}
+            onChange={setDeptFilter}
+          />
         </div>
       </header>
 
       {isLoading && <p className="muted">Loading employees…</p>}
       {isError && <p className="form-error">{error?.message ?? 'Failed to load employees.'}</p>}
 
-      {departments.map(dept => {
+      {visibleDepartments.map(dept => {
         const expanded = !collapsed[dept.id]
         // A user who is both an admin and an employee of this department appears
         // in both lists by design.
-        const admins = dept.admins.filter(a => matchesSearch(a.user.surname ?? ''))
+        const admins = dept.admins.filter(a => matchesPerson(a.user.surname ?? ''))
         const deptEmployees = employeesByDept.get(dept.name) ?? []
         return (
           <div className="accordion-section" key={dept.id}>

@@ -4,7 +4,7 @@ import ConfirmModal from './modals/ConfirmModal'
 import AddEmployeeModal from './modals/AddEmployeeModal'
 import EditAdminsModal from './modals/EditAdminsModal'
 import LogHoursModal from './modals/LogHoursModal'
-import LeaveModal from './modals/LeaveModal'
+import AddLeaveModal from './modals/AddLeaveModal'
 import AcceptRequestModal from './modals/AcceptRequestModal'
 import AddDepartmentModal from './modals/AddDepartmentModal'
 import EditDepartmentModal from './modals/EditDepartmentModal'
@@ -12,10 +12,12 @@ import AddDefaultWorkingHoursModal from './modals/AddDefaultWorkingHoursModal'
 import EditEmployeeModal from './modals/EditEmployeeModal'
 import EditHoursModal from './modals/EditHoursModal'
 import EditLeaveModal from './modals/EditLeaveModal'
+import ViewLeaveModal from './modals/ViewLeaveModal'
 import ChangePasswordFormModal from './modals/ChangePasswordModal'
 
 interface Props {
   activeModal: ModalType
+  previousModal: ModalType
   openModal: OpenModal
   closeModal: () => void
   confirmModal: () => void
@@ -38,6 +40,7 @@ const CONFIRM_MODALS: ModalType[] = [
 
 const Modals: React.FC<Props> = ({
   activeModal,
+  previousModal,
   closeModal,
   confirmModal,
   selectedEmployee,
@@ -96,18 +99,32 @@ const Modals: React.FC<Props> = ({
           <LogHoursModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
         )}
 
-        {(activeModal === 'ADD_LEAVE' ||
-          activeModal === 'EDIT_LEAVE' ||
-          activeModal === 'CREATE_REQUEST') && (
-          <LeaveModal activeModal={activeModal} closeModal={closeModal} />
+        {(activeModal === 'ADD_LEAVE' || activeModal === 'CREATE_REQUEST') && (
+          <AddLeaveModal activeModal={activeModal} closeModal={closeModal} />
         )}
 
         {activeModal === 'EDIT_LEAVE_FORM' && (
-          <EditLeaveModal closeModal={closeModal} selectedRequest={selectedRequest} />
+          <EditLeaveModal
+            closeModal={closeModal}
+            selectedRequest={selectedRequest}
+            // Only show a back arrow when this form was reached from the
+            // accept/reject modal, so it can return there.
+            onBack={
+              previousModal === 'ACCEPT_REQUEST' ? () => openModal('ACCEPT_REQUEST') : undefined
+            }
+          />
+        )}
+
+        {activeModal === 'VIEW_LEAVE_FORM' && (
+          <ViewLeaveModal closeModal={closeModal} selectedRequest={selectedRequest} />
         )}
 
         {activeModal === 'ACCEPT_REQUEST' && (
-          <AcceptRequestModal closeModal={closeModal} selectedRequest={selectedRequest} />
+          <AcceptRequestModal
+            closeModal={closeModal}
+            selectedRequest={selectedRequest}
+            openModal={openModal}
+          />
         )}
 
         {activeModal === 'ADD_DEPARTMENT' && <AddDepartmentModal closeModal={closeModal} />}

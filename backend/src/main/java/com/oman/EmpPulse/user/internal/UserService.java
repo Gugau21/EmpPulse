@@ -2,6 +2,8 @@ package com.oman.EmpPulse.user.internal;
 
 import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.department.api.DepartmentApi;
+import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
+import com.oman.EmpPulse.leave.api.LeaveApi;
 import com.oman.EmpPulse.user.api.Admin;
 import com.oman.EmpPulse.user.api.AdminProfileResponse;
 import com.oman.EmpPulse.user.api.EmployeeProfileResponse;
@@ -13,7 +15,9 @@ import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.session.FindByIndexNameSessionRepository;
@@ -32,6 +36,7 @@ public class UserService implements UserApi {
   private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
   private final DepartmentApi departmentApi;
   private final PasswordEncoder passwordEncoder;
+  private final LeaveApi leaveApi;
 
   public UserService(
       UserRepository userRepository,
@@ -39,13 +44,15 @@ public class UserService implements UserApi {
       EmployeeRepository employeeRepository,
       FindByIndexNameSessionRepository<? extends Session> sessionRepository,
       DepartmentApi departmentApi,
-      PasswordEncoder passwordEncoder) {
+      PasswordEncoder passwordEncoder,
+      @Lazy LeaveApi leaveApi) {
     this.userRepository = userRepository;
     this.adminRepository = adminRepository;
     this.employeeRepository = employeeRepository;
     this.sessionRepository = sessionRepository;
     this.departmentApi = departmentApi;
     this.passwordEncoder = passwordEncoder;
+    this.leaveApi = leaveApi;
   }
 
   @Override
@@ -65,9 +72,15 @@ public class UserService implements UserApi {
   @Override
   @Transactional
   public void ensureOwnerExists(String email, String rawPassword) {
-    if (userRepository.existsByIsOwnerTrue()) {
-      return;
+    User owner =
+        userRepository.findByIsOwnerTrue().orElseGet(() -> createOwnerUser(email, rawPassword));
+    if (adminRepository.findById(owner.getId()).isEmpty()) {
+      adminRepository.save(new Admin(owner.getId()));
     }
+    departmentApi.setAdminDepartments(owner.getId(), departmentApi.findAllDepartmentIds());
+  }
+
+  private User createOwnerUser(String email, String rawPassword) {
     User user =
         new User(
             "System",
@@ -77,7 +90,7 @@ public class UserService implements UserApi {
             UserTheme.light,
             UserLanguage.en);
     user.setOwner(true);
-    userRepository.save(user);
+    return userRepository.save(user);
   }
 
   private User getUserById(Long userId) {
@@ -92,7 +105,9 @@ public class UserService implements UserApi {
     if (user.isOwner()) {
       authorities.add("OWNER");
     }
-    if (adminRepository.findById(user.getId()).filter(Admin::isActive).isPresent()) {
+    boolean activeAdmin =
+        adminRepository.findById(user.getId()).filter(Admin::isActive).isPresent();
+    if (user.isOwner() || activeAdmin) { // .isOwner() in case there are no departments
       authorities.add("ADMIN");
     }
     if (employeeRepository.findById(user.getId()).filter(Employee::isActive).isPresent()) {
@@ -122,7 +137,7 @@ public class UserService implements UserApi {
 
     AdminProfileResponse adminProfile = null;
     Optional<Admin> adminOpt = adminRepository.findById(userId);
-    if (adminOpt.isPresent()) {
+    if (adminOpt.isPresent() && !user.isOwner()) {
       Admin admin = adminOpt.get();
       if (admin.isActive()) {
         List<Long> deptIds = admin.getDepartments().stream().map(Department::getId).toList();
@@ -136,12 +151,15 @@ public class UserService implements UserApi {
       Employee employee = employeeOpt.get();
       if (employee.isActive()) {
         String deptName = departmentApi.findNameById(employee.getDepartmentId()).orElse(null);
+        Map<Long, ActiveLeaveResponse> activeLeaves =
+            leaveApi.findActiveLeavesByEmployeeIds(List.of(employee.getId()));
         employeeProfile =
             new EmployeeProfileResponse(
                 employee.getId(),
                 employee.getDepartmentId(),
                 deptName,
-                employee.getVacationBalance());
+                employee.getVacationBalance(),
+                activeLeaves.get(employee.getId()));
       }
     }
 
@@ -200,9 +218,7 @@ public class UserService implements UserApi {
 
     if (reqToCreateEmployee) {
       requireDepartmentExists(req.getEmployeeDepartmentId());
-      if (!callerIsOwner) {
-        verifyAdminOverseesDepartment(callerUserId, req.getEmployeeDepartmentId());
-      }
+      verifyAdminOverseesDepartment(callerUserId, req.getEmployeeDepartmentId());
     }
 
     if (userRepository.findByEmailAndActiveTrue(req.getEmail()).isPresent()) {

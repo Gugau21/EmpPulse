@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import type { Employee } from '../types'
 import type { OutletContext } from '../components/AppLayout'
 import { MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
+import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { landingPath } from '../utils/guards'
+import { describeActiveLeave } from '../utils/activeLeave'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useTheme } from '../hooks/useTheme'
@@ -78,6 +80,25 @@ const ProfilePage: React.FC = () => {
   const targetUser = isMyProfile ? currentUser : employeeUser
   const employeeProfile = targetUser?.employeeProfile ?? null
   const adminDepartmentIds = targetUser?.adminProfile?.departmentIds ?? []
+  // Current leave from the profile's active leave (null = working, no badge).
+  const { status, untilDate } = describeActiveLeave(employeeProfile?.activeLeave)
+
+  // Resolve admin department IDs to real names. The list is gated to owners/admins
+  // and an admin only receives their own departments, so a name may be missing
+  // (e.g. an admin viewing another admin) — fall back to the ID in that case.
+  const { data: departments } = useDepartmentsList()
+  const departmentNamesById = new Map((departments ?? []).map(d => [d.id, d.name]))
+  const adminDepartmentNames = adminDepartmentIds
+    .map(id => departmentNamesById.get(id) ?? `Department ${id}`)
+    .sort((a, b) => a.localeCompare(b))
+
+  // Viewing your own id in employee mode (e.g. an admin who appears in the
+  // employees list and clicks themselves) is really the personal profile —
+  // send it to /profile so the own-profile view (log out, change password)
+  // renders instead of the read-only employee one.
+  if (!isMyProfile && currentUser != null && employeeId === currentUser.id) {
+    return <Navigate to="/profile" replace />
+  }
 
   // In employee mode, don't render the profile shell until the user is loaded:
   // the banner would otherwise show empty fields and the action buttons would
@@ -139,36 +160,32 @@ const ProfilePage: React.FC = () => {
               {!isOwnerPersonal && adminDepartmentIds.length > 0 && (
                 <div className="banner-stacked-detail">
                   <label>Administrator of:</label>
-                  <span>{`Department ${adminDepartmentIds.join(', ')}`}</span>
+                  <span>{adminDepartmentNames.join(', ')}</span>
                 </div>
               )}
             </div>
 
-            {/*
-              HIDDEN FOR NOW: current leave status. Neither GET /api/me nor
-              GET /api/users/{id} returns a status field, so there is nothing
-              real to render. Restore once a leave/status API is wired:
-
-              {!isOwnerPersonal && (
-                <div className="banner-side-info">
-                  <div className="banner-stacked-detail">
-                    <label>Status:</label>
-                    <span>{targetUser?.status}</span>
-                  </div>
+            {/* Current leave status. Only employees have one; a working employee
+                (no active leave) shows "Working" rather than a badge. */}
+            {!isOwnerPersonal && employeeProfile && (
+              <div className="banner-side-info">
+                <div className="banner-stacked-detail">
+                  <label>Status:</label>
+                  {status ? (
+                    <span className="banner-status">
+                      <span className={`badge badge-${status.toLowerCase()}`}>{status}</span>
+                      {untilDate && <span className="until-text">until {untilDate}</span>}
+                    </span>
+                  ) : (
+                    <span>Working</span>
+                  )}
                 </div>
-              )}
-            */}
+              </div>
+            )}
           </div>
 
           <div className="banner-center-action">
-            {isMyProfile ? (
-              <button
-                className="btn-change-password"
-                onClick={() => openModal('CHANGE_PASSWORD_FORM')}
-              >
-                Change password
-              </button>
-            ) : (
+            {!isMyProfile && (
               <button
                 className="btn-change-password"
                 onClick={() => openModal('EDIT_EMPLOYEE', employee as Employee)}

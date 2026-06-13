@@ -24,6 +24,14 @@ public interface AdminApi {
   Optional<Admin> findById(Long id);
 
   /**
+   * Returns the owner's admin row. The owner is a real admin of every department, so this is used
+   * to add, preserve, and identify the owner when managing department rosters.
+   *
+   * @return the owner's admin entity, or empty if the owner has not been seeded yet
+   */
+  Optional<Admin> getOwnerAdmin();
+
+  /**
    * Converts an Admin entity to a response DTO.
    *
    * @param admin the admin entity to convert

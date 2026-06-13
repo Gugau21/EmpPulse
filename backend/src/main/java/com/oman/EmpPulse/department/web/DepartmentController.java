@@ -21,12 +21,9 @@ public class DepartmentController {
     this.departmentService = departmentService;
   }
 
-  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('ADMIN')")
   @GetMapping
   public ResponseEntity<?> listDepartments(Authentication authentication) {
-    if (AuthUtils.isOwner(authentication)) {
-      return ResponseEntity.ok(departmentService.getAllDepartments());
-    }
     return ResponseEntity.ok(
         departmentService.getDepartmentsForAdmin(AuthUtils.getUserId(authentication)));
   }
@@ -38,14 +35,14 @@ public class DepartmentController {
     return ResponseEntity.noContent().build();
   }
 
-  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  @PreAuthorize("hasAuthority('ADMIN')")
   @GetMapping("/{departmentId}")
   public ResponseEntity<?> getDepartment(
       @PathVariable Long departmentId, Authentication authentication) {
     boolean isAdminOfDepartment =
         departmentService.isAdminOfDepartment(AuthUtils.getUserId(authentication), departmentId);
 
-    if (AuthUtils.isOwner(authentication) || isAdminOfDepartment) {
+    if (isAdminOfDepartment) {
       return ResponseEntity.ok(departmentService.getDepartment(departmentId));
     }
     return ResponseEntity.status(HttpStatus.FORBIDDEN)

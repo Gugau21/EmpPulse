@@ -25,7 +25,7 @@
   --btn-remove-text: #fff;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   /* Existing Structure Variables */
   --bg-dashboard: #3d3c42;
   --bg-surface: #2c2b2f;
@@ -271,14 +271,53 @@ select {
 }
 
 .filter-dropdown {
+  position: relative;
+}
+
+/* "Filter by"/"Sort by" button — keeps the look of the old static pill. */
+.filter-toggle {
   background-color: var(--bg-tertiary);
   padding: 8px 16px;
+  border: none;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  font-family: Poppins, sans-serif;
   font-size: 14px;
   color: var(--text-muted);
+  cursor: pointer;
+}
+
+/* Checkbox list that drops below the button; selecting tags keeps it open. */
+.filter-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  min-width: 160px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.filter-option:hover {
+  background-color: #f4f4f4;
+}
+
+.filter-option input {
   cursor: pointer;
 }
 
@@ -540,6 +579,22 @@ select {
 
 .banner-side-info {
   text-align: right;
+}
+
+/* Status badge + return date stacked at the right of the banner. */
+.banner-status {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+/* The until date sits on the purple banner, so it needs light text rather than
+   the dark default used in the (light) employee list. */
+.banner-status .until-text {
+  color: inherit;
+  opacity: 0.9;
+  min-width: 0;
 }
 
 .banner-center-action {
@@ -809,6 +864,32 @@ select {
   color: var(--text-muted);
 }
 
+.modal-back {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+}
+
+/* Small text-only action (e.g. "edit request" under the accept/reject buttons) */
+.link-btn {
+  display: block;
+  margin: 14px auto 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: #5932ea;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Confirmation dialog (delete / logout / change password) */
 .modal-confirm {
   text-align: center;
 }
@@ -960,6 +1041,50 @@ select {
   margin: -8px 0 16px;
 }
 
+/* Type-ahead employee picker in the admin "Create request" modal. The menu drops
+   directly under the text input, so the label is the positioning context. */
+.employee-picker {
+  position: relative;
+}
+
+.autocomplete-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
+  margin-top: 4px;
+}
+
+.autocomplete-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.autocomplete-option:hover {
+  background-color: #f4f4f4;
+}
+
+.autocomplete-empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #888;
+}
+
+/* Request detail summary shown in the accept-request modal */
 .request-summary-box {
   background-color: var(--bg-dashboard);
   padding: 16px;

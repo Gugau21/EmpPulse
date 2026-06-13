@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.user.api;
 
+import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
 import java.util.List;
 
 public class EmployeeProfileResponse {
@@ -8,14 +9,20 @@ public class EmployeeProfileResponse {
   private String departmentName;
   private int yearlyVacationBalance;
   private List<Object> bonusVacationDays;
+  private ActiveLeaveResponse activeLeave;
 
   public EmployeeProfileResponse(
-      Long employeeId, Long departmentId, String departmentName, int yearlyVacationBalance) {
+      Long employeeId,
+      Long departmentId,
+      String departmentName,
+      int yearlyVacationBalance,
+      ActiveLeaveResponse activeLeave) {
     this.employeeId = employeeId;
     this.departmentId = departmentId;
     this.departmentName = departmentName;
     this.yearlyVacationBalance = yearlyVacationBalance;
     this.bonusVacationDays = List.of();
+    this.activeLeave = activeLeave;
   }
 
   public Long getEmployeeId() {
@@ -36,5 +43,9 @@ public class EmployeeProfileResponse {
 
   public List<Object> getBonusVacationDays() {
     return bonusVacationDays;
+  }
+
+  public ActiveLeaveResponse getActiveLeave() {
+    return activeLeave;
   }
 }
