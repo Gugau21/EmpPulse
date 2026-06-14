@@ -87,6 +87,14 @@ public class LoggedHoursService {
     return toLoggedHoursResponse(saved);
   }
 
+  /**
+   * Returns all logged hours for {@code employeeId}, sorted by date and start time descending.
+   *
+   * @param employeeId the employee whose hours to list
+   * @param callerId the user ID of the authenticated caller
+   * @param isAdmin true if the caller holds the ADMIN role
+   * @return list of logged hours entries
+   */
   @Transactional(readOnly = true)
   public LoggedHoursListResponse listLoggedHours(Long employeeId, Long callerId, boolean isAdmin) {
     if (isAdmin) {
@@ -101,6 +109,16 @@ public class LoggedHoursService {
             .toList());
   }
 
+  /**
+   * Updates date/time of an existing logged-hours entry, merging adjacent/overlapping intervals
+   * (same as createLoggedHours)
+   *
+   * @param employeeId the employee the hours belong to
+   * @param loggedHoursId the entry to update
+   * @param req new date, start time, and end time
+   * @param callerId the user ID of the authenticated admin
+   * @return the updated logged hours entry
+   */
   @Transactional
   public LoggedHoursResponse updateLoggedHours(
       Long employeeId, Long loggedHoursId, LoggedHoursUpdateRequest req, Long callerId) {
@@ -109,16 +127,7 @@ public class LoggedHoursService {
     validateTimeRange(req.getStartTime(), req.getEndTime());
     validateNotFuture(req.getDate());
 
-    LoggedHours loggedHoursToUpdate =
-        loggedHoursRepository
-            .findById(loggedHoursId)
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Logged Hours entry not found"));
-    if (!loggedHoursToUpdate.getEmployeeId().equals(employeeId)) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logged hours entry not found");
-    }
+    LoggedHours loggedHoursToUpdate = findLoggedHoursForEmployeeOrThrow(loggedHoursId, employeeId);
 
     MergedInterval mergedInterval =
         mergeIntervalsForDay(
@@ -130,6 +139,34 @@ public class LoggedHoursService {
     loggedHoursRepository.save(loggedHoursToUpdate);
 
     return toLoggedHoursResponse(loggedHoursToUpdate);
+  }
+
+  /**
+   * Hard deletes a logged-hours entry on behalf of an admin.
+   *
+   * @param employeeId the employee the hours belong to
+   * @param loggedHoursId the logged-hours entry to delete
+   * @param callerId the user ID of the authenticated admin
+   */
+  @Transactional
+  public void deleteLoggedHours(Long employeeId, Long loggedHoursId, Long callerId) {
+    requireAdminAccessToEmployee(callerId, employeeId);
+    LoggedHours loggedHours = findLoggedHoursForEmployeeOrThrow(loggedHoursId, employeeId);
+    loggedHoursRepository.delete(loggedHours);
+  }
+
+  private LoggedHours findLoggedHoursForEmployeeOrThrow(Long loggedHoursId, Long employeeId) {
+    LoggedHours loggedHours =
+        loggedHoursRepository
+            .findById(loggedHoursId)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Logged hours entry not found"));
+    if (!loggedHours.getEmployeeId().equals(employeeId)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logged hours entry not found");
+    }
+    return loggedHours;
   }
 
   private EmployeeSummaryResponse findEmployeeOrThrow(Long employeeId) {

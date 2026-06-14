@@ -52,4 +52,15 @@ public class LoggedHoursController {
         loggedHoursService.updateLoggedHours(
             employeeId, loggedHoursId, req, AuthUtils.getUserId(authentication)));
   }
+
+  @PreAuthorize("hasAuthority('ADMIN')")
+  @DeleteMapping("/{employeeId}/logged-hours/{loggedHoursId}")
+  public ResponseEntity<?> deleteLoggedHours(
+      @PathVariable Long employeeId,
+      @PathVariable Long loggedHoursId,
+      Authentication authentication) {
+    loggedHoursService.deleteLoggedHours(
+        employeeId, loggedHoursId, AuthUtils.getUserId(authentication));
+    return ResponseEntity.noContent().build();
+  }
 }
