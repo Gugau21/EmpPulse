@@ -19,6 +19,15 @@ public class LoggedHoursController {
     this.loggedHoursService = loggedHoursService;
   }
 
+  @PreAuthorize("hasAnyAuthority('ADMIN', 'EMPLOYEE')")
+  @GetMapping("/{employeeId}/logged-hours")
+  public ResponseEntity<?> listLoggedHours(
+      @PathVariable Long employeeId, Authentication authentication) {
+    return ResponseEntity.ok(
+        loggedHoursService.listLoggedHours(
+            employeeId, AuthUtils.getUserId(authentication), AuthUtils.isAdmin(authentication)));
+  }
+
   @PreAuthorize("hasAuthority('ADMIN')")
   @PostMapping("/{employeeId}/logged-hours")
   public ResponseEntity<?> createLoggedHours(

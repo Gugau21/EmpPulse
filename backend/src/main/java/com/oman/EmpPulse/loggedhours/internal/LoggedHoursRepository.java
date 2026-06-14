@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface LoggedHoursRepository extends JpaRepository<LoggedHours, Long> {
 
   List<LoggedHours> findAllByEmployeeIdAndDate(Long employeeId, LocalDate date);
+
+  List<LoggedHours> findAllByEmployeeIdOrderByDateDescStartTimeDesc(Long employeeId);
 }

@@ -1,6 +1,7 @@
 package com.oman.EmpPulse.loggedhours.internal;
 
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursCreateRequest;
+import com.oman.EmpPulse.loggedhours.dto.LoggedHoursListResponse;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursResponse;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
@@ -75,16 +76,8 @@ public class LoggedHoursService {
     validateTimeRange(req.getStartTime(), req.getEndTime());
     validateNotFuture(req.getDate());
 
-    EmployeeSummaryResponse employee =
-        employeeApi
-            .findSummaryById(employeeId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+    EmployeeSummaryResponse employee = requireAdminAccessToEmployee(callerAdminId, employeeId);
     requireActive(employee);
-
-    if (!adminApi.overseesDepartment(callerAdminId, employee.getDepartmentId())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this employee");
-    }
 
     MergedInterval merged =
         mergeIntervalsForDay(employeeId, req.getDate(), req.getStartTime(), req.getEndTime(), null);
@@ -94,6 +87,34 @@ public class LoggedHoursService {
             new LoggedHours(
                 employeeId, callerAdminId, req.getDate(), merged.start(), merged.end()));
     return toLoggedHoursResponse(saved);
+  }
+
+  @Transactional(readOnly = true)
+  public LoggedHoursListResponse listLoggedHours(Long employeeId, Long callerId, boolean isAdmin) {
+    if (isAdmin) {
+      requireAdminAccessToEmployee(callerId, employeeId);
+    } else if (!callerId.equals(employeeId)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this employee");
+    }
+
+    return new LoggedHoursListResponse(
+        loggedHoursRepository.findAllByEmployeeIdOrderByDateDescStartTimeDesc(employeeId).stream()
+            .map(this::toLoggedHoursResponse)
+            .toList());
+  }
+
+  private EmployeeSummaryResponse findEmployeeOrThrow(Long employeeId) {
+    return employeeApi
+        .findSummaryById(employeeId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+  }
+
+  private EmployeeSummaryResponse requireAdminAccessToEmployee(Long adminId, Long employeeId) {
+    EmployeeSummaryResponse employee = findEmployeeOrThrow(employeeId);
+    if (!adminApi.overseesDepartment(adminId, employee.getDepartmentId())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this employee");
+    }
+    return employee;
   }
 
   private void ensureRequiredFieldsPresent(LoggedHoursCreateRequest req) {
