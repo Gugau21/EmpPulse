@@ -1,0 +1,33 @@
+package com.oman.EmpPulse.loggedhours.web;
+
+import com.oman.EmpPulse.loggedhours.dto.LoggedHoursCreateRequest;
+import com.oman.EmpPulse.loggedhours.internal.LoggedHoursService;
+import com.oman.EmpPulse.shared.security.AuthUtils;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/employees")
+public class LoggedHoursController {
+
+  private final LoggedHoursService loggedHoursService;
+
+  public LoggedHoursController(LoggedHoursService loggedHoursService) {
+    this.loggedHoursService = loggedHoursService;
+  }
+
+  @PreAuthorize("hasAuthority('ADMIN')")
+  @PostMapping("/{employeeId}/logged-hours")
+  public ResponseEntity<?> createLoggedHours(
+      @PathVariable Long employeeId,
+      @RequestBody LoggedHoursCreateRequest req,
+      Authentication authentication) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(
+            loggedHoursService.createLoggedHours(
+                employeeId, req, AuthUtils.getUserId(authentication)));
+  }
+}
