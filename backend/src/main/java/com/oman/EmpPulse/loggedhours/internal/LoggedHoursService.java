@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.loggedhours.internal;
 
+import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursCreateRequest;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursListResponse;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursResponse;
@@ -16,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class LoggedHoursService {
+public class LoggedHoursService implements LoggedHoursApi {
 
   private final LoggedHoursRepository loggedHoursRepository;
   private final EmployeeApi employeeApi;
@@ -27,6 +28,14 @@ public class LoggedHoursService {
     this.loggedHoursRepository = loggedHoursRepository;
     this.employeeApi = employeeApi;
     this.adminApi = adminApi;
+  }
+
+  @Override
+  @Transactional
+  public void deleteByEmployeeAndDateRange(
+      Long employeeId, LocalDate startDate, LocalDate endDate) {
+    loggedHoursRepository.deleteAll(
+        loggedHoursRepository.findAllByEmployeeIdAndDateBetween(employeeId, startDate, endDate));
   }
 
   private record MergedInterval(LocalTime start, LocalTime end) {}

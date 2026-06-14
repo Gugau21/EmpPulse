@@ -8,5 +8,8 @@ public interface LoggedHoursRepository extends JpaRepository<LoggedHours, Long> 
 
   List<LoggedHours> findAllByEmployeeIdAndDate(Long employeeId, LocalDate date);
 
+  List<LoggedHours> findAllByEmployeeIdAndDateBetween(
+      Long employeeId, LocalDate startDate, LocalDate endDate);
+
   List<LoggedHours> findAllByEmployeeIdOrderByDateDescStartTimeDesc(Long employeeId);
 }
