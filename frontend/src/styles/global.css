@@ -143,7 +143,6 @@ select {
 .user-avatar {
   width: 34px;
   height: 34px;
-  background-color: var(--bg-avatar);
   border-radius: 50%;
 }
 

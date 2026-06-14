@@ -6,6 +6,8 @@ import { useDepartmentDetail } from '../hooks/useDepartmentDetail'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import whiteTriangleIcon from '../assets/white_triangle.png'
 import EditIcon from '../assets/edit_icon.png'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 import EditIconLight from '../assets/edit_icon_light.png'
 import { useTheme } from '../hooks/useTheme'
 
@@ -20,6 +22,8 @@ const DepartmentDetailScreen: React.FC = () => {
   const navigate = useNavigate()
   const { deptId } = useParams()
   const { isOwner } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].departmentDetail
   const { theme } = useTheme()
   // Guard against NaN from invalid route params
   const parsedId = deptId ? Number(deptId) : null
@@ -31,7 +35,7 @@ const DepartmentDetailScreen: React.FC = () => {
   if (loading && !department) {
     return (
       <div className="screen-container">
-        <p>Loading department…</p>
+        <p>{t.loading}</p>
       </div>
     )
   }
@@ -45,7 +49,7 @@ const DepartmentDetailScreen: React.FC = () => {
           <p>No department context selected.</p>
         )}
         <button className="btn-pill-secondary" onClick={onBack}>
-          🡄 Back
+          {t.back}
         </button>
       </div>
     )
@@ -82,11 +86,9 @@ const DepartmentDetailScreen: React.FC = () => {
 
       <div className="department-detail-grid">
         <div className="detail-column">
-          <h3 className="column-section-title">Administrators</h3>
+          <h3 className="column-section-title">{t.adminsTitle}</h3>
           <div className="card-box list-box department-detail-card">
-            {department.admins.length === 0 && (
-              <div className="admin-block-item">No administrators assigned.</div>
-            )}
+            {department.admins.length === 0 && <div className="admin-block-item">{t.noAdmins}</div>}
             {department.admins.map(admin => (
               <div key={admin.id} className="admin-block-item">
                 {admin.user.name} {admin.user.surname}
@@ -96,7 +98,7 @@ const DepartmentDetailScreen: React.FC = () => {
           {isOwner && (
             <div className="detail-action-row">
               <button className="primary-btn" onClick={() => openModal('EDIT_ADMINS', department)}>
-                edit admins
+                {t.editAdmins}
               </button>
             </div>
           )}
