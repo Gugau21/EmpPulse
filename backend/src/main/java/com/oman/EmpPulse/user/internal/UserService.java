@@ -14,6 +14,7 @@ import com.oman.EmpPulse.user.api.UserResponse;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -148,12 +149,23 @@ public class UserService implements UserApi {
         String deptName = departmentApi.findNameById(employee.getDepartmentId()).orElse(null);
         Map<Long, ActiveLeaveResponse> activeLeaves =
             leaveApi.findActiveLeavesByEmployeeIds(List.of(employee.getId()));
+
+        int year = LocalDate.now().getYear();
+        int bonus =
+            bonusVacationDaysRepository
+                .findByEmployeeIdAndYear(employee.getId(), year)
+                .map(BonusVacationDays::getDays)
+                .orElse(0);
+        int used = leaveApi.countUsedVacationDays(employee.getId(), year);
+        int vacationBalance = employee.getVacationBalance() + bonus - used;
+
         employeeProfile =
             new EmployeeProfileResponse(
                 employee.getId(),
                 employee.getDepartmentId(),
                 deptName,
                 employee.getVacationBalance(),
+                vacationBalance,
                 activeLeaves.get(employee.getId()));
       }
     }

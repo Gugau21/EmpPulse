@@ -388,7 +388,11 @@ Due to codependency, **User** and (**Employee** or **Admin**) must be created in
     Vacation Balance Calculation
 </h3>
 
-For a specific year, **Employees** vacation balance is set to their yearly vacation balance plus *number of days* of **Bonus vacation days** for a **Employees** and year.
+For a specific year, an **Employee's** vacation balance is their yearly vacation balance, plus the *number of days* of the **Bonus vacation days** for that **Employee** and year, minus their used vacation days for that year.
+
+Used vacation days for a year are the working days (Monday–Friday) of all active (Pending or Accepted) **Leave requests** of *leave type* Vacation that fall within that year. A **Leave request** whose range crosses a year boundary contributes only the portion within the year being calculated. Weekends are excluded, and there is no holiday concept.
+
+A pending modification **Leave request** overrides the original it targets: the modification's values are counted and the original is not. (Rejecting unlinks the modification and the original counts again; accepting overwrites the original.)
 
 <h3>
     Data export
