@@ -3,6 +3,7 @@ package com.oman.EmpPulse.loggedhours.internal;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursCreateRequest;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursListResponse;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursResponse;
+import com.oman.EmpPulse.loggedhours.dto.LoggedHoursUpdateRequest;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
@@ -35,9 +36,8 @@ public class LoggedHoursService {
    * if non-null), finds every row that overlaps or is adjacent to {@code [newStart, newEnd]},
    * deletes those rows, and returns the widest interval that covers the input and all matched rows.
    *
-   * <p>Callers must save the resulting interval themselves (as a new row for POST, or by updating
-   * the existing row for PATCH). Passing {@code excludeId} for PATCH prevents the row being updated
-   * from merging with itself.
+   * <p>Callers must save the resulting interval themselves. Passing {@code excludeId} for PATCH
+   * prevents the row being updated from merging with itself.
    */
   MergedInterval mergeIntervalsForDay(
       Long employeeId, LocalDate date, LocalTime newStart, LocalTime newEnd, Long excludeId) {
@@ -72,12 +72,10 @@ public class LoggedHoursService {
   @Transactional
   public LoggedHoursResponse createLoggedHours(
       Long employeeId, LoggedHoursCreateRequest req, Long callerAdminId) {
-    ensureRequiredFieldsPresent(req);
+    ensureRequiredFieldsPresent(req.getDate(), req.getStartTime(), req.getEndTime());
     validateTimeRange(req.getStartTime(), req.getEndTime());
     validateNotFuture(req.getDate());
-
-    EmployeeSummaryResponse employee = requireAdminAccessToEmployee(callerAdminId, employeeId);
-    requireActive(employee);
+    requireAdminAccessToEmployee(callerAdminId, employeeId);
 
     MergedInterval merged =
         mergeIntervalsForDay(employeeId, req.getDate(), req.getStartTime(), req.getEndTime(), null);
@@ -103,6 +101,37 @@ public class LoggedHoursService {
             .toList());
   }
 
+  @Transactional
+  public LoggedHoursResponse updateLoggedHours(
+      Long employeeId, Long loggedHoursId, LoggedHoursUpdateRequest req, Long callerId) {
+    requireAdminAccessToEmployee(callerId, employeeId);
+    ensureRequiredFieldsPresent(req.getDate(), req.getStartTime(), req.getEndTime());
+    validateTimeRange(req.getStartTime(), req.getEndTime());
+    validateNotFuture(req.getDate());
+
+    LoggedHours loggedHoursToUpdate =
+        loggedHoursRepository
+            .findById(loggedHoursId)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Logged Hours entry not found"));
+    if (!loggedHoursToUpdate.getEmployeeId().equals(employeeId)) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logged hours entry not found");
+    }
+
+    MergedInterval mergedInterval =
+        mergeIntervalsForDay(
+            employeeId, req.getDate(), req.getStartTime(), req.getEndTime(), loggedHoursId);
+
+    loggedHoursToUpdate.setDate(req.getDate());
+    loggedHoursToUpdate.setStartTime(mergedInterval.start());
+    loggedHoursToUpdate.setEndTime(mergedInterval.end());
+    loggedHoursRepository.save(loggedHoursToUpdate);
+
+    return toLoggedHoursResponse(loggedHoursToUpdate);
+  }
+
   private EmployeeSummaryResponse findEmployeeOrThrow(Long employeeId) {
     return employeeApi
         .findSummaryById(employeeId)
@@ -117,8 +146,8 @@ public class LoggedHoursService {
     return employee;
   }
 
-  private void ensureRequiredFieldsPresent(LoggedHoursCreateRequest req) {
-    if (req.getDate() == null || req.getStartTime() == null || req.getEndTime() == null) {
+  private void ensureRequiredFieldsPresent(LocalDate date, LocalTime startTime, LocalTime endTime) {
+    if (date == null || startTime == null || endTime == null) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "date, startTime and endTime are required");
     }
@@ -135,12 +164,6 @@ public class LoggedHoursService {
     if (date.isAfter(LocalDate.now())) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Cannot log hours for a future date");
-    }
-  }
-
-  private void requireActive(EmployeeSummaryResponse employee) {
-    if (!employee.isActive()) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Employee is not active");
     }
   }
 

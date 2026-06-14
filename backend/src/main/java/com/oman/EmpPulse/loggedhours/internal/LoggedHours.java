@@ -54,6 +54,10 @@ public class LoggedHours {
     return date;
   }
 
+  public LocalDate setDate(LocalDate newDate) {
+    return this.date = newDate;
+  }
+
   public LocalTime getStartTime() {
     return startTime;
   }

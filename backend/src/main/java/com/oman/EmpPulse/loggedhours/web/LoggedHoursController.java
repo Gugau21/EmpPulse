@@ -1,6 +1,7 @@
 package com.oman.EmpPulse.loggedhours.web;
 
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursCreateRequest;
+import com.oman.EmpPulse.loggedhours.dto.LoggedHoursUpdateRequest;
 import com.oman.EmpPulse.loggedhours.internal.LoggedHoursService;
 import com.oman.EmpPulse.shared.security.AuthUtils;
 import org.springframework.http.HttpStatus;
@@ -38,5 +39,17 @@ public class LoggedHoursController {
         .body(
             loggedHoursService.createLoggedHours(
                 employeeId, req, AuthUtils.getUserId(authentication)));
+  }
+
+  @PreAuthorize("hasAuthority('ADMIN')")
+  @PatchMapping("/{employeeId}/logged-hours/{loggedHoursId}")
+  public ResponseEntity<?> editLoggedHours(
+      @PathVariable Long employeeId,
+      @PathVariable Long loggedHoursId,
+      @RequestBody LoggedHoursUpdateRequest req,
+      Authentication authentication) {
+    return ResponseEntity.ok(
+        loggedHoursService.updateLoggedHours(
+            employeeId, loggedHoursId, req, AuthUtils.getUserId(authentication)));
   }
 }
