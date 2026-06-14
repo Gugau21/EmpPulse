@@ -4,6 +4,7 @@ import { useAuth } from '../context/useAuth'
 import { landingPath } from '../utils/guards'
 import UKflag from '../assets/uk_icon.png'
 import UkranianFlag from '../assets/ukraine_icon.png'
+import profileIcon from '../assets/profile_icon.png'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
 
@@ -56,7 +57,9 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-bottom">
         <div className="user-profile clickable" onClick={() => navigate('/profile')}>
-          <div className="user-avatar"></div>
+          <div className="user-avatar">
+            <img src={profileIcon} alt="Profile" width={35} height={35} />
+          </div>
           <div className="user-info">
             <span className="user-name">{displayName}</span>
             {isOwner && <span className="user-role">{displayRole}</span>}
