@@ -5,9 +5,30 @@ import AccordionScreen from '../components/AccordionScreen'
 import RequestList from '../components/RequestList'
 import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
 import { useLeaveRequests } from '../hooks/useLeaveRequests'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 const RequestManagerPage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
+  const { language } = useLanguage()
+  const t = translations[language].requestManagerPage
+  
+  // Grab our filter dictionary so we can reuse the type/status translations
+  const filtersT = translations[language].requestFilters
+
+  const typeMap: Record<string, string> = {
+    Vacation: filtersT.typeVacation,
+    Sick: filtersT.typeSick,
+    Personal: filtersT.typePersonal
+  }
+
+  const statusMap: Record<string, string> = {
+    PENDING: filtersT.statusPending,
+    APPROVED: filtersT.statusApproved,
+    REJECTED: filtersT.statusRejected,
+    CANCELLED: filtersT.statusCancelled
+  }
+
   // The server already scopes this to what the caller manages: an admin gets
   // their overseen departments' requests (plus their own); the owner gets all.
   const managedRequestsQuery = useLeaveRequests()
@@ -15,12 +36,12 @@ const RequestManagerPage: React.FC = () => {
 
   return (
     <AccordionScreen
-      pageTitle="Requests"
+      pageTitle={t.title}
       filter={filterNode}
       footer={
         <div className="center-action">
           <button className="primary-btn" onClick={() => openModal('CREATE_REQUEST')}>
-            + create request
+            {t.createRequest}
           </button>
         </div>
       }
@@ -46,9 +67,13 @@ const RequestManagerPage: React.FC = () => {
             <span className="emp-name">{req.employeeName}</span>
             <span className="date-span">{req.dateRange}</span>
             <div className="emp-meta">
-              <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
+              {/* Map the type but leave the CSS class as English */}
+              <span className={`badge badge-${req.type.toLowerCase()}`}>
+                {typeMap[req.type] || req.type}
+              </span>
+              {/* Map the status but leave the CSS class as English */}
               <span className={`status-label status-${req.status.toLowerCase()}`}>
-                {req.status}
+                {statusMap[req.status] || req.status}
               </span>
             </div>
           </div>

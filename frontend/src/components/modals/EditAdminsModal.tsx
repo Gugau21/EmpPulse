@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import type { Department } from '../../types'
 import { useAdmins } from '../../hooks/useAdmins'
 import { useUpdateDepartment } from '../../hooks/useDepartmentMutations'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   closeModal: () => void
@@ -9,6 +11,9 @@ interface Props {
 }
 
 const EditAdminsModal: React.FC<Props> = ({ closeModal, selectedDepartment }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   // Working set of admin ids (Admin.id) assigned to the selected department,
   // seeded from the department's current admins. The modal remounts per open,
   // so this lazy initial value is sufficient — no effect needed to re-seed.
@@ -46,10 +51,7 @@ const EditAdminsModal: React.FC<Props> = ({ closeModal, selectedDepartment }) =>
       .filter(id => !editAdminIds.includes(id) && isLastDepartment(id))
       .map(adminName)
     if (blocked.length > 0) {
-      setAdminsError(
-        `${blocked.join(', ')} cannot be removed — this is their only department. ` +
-          `Assign them to another department first.`
-      )
+      setAdminsError(`${blocked.join(', ')} ${t.errOnlyDept}`)
       return
     }
 
@@ -63,13 +65,13 @@ const EditAdminsModal: React.FC<Props> = ({ closeModal, selectedDepartment }) =>
 
   return (
     <div className="modal-form">
-      <h2>Edit administrators</h2>
+      <h2>{t.editAdminsTitle}</h2>
       <h3 className="edit-admins-title">{selectedDepartment?.name}</h3>
 
       <div className="edit-admins-list">
         {editAdminIds.length === 0 && (
           <div className="edit-admin-item">
-            <div className="edit-admin-pill">No administrators assigned.</div>
+            <div className="edit-admin-pill">{t.noAdminsAssigned}</div>
           </div>
         )}
         {editAdminIds.map((id, idx) => (
@@ -97,7 +99,7 @@ const EditAdminsModal: React.FC<Props> = ({ closeModal, selectedDepartment }) =>
             }}
           >
             <option value="" disabled>
-              add administrator
+              {t.addAdministrator}
             </option>
             {availableAdmins.map(a => (
               <option key={a.id} value={a.id}>
@@ -117,7 +119,7 @@ const EditAdminsModal: React.FC<Props> = ({ closeModal, selectedDepartment }) =>
         onClick={handleSaveAdmins}
         disabled={updateDept.isPending}
       >
-        save administrators
+        {t.saveAdmins}
       </button>
     </div>
   )

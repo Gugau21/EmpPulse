@@ -7,13 +7,13 @@ import { useUserDetail } from '../../hooks/useUserDetail'
 import { useCreateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import { useOutsideClick } from '../../hooks/useOutsideClick'
 import LeaveTypeSelects from './LeaveTypeSelects'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   activeModal: ModalType
   closeModal: () => void
 }
-
-const REASON_MAX = 300
 
 // The UI shows display-cased leave types; the API takes the lower-cased wire enum.
 const LEAVE_TYPE_TO_API: Record<LeaveRequest['type'], LeaveRequestCreatePayload['type']> = {
@@ -30,16 +30,13 @@ function todayISO(): string {
   return new Date(now.getTime() - off * 60_000).toISOString().slice(0, 10)
 }
 
-// Type-ahead picker the admin/owner uses to choose whose request they're filing.
-// The list it draws from is already scoped server-side: an admin receives only
-// employees in the departments they oversee, the owner receives everyone — so no
-// extra filtering by role is needed here, just narrowing by the typed text.
 interface EmployeePickerProps {
   selectedId: number | null
   onSelect: (id: number | null) => void
+  t: any
 }
 
-const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect }) => {
+const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect, t }) => {
   const { data: employees = [] } = useEmployeesList()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
@@ -54,10 +51,10 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect })
 
   return (
     <label className="employee-picker" ref={ref}>
-      Employee
+      {t.employee}
       <input
         type="text"
-        placeholder="Type a name"
+        placeholder={t.typeAName}
         value={query}
         maxLength={101}
         onFocus={() => setOpen(true)}
@@ -86,7 +83,7 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect })
               </button>
             ))
           ) : (
-            <div className="autocomplete-empty">No matching employees</div>
+            <div className="autocomplete-empty">{t.noMatchingEmp}</div>
           )}
         </div>
       )}
@@ -96,6 +93,9 @@ const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect })
 
 const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
   const { currentUser, isOwner, isAdmin } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   // ADD_LEAVE is the caller filing their own request ("mine"); CREATE_REQUEST is
   // the admin/owner flow, filing on behalf of another employee.
   const isMine = activeModal === 'ADD_LEAVE'
@@ -128,24 +128,24 @@ const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
   const handleSubmit = () => {
     setValidationError(null)
     if (!isMine && employeeId === null) {
-      setValidationError('Select an employee.')
+      setValidationError(t.errSelectEmployee)
       return
     }
     if (!from || !till) {
-      setValidationError('Both dates are required.')
+      setValidationError(t.errDatesRequired)
       return
     }
     if (from > till) {
-      setValidationError('The "From" date must not be after the "Till" date.')
+      setValidationError(t.errFromAfterTill)
       return
     }
     if (!canSetPastDates && minDate && from < minDate) {
-      setValidationError('Leave cannot start in the past.')
+      setValidationError(t.errPastStart)
       return
     }
     // Reason is mandatory for personal leave for every role; optional otherwise.
     if (leaveType === 'Personal' && !reason.trim()) {
-      setValidationError('A reason is required for personal leave.')
+      setValidationError(t.errReasonRequired)
       return
     }
     // The target is the caller themselves (self flow) or the picked employee.
@@ -153,7 +153,7 @@ const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
       ? (currentUser?.employeeProfile?.employeeId ?? null)
       : employeeId
     if (targetEmployeeId == null) {
-      setValidationError('You do not have an employee profile to file a request for.')
+      setValidationError(t.errNoEmpProfile)
       return
     }
     createLeave.mutate(
@@ -171,9 +171,9 @@ const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
 
   return (
     <div className="modal-form">
-      <h2>{isMine ? 'Add request' : 'Create request'}</h2>
+      <h2>{isMine ? t.addRequest : t.createRequest}</h2>
 
-      {!isMine && <EmployeePicker selectedId={employeeId} onSelect={setEmployeeId} />}
+      {!isMine && <EmployeePicker selectedId={employeeId} onSelect={setEmployeeId} t={t} />}
 
       <LeaveTypeSelects
         paymentType={paymentType}
@@ -186,31 +186,31 @@ const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
         <div className="balance-hint">
           {vacationDaysLeft != null
             ? isMine
-              ? `You have ${vacationDaysLeft} vacation days left`
-              : `${selectedEmployee?.name} ${selectedEmployee?.surname} has ${vacationDaysLeft} vacation days left`
-            : 'Vacation balance unavailable'}
+              ? `${t.youHave}${vacationDaysLeft}${t.daysLeft}`
+              : `${selectedEmployee?.name} ${selectedEmployee?.surname}${t.has}${vacationDaysLeft}${t.daysLeft}`
+            : t.vacationBalanceUnavailable}
         </div>
       )}
 
       <label>
-        From
+        {t.fromLabel}
         <input type="date" min={minDate} value={from} onChange={e => setFrom(e.target.value)} />
       </label>
 
       <label>
-        Till
+        {t.tillLabel}
         <input type="date" min={minDate} value={till} onChange={e => setTill(e.target.value)} />
       </label>
 
       <label>
-        Reason{leaveType === 'Personal' ? ' *' : ''}
+        {t.reason}{leaveType === 'Personal' ? ' *' : ''}
         <textarea
           rows={2}
-          maxLength={REASON_MAX}
+          maxLength={300}
           value={reason}
           onChange={e => setReason(e.target.value)}
         />
-        <span className="char-counter">{REASON_MAX - reason.length} characters left</span>
+        <span className="char-counter">{300 - reason.length}{t.charsLeft}</span>
       </label>
 
       {(validationError || createLeave.error) && (
@@ -222,7 +222,7 @@ const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
         onClick={handleSubmit}
         disabled={createLeave.isPending}
       >
-        + create request
+        {t.createRequestBtn}
       </button>
     </div>
   )

@@ -7,6 +7,8 @@ import { useLeaveRequestDetail } from '../../hooks/useLeaveRequestDetail'
 import { useUpdateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import LeaveTypeSelects from './LeaveTypeSelects'
 import LeaveRequestLoadState from './LeaveRequestLoadState'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   closeModal: () => void
@@ -39,6 +41,9 @@ const formatDate = (dateStr?: string) => {
 // a child that mounts only once the request has loaded, so its initial state seeds
 // cleanly from the fetched values.
 const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   const rawId = selectedRequest ? Number(selectedRequest.id) : NaN
   const id = Number.isInteger(rawId) ? rawId : null
   const { data: request, isLoading, error } = useLeaveRequestDetail(id)
@@ -46,11 +51,11 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }
   return (
     <div className="modal-form">
       {onBack && (
-        <button className="modal-back" onClick={onBack} aria-label="Go back">
+        <button className="modal-back" onClick={onBack} aria-label={t.goBack}>
           ‹
         </button>
       )}
-      <h2>Edit request</h2>
+      <h2>{t.editRequestTitle}</h2>
 
       <LeaveRequestLoadState isLoading={isLoading} error={error} loaded={!!request} />
       {request && <EditLeaveForm request={request} closeModal={closeModal} onBack={onBack} />}
@@ -65,6 +70,9 @@ interface FormProps {
 }
 
 const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   const [startStr, endStr] = request.dateRange?.split(' - ') ?? []
 
   const [paymentType, setPaymentType] = useState(request.paid ? 'Paid' : 'Unpaid')
@@ -97,16 +105,16 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
   const handleSubmit = () => {
     setValidationError(null)
     if (!from || !till) {
-      setValidationError('Both dates are required.')
+      setValidationError(t.errDatesRequired)
       return
     }
     // ISO yyyy-mm-dd strings compare correctly as plain strings.
     if (from > till) {
-      setValidationError('The "From" date must not be after the "Till" date.')
+      setValidationError(t.errFromAfterTill)
       return
     }
     if (leaveType === 'Personal' && !reason.trim()) {
-      setValidationError('A reason is required for personal leave.')
+      setValidationError(t.errReasonRequired)
       return
     }
     updateLeave.mutate(
@@ -137,24 +145,24 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
         <div className="balance-hint">
           {vacationDaysLeft != null
             ? isMine
-              ? `You have ${vacationDaysLeft} vacation days left`
-              : `${request.employeeName} has ${vacationDaysLeft} vacation days left`
-            : 'Vacation balance unavailable'}
+              ? `${t.youHave}${vacationDaysLeft}${t.daysLeft}`
+              : `${request.employeeName}${t.has}${vacationDaysLeft}${t.daysLeft}`
+            : t.vacationBalanceUnavailable}
         </div>
       )}
 
       <label>
-        From
+        {t.fromLabel}
         <input type="date" value={from} onChange={e => setFrom(e.target.value)} />
       </label>
 
       <label>
-        Till
+        {t.tillLabel}
         <input type="date" value={till} onChange={e => setTill(e.target.value)} />
       </label>
 
       <label>
-        Reason
+        {t.reason}
         <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)}></textarea>
       </label>
 
@@ -167,7 +175,7 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
         onClick={handleSubmit}
         disabled={updateLeave.isPending}
       >
-        {onBack ? 'edit and auto approve request' : 'edit request'}
+        {onBack ? t.editAutoApproveBtn : t.editRequest}
       </button>
     </>
   )

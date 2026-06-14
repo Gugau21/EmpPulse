@@ -4,11 +4,15 @@ import trashIcon from '../assets/trash-icon.png.webp'
 import type { OutletContext } from '../components/AppLayout'
 import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 const DepartmentsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
   const { currentUser, isOwner } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].departmentsPage
   const departmentsQuery = useDepartmentsList()
   const departments = departmentsQuery.data ?? []
   const loading = departmentsQuery.isLoading
@@ -26,12 +30,12 @@ const DepartmentsScreen: React.FC = () => {
   return (
     <div className="screen-container">
       <header className="page-header">
-        <h2>Departments</h2>
+        <h2>{t.title}</h2>
         <div className="header-actions">
           <div className="search-bar">
             <input
               type="text"
-              placeholder="Search"
+              placeholder={t.searchPlaceholder}
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               maxLength={100}
@@ -44,7 +48,7 @@ const DepartmentsScreen: React.FC = () => {
         <div className="card-box list-box">
           {loading && (
             <div className="employee-row">
-              <span className="emp-name">Loading departments…</span>
+              <span className="emp-name">{t.loading}</span>
             </div>
           )}
           {!loading &&
@@ -65,7 +69,7 @@ const DepartmentsScreen: React.FC = () => {
                       e.stopPropagation()
                       openModal('DELETE_DEPARTMENT', dept)
                     }}
-                    title="Delete Department"
+                    title={t.deleteTitle}
                   >
                     <img src={trashIcon} alt="Delete" width={30} height={30} />
                   </button>
@@ -78,7 +82,7 @@ const DepartmentsScreen: React.FC = () => {
       {isOwner && (
         <div className="center-action">
           <button className="primary-btn" onClick={() => openModal('ADD_DEPARTMENT')}>
-            + add department
+            {t.addDepartment}
           </button>
         </div>
       )}

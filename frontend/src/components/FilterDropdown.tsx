@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { useOutsideClick } from '../hooks/useOutsideClick'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 // A "Filter by" tag picker shared by the Employees, My requests and Requests
 // pages. Clicking the button opens a dropdown of checkboxes; toggling a checkbox
@@ -24,12 +26,16 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   options,
   selected,
   onChange,
-  label = 'Filter by'
+  label
 }) => {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  
+  const { language } = useLanguage()
+  const t = translations[language].dropdowns
+  
+  const displayLabel = label || t.filterBy
 
-  // Close on an outside click; the chosen tags are kept.
   useOutsideClick(ref, open, () => setOpen(false))
 
   const toggleOption = (value: string) =>
@@ -38,7 +44,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({
   return (
     <div className="filter-dropdown" ref={ref}>
       <button type="button" className="filter-toggle" onClick={() => setOpen(o => !o)}>
-        {label}
+        {displayLabel}
         {selected.length ? ` (${selected.length})` : ''}
       </button>
 

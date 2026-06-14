@@ -1,5 +1,7 @@
 import React, { useRef, useState } from 'react'
 import { useOutsideClick } from '../hooks/useOutsideClick'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 // A "Sort by" picker sitting next to the "Filter by" dropdowns on the request
 // lists. Unlike FilterDropdown it is single-select: choosing an option applies
@@ -21,12 +23,16 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   options,
   selected,
   onChange,
-  label = 'Sort by'
+  label
 }) => {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  
+  const { language } = useLanguage()
+  const t = translations[language].dropdowns
+  
+  const displayLabel = label || t.sortBy
 
-  // Close on an outside click; the chosen option is kept.
   useOutsideClick(ref, open, () => setOpen(false))
 
   const pick = (value: string) => {
@@ -39,7 +45,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   return (
     <div className="filter-dropdown" ref={ref}>
       <button type="button" className="filter-toggle" onClick={() => setOpen(o => !o)}>
-        {label}
+        {displayLabel}
         {activeLabel ? `: ${activeLabel}` : ''}
       </button>
 

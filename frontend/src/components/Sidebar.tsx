@@ -2,6 +2,10 @@ import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import { landingPath } from '../utils/guards'
+import UKflag from '../assets/uk_icon.png'
+import UkranianFlag from '../assets/ukraine_icon.png'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 // NavLink className callback: keep the base `nav-item` class and add `active`
 // when the link matches the current URL (router-driven, replacing currentScreen).
@@ -10,13 +14,15 @@ const navItemClass = ({ isActive }: { isActive: boolean }) => `nav-item${isActiv
 const Sidebar: React.FC = () => {
   const { currentUser, isOwner, isAdmin, isEmployee } = useAuth()
   const navigate = useNavigate()
+  const { language, changeLanguage } = useLanguage()
+  const t = translations[language].sidebar
 
   const showEmployees = isOwner || isAdmin
   const showRequestMgr = isOwner || isAdmin
   const showDepartments = isOwner || isAdmin
   const showMyRequests = isEmployee
   const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : ''
-  const displayRole = isOwner ? 'Owner' : isAdmin ? 'Administrator' : 'Employee'
+  const displayRole = isOwner ? t.owner : isAdmin ? t.administrator : t.employee
 
   return (
     <aside className="sidebar">
@@ -27,22 +33,22 @@ const Sidebar: React.FC = () => {
         <nav className="sidebar-nav">
           {showDepartments && (
             <NavLink to="/departments" className={navItemClass}>
-              Department list
+              {t.departmentList}
             </NavLink>
           )}
           {showEmployees && (
             <NavLink to="/employees" className={navItemClass}>
-              Employees
+              {t.employees}
             </NavLink>
           )}
           {showRequestMgr && (
             <NavLink to="/request-manager" className={navItemClass}>
-              Request manager
+              {t.requestManager}
             </NavLink>
           )}
           {showMyRequests && (
             <NavLink to="/my-requests" className={navItemClass}>
-              My requests
+              {t.myRequests}
             </NavLink>
           )}
         </nav>
@@ -53,7 +59,6 @@ const Sidebar: React.FC = () => {
           <div className="user-avatar"></div>
           <div className="user-info">
             <span className="user-name">{displayName}</span>
-            {/* Only show role badge for owner (already prominent in the app). */}
             {isOwner && <span className="user-role">{displayRole}</span>}
           </div>
         </div>
@@ -74,8 +79,18 @@ const Sidebar: React.FC = () => {
             </div>
           </div>
           <div className="lang-toggles">
-            <span className="lang-icon">🇬🇧</span>
-            <span className="lang-icon is-dimmed">🇺🇦</span>
+            <span 
+              className={`lang-icon ${language === 'uk' ? 'is-dimmed' : ''}`}
+              onClick={() => changeLanguage('en')}
+            >
+              <img src={UKflag} alt="English" width={27} height={27} />
+            </span>
+            <span 
+              className={`lang-icon ${language === 'en' ? 'is-dimmed' : ''}`}
+              onClick={() => changeLanguage('uk')}
+            >
+              <img src={UkranianFlag} alt="Ukrainian" width={27} height={27} />
+            </span>
           </div>
         </div>
       </div>

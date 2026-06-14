@@ -4,6 +4,8 @@ import { useAuth } from '../../context/useAuth'
 import { useCreateUser } from '../../hooks/useCreateUser'
 import { IdentityFields, RoleSection } from '../helpers/employeeFormParts'
 import { isValidEmail } from '../../utils/validation'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   closeModal: () => void
@@ -13,6 +15,9 @@ interface Props {
 
 const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal }) => {
   const { isOwner, isAdmin } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   // An admin can only ever create plain employees (no admin accounts, no role choice).
   const isAdminCreator = isAdmin && !isOwner
 
@@ -48,27 +53,25 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
   const handleCreateUser = () => {
     setCreateError(null)
     if (!newName.trim() || !newSurname.trim() || !newEmail.trim() || !newPassword) {
-      setCreateError('Name, surname, email and password are required.')
+      setCreateError(t.errAllFieldsRequired)
       return
     }
     if (!isValidEmail(newEmail)) {
-      setCreateError('Please enter a valid email address.')
+      setCreateError(t.errInvalidEmail)
       return
     }
     // A user with no role is meaningless — must be employee and/or admin.
     if (!isEmployeeChecked && !isAdminChecked) {
-      setCreateError('User must be assigned at least one role: Employee or Administrator.')
+      setCreateError(t.errAtLeastOneRole)
       return
     }
     // A department must be chosen for every selected role — creating without one is not allowed.
     if (isEmployeeChecked && employeeDeptId === null) {
-      setCreateError('Please select a department for the employee role before creating the user.')
+      setCreateError(t.errSelectEmpDept)
       return
     }
     if (isAdminChecked && adminDeptIds.length === 0) {
-      setCreateError(
-        'Please select at least one department for the administrator role before creating the user.'
-      )
+      setCreateError(t.errSelectAdminDept)
       return
     }
 
@@ -101,7 +104,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
 
   return (
     <div className="modal-form">
-      <h2>Add employee</h2>
+      <h2>{t.addEmployee}</h2>
 
       <IdentityFields
         name={newName}
@@ -141,7 +144,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
           onClick={handleCreateUser}
           disabled={createUser.isPending}
         >
-          + add without default working hours
+          {t.addWithoutHours}
         </button>
         <button
           className="btn-modal-action"
@@ -149,7 +152,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
             openModal('ADD_WORKING_HOURS')
           }}
         >
-          + add default working hours
+          {t.addWithHours}
         </button>
       </div>
     </div>

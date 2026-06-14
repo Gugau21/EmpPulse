@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import type { Department } from '../../types'
 import { useUpdateDepartment } from '../../hooks/useDepartmentMutations'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   closeModal: () => void
@@ -8,6 +10,9 @@ interface Props {
 }
 
 const EditDepartmentModal: React.FC<Props> = ({ closeModal, selectedDepartment }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   const [deptName, setDeptName] = useState(selectedDepartment?.name || '')
   const [validationError, setValidationError] = useState<string | null>(null)
 
@@ -16,7 +21,7 @@ const EditDepartmentModal: React.FC<Props> = ({ closeModal, selectedDepartment }
   const handleUpdateDepartment = () => {
     setValidationError(null)
     if (!deptName.trim()) {
-      setValidationError('Department name is required.')
+      setValidationError(t.errDeptNameRequired)
       return
     }
 
@@ -33,12 +38,12 @@ const EditDepartmentModal: React.FC<Props> = ({ closeModal, selectedDepartment }
 
   return (
     <div className="modal-form">
-      <h2>Edit department</h2>
+      <h2>{t.editDepartment}</h2>
       <label>
-        Name of department
+        {t.nameOfDepartment}
         <input
           type="text"
-          placeholder="e.g. Department 7"
+          placeholder={t.deptNamePlaceholder}
           value={deptName}
           onChange={e => setDeptName(e.target.value)}
           maxLength={100}
@@ -54,7 +59,7 @@ const EditDepartmentModal: React.FC<Props> = ({ closeModal, selectedDepartment }
         onClick={handleUpdateDepartment}
         disabled={updateDept.isPending}
       >
-        Save changes
+        {t.saveChanges}
       </button>
     </div>
   )

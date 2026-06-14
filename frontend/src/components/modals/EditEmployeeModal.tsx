@@ -6,6 +6,8 @@ import { useUpdateUser, useDeleteEmployee } from '../../hooks/useEmployeeMutatio
 import type { UserUpdatePayload } from '../../services/api'
 import { IdentityFields, RoleSection } from '../helpers/employeeFormParts'
 import { isValidEmail } from '../../utils/validation'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   closeModal: () => void
@@ -18,14 +20,17 @@ interface Props {
 // keyed on the user id so its state initialises from the loaded values without
 // an effect syncing props into state.
 const EditEmployeeModal: React.FC<Props> = ({ closeModal, departments, selectedEmployee }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   const userId = selectedEmployee?.id ? Number(selectedEmployee.id) : null
   const { data: userDetail } = useUserDetail(userId)
 
   if (userId === null || !userDetail) {
     return (
       <div className="modal-form">
-        <h2 style={{ marginBottom: '24px' }}>Edit employee’s profile</h2>
-        <p>Loading…</p>
+        <h2 style={{ marginBottom: '24px' }}>{t.editEmpProfile}</h2>
+        <p>{t.loading}</p>
       </div>
     )
   }
@@ -50,6 +55,8 @@ interface FormProps {
 
 const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, closeModal }) => {
   const { isOwner } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].modals
 
   const [newName, setNewName] = useState(user.name)
   const [newSurname, setNewSurname] = useState(user.surname)
@@ -83,11 +90,11 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
     setEditError(null)
 
     if (isEmployeeChecked && employeeDeptId === null) {
-      setEditError('Please select a department for the employee role.')
+      setEditError(t.errSelectEmpDeptEdit)
       return
     }
     if (isOwner && isAdminChecked && adminDeptIds.length === 0) {
-      setEditError('Please select at least one department for the administrator role.')
+      setEditError(t.errSelectAdminDeptEdit)
       return
     }
 
@@ -102,11 +109,11 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
     const payload: UserUpdatePayload = {}
     if (isOwner) {
       if (!newName.trim() || !newSurname.trim()) {
-        setEditError('First name and surname are required.')
+        setEditError(t.errFirstSurnameRequired)
         return
       }
       if (newEmail.trim() && !isValidEmail(newEmail)) {
-        setEditError('Please enter a valid email address.')
+        setEditError(t.errInvalidEmail)
         return
       }
       payload.name = newName.trim()
@@ -140,10 +147,7 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
     const err = deleteUser.error ?? updateUser.error
     return (
       <div className="modal-confirm">
-        <h3>
-          Do you really want to detach all departments? The user will no longer be able to log in or
-          use the system, so the account will be deleted.
-        </h3>
+        <h3>{t.confirmDetachAll}</h3>
         {err && <p className="form-error">{err.message}</p>}
         <div className="modal-buttons">
           <button
@@ -151,10 +155,10 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
             onClick={() => deleteUser.mutate(userId, { onSuccess: () => closeModal() })}
             disabled={deleteUser.isPending}
           >
-            YES
+            {t.yes}
           </button>
           <button className="btn-outline-primary" onClick={() => setConfirmDeleteUser(false)}>
-            NO
+            {t.no}
           </button>
         </div>
       </div>
@@ -163,7 +167,7 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
 
   return (
     <div className="modal-form">
-      <h2 style={{ marginBottom: '24px' }}>Edit employee’s profile</h2>
+      <h2 style={{ marginBottom: '24px' }}>{t.editEmpProfile}</h2>
 
       {/* Identity fields (name/surname/email/password) are editable by owners
           only; admins can change just the department and vacation balance. */}
@@ -177,7 +181,7 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
           onEmail={setNewEmail}
           password={newPassword}
           onPassword={setNewPassword}
-          passwordPlaceholder="Leave blank to keep current password"
+          passwordPlaceholder={t.leaveBlankKeepPwd}
         />
       )}
 
@@ -208,7 +212,7 @@ const EditEmployeeForm: React.FC<FormProps> = ({ userId, user, departments, clos
           onClick={handleEditUser}
           disabled={updateUser.isPending}
         >
-          edit employee
+          {t.editEmployeeBtn}
         </button>
       </div>
     </div>

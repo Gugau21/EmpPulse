@@ -7,10 +7,31 @@ import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
 import { useLeaveRequests } from '../hooks/useLeaveRequests'
 import { useAuth } from '../context/useAuth'
 import trashIcon from '../assets/trash-icon.png.webp'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 const MyRequestsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const { currentUser } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].myRequestsPage
+  
+  // Grab our filter dictionary so we can reuse the type/status translations
+  const filtersT = translations[language].requestFilters
+
+  const typeMap: Record<string, string> = {
+    Vacation: filtersT.typeVacation,
+    Sick: filtersT.typeSick,
+    Personal: filtersT.typePersonal
+  }
+
+  const statusMap: Record<string, string> = {
+    PENDING: filtersT.statusPending,
+    APPROVED: filtersT.statusApproved,
+    REJECTED: filtersT.statusRejected,
+    CANCELLED: filtersT.statusCancelled
+  }
+
   const myRequestsQuery = useLeaveRequests()
   // The shared query may also carry requests this user oversees (when they are
   // an admin/owner too); this page is only the caller's own, keyed by employee id.
@@ -23,12 +44,12 @@ const MyRequestsScreen: React.FC = () => {
 
   return (
     <AccordionScreen
-      pageTitle="My requests"
+      pageTitle={t.title}
       filter={filterNode}
       footer={
         <div className="center-action">
           <button className="primary-btn" onClick={() => openModal('ADD_LEAVE')}>
-            + add request
+            {t.addRequest}
           </button>
         </div>
       }
@@ -52,11 +73,15 @@ const MyRequestsScreen: React.FC = () => {
               )
             }
           >
-            <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
+            {/* Map the type but leave the CSS class as English */}
+            <span className={`badge badge-${req.type.toLowerCase()}`}>
+              {typeMap[req.type] || req.type}
+            </span>
             <span className="date-span">{req.dateRange}</span>
             <div className="emp-meta">
+              {/* Map the status but leave the CSS class as English */}
               <span className={`status-label status-${req.status.toLowerCase()}`}>
-                {req.status}
+                {statusMap[req.status] || req.status}
               </span>
             </div>
 
@@ -70,7 +95,7 @@ const MyRequestsScreen: React.FC = () => {
                   req
                 )
               }}
-              title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
+              title={req.status === 'APPROVED' ? t.cancelApproved : t.deleteRecord}
             >
               {req.status === 'APPROVED' ? (
                 '✕'

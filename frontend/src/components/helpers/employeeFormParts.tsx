@@ -1,6 +1,8 @@
 import React from 'react'
 import type { Department } from '../../types'
 import { isValidEmail } from '../../utils/validation'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 // Shared building blocks for the Add/Edit employee modals. Both modals render the
 // same role checkboxes and department selects, so the markup lives here once to
@@ -33,24 +35,29 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
   onChange,
   departments,
   className
-}) => (
-  <label className={className}>
-    {label}
-    <select
-      value={value ?? ''}
-      onChange={e => onChange(e.target.value ? Number(e.target.value) : null)}
-    >
-      <option value="" disabled>
-        select department
-      </option>
-      {departments.map(d => (
-        <option key={d.id} value={d.id}>
-          {d.name}
+}) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
+  return (
+    <label className={className}>
+      {label}
+      <select
+        value={value ?? ''}
+        onChange={e => onChange(e.target.value ? Number(e.target.value) : null)}
+      >
+        <option value="" disabled>
+          {t.selectDeptOpt}
         </option>
-      ))}
-    </select>
-  </label>
-)
+        {departments.map(d => (
+          <option key={d.id} value={d.id}>
+            {d.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
 
 interface MultiDepartmentSelectProps {
   label: string
@@ -69,7 +76,10 @@ export const MultiDepartmentSelect: React.FC<MultiDepartmentSelectProps> = ({
   onChange,
   departments
 }) => {
-  const deptName = (id: number) => departments.find(d => d.id === id)?.name ?? `Department #${id}`
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
+  const deptName = (id: number) => departments.find(d => d.id === id)?.name ?? `${t.deptFallback}${id}`
   const available = departments.filter(d => !value.includes(d.id))
 
   return (
@@ -100,7 +110,7 @@ export const MultiDepartmentSelect: React.FC<MultiDepartmentSelectProps> = ({
             }}
           >
             <option value="" disabled>
-              add department
+              {t.addDeptOpt}
             </option>
             {available.map(d => (
               <option key={d.id} value={d.id}>
@@ -136,44 +146,49 @@ export const IdentityFields: React.FC<IdentityFieldsProps> = ({
   password,
   onPassword,
   passwordPlaceholder
-}) => (
-  <>
-    <label>
-      First name
-      <input type="text" value={name} onChange={e => onName(e.target.value)} maxLength={50} />
-    </label>
-    <label>
-      Surname
-      <input type="text" value={surname} onChange={e => onSurname(e.target.value)} maxLength={50} />
-    </label>
-    {onEmail && (
+}) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
+  return (
+    <>
       <label>
-        Email
-        <input
-          type="email"
-          value={email ?? ''}
-          onChange={e => onEmail(e.target.value)}
-          maxLength={254}
-        />
-        {email && email.trim() !== '' && !isValidEmail(email) && (
-          <span className="form-error">Please enter a valid email address.</span>
-        )}
+        {t.firstName}
+        <input type="text" value={name} onChange={e => onName(e.target.value)} maxLength={50} />
       </label>
-    )}
-    {onPassword && (
       <label>
-        Password
-        <input
-          type="password"
-          placeholder={passwordPlaceholder}
-          value={password ?? ''}
-          onChange={e => onPassword(e.target.value)}
-          maxLength={128}
-        />
+        {t.surname}
+        <input type="text" value={surname} onChange={e => onSurname(e.target.value)} maxLength={50} />
       </label>
-    )}
-  </>
-)
+      {onEmail && (
+        <label>
+          {t.email}
+          <input
+            type="email"
+            value={email ?? ''}
+            onChange={e => onEmail(e.target.value)}
+            maxLength={254}
+          />
+          {email && email.trim() !== '' && !isValidEmail(email) && (
+            <span className="form-error">{t.errInvalidEmail}</span>
+          )}
+        </label>
+      )}
+      {onPassword && (
+        <label>
+          {t.password}
+          <input
+            type="password"
+            placeholder={passwordPlaceholder}
+            value={password ?? ''}
+            onChange={e => onPassword(e.target.value)}
+            maxLength={128}
+          />
+        </label>
+      )}
+    </>
+  )
+}
 
 interface RoleSectionProps {
   // Employee role
@@ -213,44 +228,49 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
   adminDeptIds,
   onAdminDepts,
   departments
-}) => (
-  <>
-    {showEmployeeToggle && (
-      <RoleCheckbox label="Employee" checked={employeeChecked} onToggle={onToggleEmployee} />
-    )}
-    {employeeChecked && (
-      <>
-        <DepartmentSelect
-          label="Department"
-          className="field-tight"
-          value={employeeDeptId}
-          onChange={onEmployeeDept}
-          departments={departments}
-        />
-        <label className="field-tight">
-          Yearly vacation days
-          <input
-            type="text"
-            inputMode="numeric"
-            value={vacationDays}
-            onChange={e => onVacationDays(e.target.value.replace(/\D/g, ''))}
-          />
-        </label>
-      </>
-    )}
+}) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
 
-    {showAdmin && (
-      <>
-        <RoleCheckbox label="Administrator" checked={adminChecked} onToggle={onToggleAdmin} />
-        {adminChecked && (
-          <MultiDepartmentSelect
-            label="Administrator of"
-            value={adminDeptIds}
-            onChange={onAdminDepts}
+  return (
+    <>
+      {showEmployeeToggle && (
+        <RoleCheckbox label={t.roleEmployee} checked={employeeChecked} onToggle={onToggleEmployee} />
+      )}
+      {employeeChecked && (
+        <>
+          <DepartmentSelect
+            label={t.deptLabel}
+            className="field-tight"
+            value={employeeDeptId}
+            onChange={onEmployeeDept}
             departments={departments}
           />
-        )}
-      </>
-    )}
-  </>
-)
+          <label className="field-tight">
+            {t.yearlyVacationDays}
+            <input
+              type="text"
+              inputMode="numeric"
+              value={vacationDays}
+              onChange={e => onVacationDays(e.target.value.replace(/\D/g, ''))}
+            />
+          </label>
+        </>
+      )}
+
+      {showAdmin && (
+        <>
+          <RoleCheckbox label={t.roleAdmin} checked={adminChecked} onToggle={onToggleAdmin} />
+          {adminChecked && (
+            <MultiDepartmentSelect
+              label={t.adminOf}
+              value={adminDeptIds}
+              onChange={onAdminDepts}
+              departments={departments}
+            />
+          )}
+        </>
+      )}
+    </>
+  )
+}

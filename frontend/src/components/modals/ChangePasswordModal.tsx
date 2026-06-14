@@ -1,28 +1,33 @@
 import React from 'react'
 import type { OpenModal } from '../../types'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   openModal: OpenModal
 }
 
 const ChangePasswordModal: React.FC<Props> = ({ openModal }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   return (
     <div className="modal-form">
-      <h2>Change password</h2>
+      <h2>{t.changePassword}</h2>
       <label>
-        Old password
+        {t.oldPassword}
         <input type="password" placeholder=" " />
       </label>
       <label>
-        New password
+        {t.newPassword}
         <input type="password" placeholder=" " />
       </label>
       <label>
-        Repeat new password
+        {t.repeatNewPassword}
         <input type="password" placeholder=" " />
       </label>
       <button className="primary-btn full-width" onClick={() => openModal('CHANGE_PASSWORD')}>
-        change password
+        {t.changePassword}
       </button>
     </div>
   )

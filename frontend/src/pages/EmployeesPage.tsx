@@ -8,6 +8,8 @@ import { useEmployeesList } from '../hooks/useEmployeesList'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useAuth } from '../context/useAuth'
 import FilterDropdown from '../components/FilterDropdown'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 // Employees grouped by their department NAME (admins are sourced separately from
 // the departments list). Employees with no department are not shown — this page
@@ -29,6 +31,8 @@ const EmployeesPage: React.FC = () => {
   // Only owners may remove employees from a department; admins see a plain,
   // non-sliding row with no delete affordance.
   const { isOwner } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].employeesPage
   const {
     data: employees = [],
     isLoading: employeesLoading,
@@ -95,7 +99,7 @@ const EmployeesPage: React.FC = () => {
                 e.stopPropagation()
                 openModal('DELETE_EMPLOYEE', deleteEmployee)
               }}
-              title="Remove from department"
+              title={t.removeFromDept}
             >
               <img src={trashIcon} alt="Delete" width={30} height={30} />
             </button>
@@ -108,12 +112,12 @@ const EmployeesPage: React.FC = () => {
   return (
     <div className="screen-container">
       <header className="page-header">
-        <h2>Employees</h2>
+        <h2>{t.title}</h2>
         <div className="header-actions">
           <div className="search-bar">
             <input
               type="text"
-              placeholder="Search by surname"
+              placeholder={t.searchPlaceholder}
               value={search}
               onChange={e => setSearch(e.target.value)}
               maxLength={50}
@@ -121,7 +125,7 @@ const EmployeesPage: React.FC = () => {
             />
           </div>
           <FilterDropdown
-            label="Filter by department"
+            label={t.filterLabel}
             options={departmentFilterOptions}
             selected={deptFilter}
             onChange={setDeptFilter}
@@ -129,8 +133,8 @@ const EmployeesPage: React.FC = () => {
         </div>
       </header>
 
-      {isLoading && <p className="muted">Loading employees…</p>}
-      {isError && <p className="form-error">{error?.message ?? 'Failed to load employees.'}</p>}
+      {isLoading && <p className="muted">{t.loading}</p>}
+      {isError && <p className="form-error">{error?.message ?? t.error}</p>}
 
       {visibleDepartments.map(dept => {
         const expanded = !collapsed[dept.id]
@@ -151,7 +155,7 @@ const EmployeesPage: React.FC = () => {
 
             {expanded && (
               <div className="card-box list-box">
-                <div className="role-section-title">Administrators:</div>
+                <div className="role-section-title">{t.administrators}</div>
                 {admins.length ? (
                   admins.map(a =>
                     renderPersonRow(
@@ -160,14 +164,14 @@ const EmployeesPage: React.FC = () => {
                     )
                   )
                 ) : (
-                  <div className="muted role-empty">None</div>
+                  <div className="muted role-empty">{t.none}</div>
                 )}
 
-                <div className="role-section-title secondary">Employees:</div>
+                <div className="role-section-title secondary">{t.employeesList}</div>
                 {deptEmployees.length ? (
                   deptEmployees.map(emp => renderPersonRow(emp, 'emp', emp))
                 ) : (
-                  <div className="muted role-empty">None</div>
+                  <div className="muted role-empty">{t.none}</div>
                 )}
               </div>
             )}
@@ -177,7 +181,7 @@ const EmployeesPage: React.FC = () => {
 
       <div className="center-action">
         <button className="primary-btn" onClick={() => openModal('ADD_EMPLOYEE')}>
-          + add employee
+          {t.addEmployee}
         </button>
       </div>
     </div>

@@ -1,6 +1,8 @@
 import React from 'react'
 import type { UseQueryResult } from '@tanstack/react-query'
 import type { LeaveRequest } from '../types'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 interface Props {
   // The list-loading query straight from useLeaveRequests; this reads its
@@ -13,15 +15,20 @@ interface Props {
   renderRow: (request: LeaveRequest) => React.ReactNode
 }
 
-const RequestList: React.FC<Props> = ({ state, requests, renderRow }) => (
-  <>
-    {state.isLoading && <p className="muted">Loading requests…</p>}
-    {state.isError && (
-      <p className="form-error">{state.error?.message ?? 'Failed to load requests.'}</p>
-    )}
+const RequestList: React.FC<Props> = ({ state, requests, renderRow }) => {
+  const { language } = useLanguage()
+  const t = translations[language].requestList
 
-    {requests.length > 0 && <div className="card-box list-box">{requests.map(renderRow)}</div>}
-  </>
-)
+  return (
+    <>
+      {state.isLoading && <p className="muted">{t.loading}</p>}
+      {state.isError && (
+        <p className="form-error">{state.error?.message ?? t.failedLoad}</p>
+      )}
+
+      {requests.length > 0 && <div className="card-box list-box">{requests.map(renderRow)}</div>}
+    </>
+  )
+}
 
 export default RequestList
