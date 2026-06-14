@@ -10,6 +10,7 @@ import { useEmployeesList } from '../hooks/useEmployeesList'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useAuth } from '../context/useAuth'
 import FilterDropdown from '../components/FilterDropdown'
+import PageHeader from '../components/PageHeader'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
 import { useTheme } from '../hooks/useTheme'
@@ -128,27 +129,21 @@ const EmployeesPage: React.FC = () => {
 
   return (
     <div className="screen-container">
-      <header className="page-header">
-        <h2>{t.title}</h2>
-        <div className="header-actions">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              maxLength={50}
-              style={{ width: '16ch' }}
-            />
-          </div>
-          <FilterDropdown
-            label={t.filterLabel}
-            options={departmentFilterOptions}
-            selected={deptFilter}
-            onChange={setDeptFilter}
-          />
-        </div>
-      </header>
+      <PageHeader
+        title={t.title}
+        searchValue={search}
+        onSearchChange={setSearch}
+        searchPlaceholder={t.searchPlaceholder}
+        searchMaxLength={50}
+        searchStyle={{ width: '16ch' }}
+      >
+        <FilterDropdown
+          label={t.filterLabel}
+          options={departmentFilterOptions}
+          selected={deptFilter}
+          onChange={setDeptFilter}
+        />
+      </PageHeader>
 
       {isLoading && <p className="muted">{t.loading}</p>}
       {isError && <p className="form-error">{error?.message ?? t.error}</p>}

@@ -28,26 +28,38 @@ export function useRequestStatusFilter(requests: LeaveRequest[]) {
   // Map the static options to our dynamic translations
   const translatedTypeFilters = LEAVE_TYPE_FILTERS.map(opt => ({
     ...opt,
-    label: opt.value === 'Personal' ? t.typePersonal
-         : opt.value === 'Sick' ? t.typeSick
-         : opt.value === 'Vacation' ? t.typeVacation
-         : opt.label
+    label:
+      opt.value === 'Personal'
+        ? t.typePersonal
+        : opt.value === 'Sick'
+          ? t.typeSick
+          : opt.value === 'Vacation'
+            ? t.typeVacation
+            : opt.label
   }))
 
   const translatedStatusFilters = LEAVE_STATUS_FILTERS.map(opt => ({
     ...opt,
-    label: opt.value === 'PENDING' ? t.statusPending
-         : opt.value === 'APPROVED' ? t.statusApproved
-         : opt.value === 'REJECTED' ? t.statusRejected
-         : opt.value === 'CANCELLED' ? t.statusCancelled
-         : opt.label
+    label:
+      opt.value === 'PENDING'
+        ? t.statusPending
+        : opt.value === 'APPROVED'
+          ? t.statusApproved
+          : opt.value === 'REJECTED'
+            ? t.statusRejected
+            : opt.value === 'CANCELLED'
+              ? t.statusCancelled
+              : opt.label
   }))
 
   const translatedSortOptions = LEAVE_SORT_OPTIONS.map(opt => ({
     ...opt,
-    label: opt.value === 'startDate' ? t.sortStartDate 
-         : opt.value === 'lastEdit' ? t.sortLastEdit 
-         : opt.label
+    label:
+      opt.value === 'startDate'
+        ? t.sortStartDate
+        : opt.value === 'lastEdit'
+          ? t.sortLastEdit
+          : opt.label
   }))
 
   // Surname search, mirroring the Employees page: an empty box matches everyone,

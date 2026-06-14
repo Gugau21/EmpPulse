@@ -88,9 +88,7 @@ const DepartmentDetailScreen: React.FC = () => {
         <div className="detail-column">
           <h3 className="column-section-title">{t.adminsTitle}</h3>
           <div className="card-box list-box department-detail-card">
-            {department.admins.length === 0 && (
-              <div className="admin-block-item">{t.noAdmins}</div>
-            )}
+            {department.admins.length === 0 && <div className="admin-block-item">{t.noAdmins}</div>}
             {department.admins.map(admin => (
               <div key={admin.id} className="admin-block-item">
                 {admin.user.name} {admin.user.surname}

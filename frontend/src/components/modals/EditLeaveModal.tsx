@@ -5,7 +5,6 @@ import { useAuth } from '../../context/useAuth'
 import { useUserDetail } from '../../hooks/useUserDetail'
 import { useUpdateLeaveRequest, useModifyLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import LeaveTypeSelects from './LeaveTypeSelects'
-import LeaveRequestLoadState from './LeaveRequestLoadState'
 import { useLanguage } from '../../hooks/useLanguage'
 import { translations } from '../../utils/translations'
 import LeaveRequestModalShell from './LeaveRequestModalShell'
@@ -36,26 +35,10 @@ const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }
   const { language } = useLanguage()
   const t = translations[language].modals
 
-  const rawId = selectedRequest ? Number(selectedRequest.id) : NaN
-  const id = Number.isInteger(rawId) ? rawId : null
-  const { data: request, isLoading, error } = useLeaveRequestDetail(id)
-
-  return (
-    <div className="modal-form">
-      {onBack && (
-        <button className="modal-back" onClick={onBack} aria-label={t.goBack}>
-          ‹
-        </button>
-      )}
-      <h2>{t.editRequestTitle}</h2>
-
-      <LeaveRequestLoadState isLoading={isLoading} error={error} loaded={!!request} />
-      {request && <EditLeaveForm request={request} closeModal={closeModal} onBack={onBack} />}
-    </div>
   return (
     <LeaveRequestModalShell
       selectedRequest={selectedRequest}
-      heading="Edit request"
+      heading={t.editRequestTitle}
       onBack={onBack}
     >
       {request => <EditLeaveForm request={request} closeModal={closeModal} onBack={onBack} />}
@@ -175,23 +158,14 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
         <p className="form-error">{validationError ?? activeMutation.error?.message}</p>
       )}
 
-      {isModification && (
-        <div className="balance-hint">
-          Editing an approved request submits the change for admin approval.
-        </div>
-      )}
+      {isModification && <div className="balance-hint">{t.modificationHint}</div>}
 
       <button
         className="primary-btn full-width"
         onClick={handleSubmit}
         disabled={activeMutation.isPending}
       >
-        {onBack ? t.editAutoApproveBtn : t.editRequest}
-        {isModification
-          ? 'request change'
-          : onBack
-            ? 'edit and auto approve request'
-            : 'edit request'}
+        {isModification ? t.requestChange : onBack ? t.editAutoApproveBtn : t.editRequest}
       </button>
     </>
   )

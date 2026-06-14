@@ -1,4 +1,4 @@
-export type Language = 'en' | 'uk';
+export type Language = 'en' | 'uk'
 
 export const translations = {
   en: {
@@ -86,7 +86,7 @@ export const translations = {
       thursday: 'Thursday',
       friday: 'Friday',
       saturday: 'Saturday',
-      sunday: 'Sunday',
+      sunday: 'Sunday'
     },
     requestManagerPage: {
       title: 'Requests',
@@ -94,16 +94,23 @@ export const translations = {
     },
     appLayout: {
       loading: 'Loading…',
-      errAdminsAttached: 'This department still has administrators attached to it. Unassign all administrators before deleting.',
-      errEmployeesAttached: 'This department still has employees assigned to it. Unassign all employees before deleting.'
+      errAdminsAttached:
+        'This department still has administrators attached to it. Unassign all administrators before deleting.',
+      errEmployeesAttached:
+        'This department still has employees assigned to it. Unassign all employees before deleting.'
     },
     requestList: {
       loading: 'Loading requests…',
-      failedLoad: 'Failed to load requests.'
+      failedLoad: 'Failed to load requests.',
+      currentLeaves: 'Current leaves',
+      future: 'Future',
+      past: 'Past',
+      noLeavesHere: 'No leaves here'
     },
     serverStatus: {
       serviceUnavailable: 'Service unavailable',
-      unreachable: 'We can’t reach the server right now. This page will reconnect automatically once it’s back online.'
+      unreachable:
+        'We can’t reach the server right now. This page will reconnect automatically once it’s back online.'
     },
     dropdowns: {
       filterBy: 'Filter by',
@@ -143,7 +150,13 @@ export const translations = {
       editDefaultWorkingHours: 'Edit default',
       addDefaultWorkingHours: 'Add default',
       workingHoursSuffix: 'working hours',
-      monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday', friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
+      monday: 'Monday',
+      tuesday: 'Tuesday',
+      wednesday: 'Wednesday',
+      thursday: 'Thursday',
+      friday: 'Friday',
+      saturday: 'Saturday',
+      sunday: 'Sunday',
       saveChanges: 'Save changes',
       addEmployeeBtnWorkingHours: '+ add employee',
       addDepartment: 'Add department',
@@ -156,8 +169,10 @@ export const translations = {
       errAllFieldsRequired: 'Name, surname, email and password are required.',
       errInvalidEmail: 'Please enter a valid email address.',
       errAtLeastOneRole: 'User must be assigned at least one role: Employee or Administrator.',
-      errSelectEmpDept: 'Please select a department for the employee role before creating the user.',
-      errSelectAdminDept: 'Please select at least one department for the administrator role before creating the user.',
+      errSelectEmpDept:
+        'Please select a department for the employee role before creating the user.',
+      errSelectAdminDept:
+        'Please select at least one department for the administrator role before creating the user.',
       addWithoutHours: '+ add without default working hours',
       addWithHours: '+ add default working hours',
       addRequest: 'Add request',
@@ -192,7 +207,8 @@ export const translations = {
       editAdminsTitle: 'Edit administrators',
       noAdminsAssigned: 'No administrators assigned.',
       addAdministrator: 'add administrator',
-      errOnlyDept: 'cannot be removed — this is their only department. Assign them to another department first.',
+      errOnlyDept:
+        'cannot be removed — this is their only department. Assign them to another department first.',
       saveAdmins: 'save administrators',
       editEmpProfile: 'Edit employee’s profile',
       loading: 'Loading…',
@@ -201,7 +217,8 @@ export const translations = {
       errFirstSurnameRequired: 'First name and surname are required.',
       leaveBlankKeepPwd: 'Leave blank to keep current password',
       editEmployeeBtn: 'edit employee',
-      confirmDetachAll: 'Do you really want to detach all departments? The user will no longer be able to log in or use the system, so the account will be deleted.',
+      confirmDetachAll:
+        'Do you really want to detach all departments? The user will no longer be able to log in or use the system, so the account will be deleted.',
       firstName: 'First name',
       surname: 'Surname',
       email: 'Email',
@@ -228,7 +245,9 @@ export const translations = {
       errLoadRequest: 'This leave request could not be loaded.',
       logHoursTitle: 'Log hours',
       addHoursBtn: '+ add hours',
-      emptyReason: '—'
+      emptyReason: '—',
+      requestChange: 'request change',
+      modificationHint: 'Editing an approved request submits the change for admin approval.'
     }
   },
   uk: {
@@ -316,7 +335,7 @@ export const translations = {
       thursday: 'Четвер',
       friday: 'П’ятниця',
       saturday: 'Субота',
-      sunday: 'Неділя',
+      sunday: 'Неділя'
     },
     requestManagerPage: {
       title: 'Запити',
@@ -324,16 +343,23 @@ export const translations = {
     },
     appLayout: {
       loading: 'Завантаження…',
-      errAdminsAttached: 'До цього відділу все ще прив’язані адміністратори. Відв’яжіть усіх адміністраторів перед видаленням.',
-      errEmployeesAttached: 'До цього відділу все ще прив’язані робітники. Відв’яжіть усіх робітників перед видаленням.'
+      errAdminsAttached:
+        'До цього відділу все ще прив’язані адміністратори. Відв’яжіть усіх адміністраторів перед видаленням.',
+      errEmployeesAttached:
+        'До цього відділу все ще прив’язані робітники. Відв’яжіть усіх робітників перед видаленням.'
     },
     requestList: {
       loading: 'Завантаження запитів…',
-      failedLoad: 'Не вдалося завантажити запити.'
+      failedLoad: 'Не вдалося завантажити запити.',
+      currentLeaves: 'Поточні відпустки',
+      future: 'Майбутні',
+      past: 'Минулі',
+      noLeavesHere: 'Немає відпусток'
     },
     serverStatus: {
       serviceUnavailable: 'Сервіс недоступний',
-      unreachable: "Зв'язок із сервером тимчасово втрачено. Сторінка оновиться автоматично, щойно він відновиться."
+      unreachable:
+        "Зв'язок із сервером тимчасово втрачено. Сторінка оновиться автоматично, щойно він відновиться."
     },
     dropdowns: {
       filterBy: 'Фільтр за',
@@ -373,7 +399,13 @@ export const translations = {
       editDefaultWorkingHours: 'Редагувати стандартні',
       addDefaultWorkingHours: 'Додати стандартні',
       workingHoursSuffix: 'робочі години',
-      monday: 'Понеділок', tuesday: 'Вівторок', wednesday: 'Середа', thursday: 'Четвер', friday: 'П’ятниця', saturday: 'Субота', sunday: 'Неділя',
+      monday: 'Понеділок',
+      tuesday: 'Вівторок',
+      wednesday: 'Середа',
+      thursday: 'Четвер',
+      friday: 'П’ятниця',
+      saturday: 'Субота',
+      sunday: 'Неділя',
       saveChanges: 'Зберегти зміни',
       addEmployeeBtnWorkingHours: '+ додати робітника',
       addDepartment: 'Додати відділ',
@@ -385,9 +417,12 @@ export const translations = {
       addEmployee: 'Додати робітника',
       errAllFieldsRequired: 'Ім’я, прізвище, електронна пошта та пароль обов’язкові.',
       errInvalidEmail: 'Будь ласка, введіть дійсну електронну адресу.',
-      errAtLeastOneRole: 'Користувачу має бути призначена хоча б одна роль: Робітник або Адміністратор.',
-      errSelectEmpDept: 'Будь ласка, виберіть відділ для ролі робітника перед створенням користувача.',
-      errSelectAdminDept: 'Будь ласка, виберіть хоча б один відділ для ролі адміністратора перед створенням користувача.',
+      errAtLeastOneRole:
+        'Користувачу має бути призначена хоча б одна роль: Робітник або Адміністратор.',
+      errSelectEmpDept:
+        'Будь ласка, виберіть відділ для ролі робітника перед створенням користувача.',
+      errSelectAdminDept:
+        'Будь ласка, виберіть хоча б один відділ для ролі адміністратора перед створенням користувача.',
       addWithoutHours: '+ додати без стандартних робочих годин',
       addWithHours: '+ додати стандартні робочі години',
       addRequest: 'Додати запит',
@@ -422,7 +457,8 @@ export const translations = {
       editAdminsTitle: 'Редагувати адміністраторів',
       noAdminsAssigned: 'Немає призначених адміністраторів.',
       addAdministrator: 'додати адміністратора',
-      errOnlyDept: 'не може бути видалено — це їхній єдиний відділ. Спочатку призначте їх до іншого відділу.',
+      errOnlyDept:
+        'не може бути видалено — це їхній єдиний відділ. Спочатку призначте їх до іншого відділу.',
       saveAdmins: 'зберегти адміністраторів',
       editEmpProfile: 'Редагувати профіль робітника',
       loading: 'Завантаження…',
@@ -431,7 +467,8 @@ export const translations = {
       errFirstSurnameRequired: 'Ім’я та прізвище обов’язкові.',
       leaveBlankKeepPwd: 'Залиште порожнім, щоб зберегти поточний пароль',
       editEmployeeBtn: 'редагувати робітника',
-      confirmDetachAll: 'Ви дійсно хочете відв’язати всі відділи? Користувач більше не зможе входити в систему або користуватися нею, тому обліковий запис буде видалено.',
+      confirmDetachAll:
+        'Ви дійсно хочете відв’язати всі відділи? Користувач більше не зможе входити в систему або користуватися нею, тому обліковий запис буде видалено.',
       firstName: 'Ім’я',
       surname: 'Прізвище',
       email: 'Електронна пошта',
@@ -458,7 +495,10 @@ export const translations = {
       errLoadRequest: 'Не вдалося завантажити цей запит.',
       logHoursTitle: 'Зареєструвати години',
       addHoursBtn: '+ додати години',
-      emptyReason: '—'
+      emptyReason: '—',
+      requestChange: 'запросити зміну',
+      modificationHint:
+        'Редагування затвердженого запиту надсилає зміну на затвердження адміністратору.'
     }
   }
-};
+}

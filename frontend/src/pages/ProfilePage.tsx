@@ -11,6 +11,7 @@ import { describeActiveLeave } from '../utils/activeLeave'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
+import { useWeekdayLabels } from '../hooks/useWeekdayLabels'
 import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useTheme } from '../hooks/useTheme'
 
@@ -45,6 +46,7 @@ const ProfilePage: React.FC = () => {
   const { currentUser, isOwner } = useAuth()
   const { language } = useLanguage()
   const t = translations[language].profilePage
+  const weekdayLabels = useWeekdayLabels()
   // The owner's own profile is a stripped-down view: no department/admin/status
   // banner details and no working-hours/logged-hours tables (none apply to them).
   const isOwnerPersonal = isMyProfile && isOwner
@@ -246,11 +248,7 @@ const ProfilePage: React.FC = () => {
                   <div className="shifts-stack" key={ci}>
                     {column.map((day, di) => {
                       // Map the hardcoded English day to our translation
-                      const translatedDays: Record<string, string> = {
-                        Monday: t.monday, Tuesday: t.tuesday, Wednesday: t.wednesday,
-                        Thursday: t.thursday, Friday: t.friday, Saturday: t.saturday, Sunday: t.sunday
-                      };
-                      const displayDay = translatedDays[day.label] || day.label;
+                      const displayDay = weekdayLabels[day.label] || day.label
 
                       return (
                         <React.Fragment key={day.label}>
@@ -261,8 +259,8 @@ const ProfilePage: React.FC = () => {
                             <div className="shift-pill-row" key={si}>
                               <span className="shift-index">{si + 1})</span>
                               <div className="time-range-display">
-                                <span>{shift.start}</span> <span className="muted-separator">—</span>{' '}
-                                <span>{shift.end}</span>
+                                <span>{shift.start}</span>{' '}
+                                <span className="muted-separator">—</span> <span>{shift.end}</span>
                               </div>
                             </div>
                           ))}

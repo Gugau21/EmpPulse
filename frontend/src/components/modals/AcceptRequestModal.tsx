@@ -14,42 +14,6 @@ interface Props {
 const AcceptRequestModal: React.FC<Props> = ({ closeModal, selectedRequest, openModal }) => {
   const { language } = useLanguage()
   const t = translations[language].modals
-
-  // `dateRange` is the display-formatted "dd.mm.yyyy - dd.mm.yyyy"; split it back
-  // into the From/Till the summary shows.
-  const [from, till] = selectedRequest?.dateRange?.split(' - ') ?? []
-
-  return (
-    <div className="modal-form">
-      <h2>{selectedRequest?.type ?? 'Vacation'} {t.leaveSuffix}</h2>
-      <div className="request-summary-box">
-        <h3>{selectedRequest?.employeeName}</h3>
-        <p>{t.from} {from}</p>
-        <p>{t.till} {till}</p>
-        <p>{t.payment} {selectedRequest?.paid ? t.paid : t.unpaid}</p>
-        <label>
-          {t.reason}<div className="reason-box">{selectedRequest?.reason ?? ''}</div>
-        </label>
-      </div>
-      <div className="modal-actions">
-        <button className="primary-btn full-width" onClick={closeModal}>
-          {t.acceptRequest}
-        </button>
-        <button className="primary-btn danger full-width" onClick={closeModal}>
-          {t.rejectRequest}
-        </button>
-      </div>
-      <button
-        className="link-btn"
-        // Reopen this accept/reject modal as the back target so the edit form
-        // can return here.
-        onClick={() =>
-          openModal('EDIT_LEAVE_FORM', undefined, selectedRequest ?? undefined, 'ACCEPT_REQUEST')
-        }
-      >
-        {t.editRequest}
-      </button>
-    </div>
   const respond = useRespondToLeaveRequest()
 
   // Send the admin's approve/reject decision, then close on success. `request` is
@@ -71,11 +35,16 @@ const AcceptRequestModal: React.FC<Props> = ({ closeModal, selectedRequest, open
           <>
             <div className="request-summary-box">
               <h3>{request.employeeName}</h3>
-              <p>From: {from}</p>
-              <p>Till: {till}</p>
-              <p>{request.paid ? 'Paid' : 'Unpaid'}</p>
+              <p>
+                {t.from} {from}
+              </p>
+              <p>
+                {t.till} {till}
+              </p>
+              <p>{request.paid ? t.paid : t.unpaid}</p>
               <label>
-                Reason<div className="reason-box">{request.reason ?? ''}</div>
+                {t.reason}
+                <div className="reason-box">{request.reason ?? ''}</div>
               </label>
             </div>
             {respond.error && <p className="form-error">{respond.error.message}</p>}
@@ -85,14 +54,14 @@ const AcceptRequestModal: React.FC<Props> = ({ closeModal, selectedRequest, open
                 onClick={() => handleDecision(request, 'approved')}
                 disabled={respond.isPending}
               >
-                accept request
+                {t.acceptRequest}
               </button>
               <button
                 className="primary-btn danger full-width"
                 onClick={() => handleDecision(request, 'rejected')}
                 disabled={respond.isPending}
               >
-                reject request
+                {t.rejectRequest}
               </button>
             </div>
             <button
@@ -108,7 +77,7 @@ const AcceptRequestModal: React.FC<Props> = ({ closeModal, selectedRequest, open
                 )
               }
             >
-              edit request
+              {t.editRequest}
             </button>
           </>
         )

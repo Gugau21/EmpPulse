@@ -79,7 +79,8 @@ export const MultiDepartmentSelect: React.FC<MultiDepartmentSelectProps> = ({
   const { language } = useLanguage()
   const t = translations[language].modals
 
-  const deptName = (id: number) => departments.find(d => d.id === id)?.name ?? `${t.deptFallback}${id}`
+  const deptName = (id: number) =>
+    departments.find(d => d.id === id)?.name ?? `${t.deptFallback}${id}`
   const available = departments.filter(d => !value.includes(d.id))
 
   return (
@@ -158,7 +159,12 @@ export const IdentityFields: React.FC<IdentityFieldsProps> = ({
       </label>
       <label>
         {t.surname}
-        <input type="text" value={surname} onChange={e => onSurname(e.target.value)} maxLength={50} />
+        <input
+          type="text"
+          value={surname}
+          onChange={e => onSurname(e.target.value)}
+          maxLength={50}
+        />
       </label>
       {onEmail && (
         <label>
@@ -235,7 +241,11 @@ export const RoleSection: React.FC<RoleSectionProps> = ({
   return (
     <>
       {showEmployeeToggle && (
-        <RoleCheckbox label={t.roleEmployee} checked={employeeChecked} onToggle={onToggleEmployee} />
+        <RoleCheckbox
+          label={t.roleEmployee}
+          checked={employeeChecked}
+          onToggle={onToggleEmployee}
+        />
       )}
       {employeeChecked && (
         <>

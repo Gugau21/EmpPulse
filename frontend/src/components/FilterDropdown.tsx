@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react'
-import { useOutsideClick } from '../hooks/useOutsideClick'
+import React from 'react'
+import DropdownShell from './DropdownShell'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
 
@@ -22,47 +22,35 @@ interface FilterDropdownProps {
   label?: string
 }
 
-const FilterDropdown: React.FC<FilterDropdownProps> = ({
-  options,
-  selected,
-  onChange,
-  label
-}) => {
-  const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
-  
+const FilterDropdown: React.FC<FilterDropdownProps> = ({ options, selected, onChange, label }) => {
   const { language } = useLanguage()
   const t = translations[language].dropdowns
-  
-  const displayLabel = label || t.filterBy
-
-  useOutsideClick(ref, open, () => setOpen(false))
 
   const toggleOption = (value: string) =>
     onChange(selected.includes(value) ? selected.filter(v => v !== value) : [...selected, value])
 
   return (
-    <div className="filter-dropdown" ref={ref}>
-      <button type="button" className="filter-toggle" onClick={() => setOpen(o => !o)}>
-        {displayLabel}
-        {selected.length ? ` (${selected.length})` : ''}
-      </button>
-
-      {open && (
-        <div className="filter-menu">
-          {options.map(opt => (
-            <label key={opt.value} className="filter-option">
-              <input
-                type="checkbox"
-                checked={selected.includes(opt.value)}
-                onChange={() => toggleOption(opt.value)}
-              />
-              <span>{opt.label}</span>
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
+    <DropdownShell
+      caption={
+        <>
+          {label || t.filterBy}
+          {selected.length ? ` (${selected.length})` : ''}
+        </>
+      }
+    >
+      {() =>
+        options.map(opt => (
+          <label key={opt.value} className="filter-option">
+            <input
+              type="checkbox"
+              checked={selected.includes(opt.value)}
+              onChange={() => toggleOption(opt.value)}
+            />
+            <span>{opt.label}</span>
+          </label>
+        ))
+      }
+    </DropdownShell>
   )
 }
 

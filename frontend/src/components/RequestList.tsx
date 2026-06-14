@@ -17,27 +17,19 @@ interface Props {
   renderRow: (request: LeaveRequest) => React.ReactNode
 }
 
+// The timeframe boxes in display order. The incoming requests are already filtered
+// and sorted, so each box just shows its slice in that same order. `titleKey` points
+// at the requestList translation entry so the heading follows the active language.
+const SECTIONS: { key: Timeframe; titleKey: 'currentLeaves' | 'future' | 'past' }[] = [
+  { key: 'current', titleKey: 'currentLeaves' },
+  { key: 'future', titleKey: 'future' },
+  { key: 'past', titleKey: 'past' }
+]
+
 const RequestList: React.FC<Props> = ({ state, requests, renderRow }) => {
   const { language } = useLanguage()
   const t = translations[language].requestList
 
-  return (
-    <>
-      {state.isLoading && <p className="muted">{t.loading}</p>}
-      {state.isError && (
-        <p className="form-error">{state.error?.message ?? t.failedLoad}</p>
-      )}
-
-      {requests.length > 0 && <div className="card-box list-box">{requests.map(renderRow)}</div>}
-// The timeframe boxes in display order. The incoming requests are already filtered
-// and sorted, so each box just shows its slice in that same order.
-const SECTIONS: { key: Timeframe; title: string }[] = [
-  { key: 'current', title: 'Current leaves' },
-  { key: 'future', title: 'Future' },
-  { key: 'past', title: 'Past' }
-]
-
-const RequestList: React.FC<Props> = ({ state, requests, renderRow }) => {
   // Past leaves are historical, so that box opens collapsed; the live ones expand.
   const [collapsed, setCollapsed] = useState<Partial<Record<Timeframe, boolean>>>({ past: true })
   const toggle = (key: Timeframe) => setCollapsed(prev => ({ ...prev, [key]: !prev[key] }))
@@ -46,20 +38,18 @@ const RequestList: React.FC<Props> = ({ state, requests, renderRow }) => {
 
   return (
     <>
-      {state.isLoading && <p className="muted">Loading requests…</p>}
-      {state.isError && (
-        <p className="form-error">{state.error?.message ?? 'Failed to load requests.'}</p>
-      )}
+      {state.isLoading && <p className="muted">{t.loading}</p>}
+      {state.isError && <p className="form-error">{state.error?.message ?? t.failedLoad}</p>}
 
       {requests.length > 0 &&
-        SECTIONS.map(({ key, title }) => {
+        SECTIONS.map(({ key, titleKey }) => {
           const rows = buckets[key]
           const expanded = !collapsed[key]
           return (
             <div className="accordion-section" key={key}>
               {/* department-title is the shared accordion-title style (chevron + click) */}
               <h3 className="department-title" onClick={() => toggle(key)}>
-                {title} ({rows.length})
+                {t[titleKey]} ({rows.length})
                 <img
                   src={blackTriangleIcon}
                   alt=""
@@ -72,7 +62,7 @@ const RequestList: React.FC<Props> = ({ state, requests, renderRow }) => {
                   {rows.length ? (
                     rows.map(renderRow)
                   ) : (
-                    <div className="muted role-empty">No leaves here</div>
+                    <div className="muted role-empty">{t.noLeavesHere}</div>
                   )}
                 </div>
               )}

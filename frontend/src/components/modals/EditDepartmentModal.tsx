@@ -3,6 +3,7 @@ import type { Department } from '../../types'
 import { useUpdateDepartment } from '../../hooks/useDepartmentMutations'
 import { useLanguage } from '../../hooks/useLanguage'
 import { translations } from '../../utils/translations'
+import DepartmentNameField from './DepartmentNameField'
 
 interface Props {
   closeModal: () => void
@@ -39,16 +40,7 @@ const EditDepartmentModal: React.FC<Props> = ({ closeModal, selectedDepartment }
   return (
     <div className="modal-form">
       <h2>{t.editDepartment}</h2>
-      <label>
-        {t.nameOfDepartment}
-        <input
-          type="text"
-          placeholder={t.deptNamePlaceholder}
-          value={deptName}
-          onChange={e => setDeptName(e.target.value)}
-          maxLength={100}
-        />
-      </label>
+      <DepartmentNameField value={deptName} onChange={setDeptName} />
 
       {(validationError || updateDept.error) && (
         <p className="form-error">{validationError ?? updateDept.error?.message}</p>

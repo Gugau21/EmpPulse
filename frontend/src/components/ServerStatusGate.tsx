@@ -18,9 +18,7 @@ const ServerStatusGate: React.FC<{ children: React.ReactNode }> = ({ children })
         <div className="auth-card">
           <h1 className="auth-brand">EmpPulse</h1>
           <h2 className="auth-title">{t.serviceUnavailable}</h2>
-          <p className="muted">
-            {t.unreachable}
-          </p>
+          <p className="muted">{t.unreachable}</p>
         </div>
       </div>
     )

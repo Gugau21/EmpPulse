@@ -8,6 +8,7 @@ import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
 import { useTheme } from '../hooks/useTheme'
+import PageHeader from '../components/PageHeader'
 
 const DepartmentsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
@@ -32,20 +33,13 @@ const DepartmentsScreen: React.FC = () => {
 
   return (
     <div className="screen-container">
-      <header className="page-header">
-        <h2>{t.title}</h2>
-        <div className="header-actions">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              maxLength={100}
-            />
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={t.title}
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder={t.searchPlaceholder}
+        searchMaxLength={100}
+      />
 
       {(loading || filteredDepartments.length > 0) && (
         <div className="card-box list-box">

@@ -85,13 +85,13 @@ const Sidebar: React.FC = () => {
             </div>
           </div>
           <div className="lang-toggles">
-            <span 
+            <span
               className={`lang-icon ${language === 'uk' ? 'is-dimmed' : ''}`}
               onClick={() => changeLanguage('en')}
             >
               <img src={UKflag} alt="English" width={27} height={27} />
             </span>
-            <span 
+            <span
               className={`lang-icon ${language === 'en' ? 'is-dimmed' : ''}`}
               onClick={() => changeLanguage('uk')}
             >

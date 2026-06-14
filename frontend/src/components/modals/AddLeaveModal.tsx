@@ -16,21 +16,6 @@ interface Props {
   closeModal: () => void
 }
 
-// The UI shows display-cased leave types; the API takes the lower-cased wire enum.
-const LEAVE_TYPE_TO_API: Record<LeaveRequest['type'], LeaveRequestCreatePayload['type']> = {
-  Vacation: 'vacation',
-  Sick: 'sick',
-  Personal: 'personal'
-}
-
-// Today as a local ISO `yyyy-mm-dd`, used as the `min` for the date pickers when
-// the caller may not back-date (employees filing their own request).
-function todayISO(): string {
-  const now = new Date()
-  const off = now.getTimezoneOffset()
-  return new Date(now.getTime() - off * 60_000).toISOString().slice(0, 10)
-}
-
 const REASON_MAX = 300
 
 // Type-ahead picker the admin/owner uses to choose whose request they're filing.
@@ -40,7 +25,7 @@ const REASON_MAX = 300
 interface EmployeePickerProps {
   selectedId: number | null
   onSelect: (id: number | null) => void
-  t: any
+  t: typeof translations.en.modals
 }
 
 const EmployeePicker: React.FC<EmployeePickerProps> = ({ selectedId, onSelect, t }) => {
@@ -210,14 +195,18 @@ const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
       </label>
 
       <label>
-        {t.reason}{leaveType === 'Personal' ? ' *' : ''}
+        {t.reason}
+        {leaveType === 'Personal' ? ' *' : ''}
         <textarea
           rows={2}
-          maxLength={300}
+          maxLength={REASON_MAX}
           value={reason}
           onChange={e => setReason(e.target.value)}
         />
-        <span className="char-counter">{300 - reason.length}{t.charsLeft}</span>
+        <span className="char-counter">
+          {REASON_MAX - reason.length}
+          {t.charsLeft}
+        </span>
       </label>
 
       {(validationError || createLeave.error) && (

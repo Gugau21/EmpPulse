@@ -7,10 +7,7 @@ import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useDeleteDepartment } from '../hooks/useDepartmentMutations'
 import { useDeleteEmployee } from '../hooks/useEmployeeMutations'
-import {
-  useCancelLeaveRequest,
-  useDeleteLeaveRequest
-} from '../hooks/useLeaveRequestMutations'
+import { useCancelLeaveRequest, useDeleteLeaveRequest } from '../hooks/useLeaveRequestMutations'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
 
@@ -143,9 +140,7 @@ const AppLayout: React.FC = () => {
               },
               onError: () => {
                 setConfirmError(
-                  dept.admins.length > 0
-                    ? t.errAdminsAttached
-                    : t.errEmployeesAttached
+                  dept.admins.length > 0 ? t.errAdminsAttached : t.errEmployeesAttached
                 )
               }
             })

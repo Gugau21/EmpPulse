@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useCreateDepartment } from '../../hooks/useDepartmentMutations'
 import { useLanguage } from '../../hooks/useLanguage'
 import { translations } from '../../utils/translations'
+import DepartmentNameField from './DepartmentNameField'
 
 interface Props {
   closeModal: () => void
@@ -28,16 +29,7 @@ const AddDepartmentModal: React.FC<Props> = ({ closeModal }) => {
   return (
     <div className="modal-form">
       <h2>{t.addDepartment}</h2>
-      <label>
-        {t.nameOfDepartment}
-        <input
-          type="text"
-          placeholder={t.deptNamePlaceholder}
-          value={deptName}
-          onChange={e => setDeptName(e.target.value)}
-          maxLength={100}
-        />
-      </label>
+      <DepartmentNameField value={deptName} onChange={setDeptName} />
       {(validationError || createDept.error) && (
         <p className="form-error">{validationError ?? createDept.error?.message}</p>
       )}

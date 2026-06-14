@@ -7,27 +7,13 @@ import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
 import { useLeaveRequests } from '../hooks/useLeaveRequests'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
+import { useRequestLabels } from '../hooks/useRequestLabels'
 
 const RequestManagerPage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const { language } = useLanguage()
   const t = translations[language].requestManagerPage
-  
-  // Grab our filter dictionary so we can reuse the type/status translations
-  const filtersT = translations[language].requestFilters
-
-  const typeMap: Record<string, string> = {
-    Vacation: filtersT.typeVacation,
-    Sick: filtersT.typeSick,
-    Personal: filtersT.typePersonal
-  }
-
-  const statusMap: Record<string, string> = {
-    PENDING: filtersT.statusPending,
-    APPROVED: filtersT.statusApproved,
-    REJECTED: filtersT.statusRejected,
-    CANCELLED: filtersT.statusCancelled
-  }
+  const { typeMap, statusMap } = useRequestLabels()
 
   // The server already scopes this to what the caller manages: an admin gets
   // their overseen departments' requests (plus their own); the owner gets all.

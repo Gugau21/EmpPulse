@@ -6,9 +6,9 @@ import RequestList from '../components/RequestList'
 import { useRequestStatusFilter } from '../hooks/useRequestStatusFilter'
 import { useLeaveRequests } from '../hooks/useLeaveRequests'
 import { useAuth } from '../context/useAuth'
-import trashIcon from '../assets/trash-icon.png.webp'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
+import { useRequestLabels } from '../hooks/useRequestLabels'
 import trashIcon from '../assets/bin_icon_dark.png'
 import trashIconLight from '../assets/bin_icon_light.png'
 import crossIcon from '../assets/cross_icon_dark.png'
@@ -20,22 +20,7 @@ const MyRequestsScreen: React.FC = () => {
   const { currentUser } = useAuth()
   const { language } = useLanguage()
   const t = translations[language].myRequestsPage
-  
-  // Grab our filter dictionary so we can reuse the type/status translations
-  const filtersT = translations[language].requestFilters
-
-  const typeMap: Record<string, string> = {
-    Vacation: filtersT.typeVacation,
-    Sick: filtersT.typeSick,
-    Personal: filtersT.typePersonal
-  }
-
-  const statusMap: Record<string, string> = {
-    PENDING: filtersT.statusPending,
-    APPROVED: filtersT.statusApproved,
-    REJECTED: filtersT.statusRejected,
-    CANCELLED: filtersT.statusCancelled
-  }
+  const { typeMap, statusMap } = useRequestLabels()
 
   const myRequestsQuery = useLeaveRequests()
   // The shared query may also carry requests this user oversees (when they are
@@ -63,45 +48,6 @@ const MyRequestsScreen: React.FC = () => {
       <RequestList
         state={myRequestsQuery}
         requests={visibleRequests}
-        renderRow={req => (
-          <div
-            key={req.id}
-            className={`employee-row hover-slide-container clickable ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}
-            onClick={() =>
-              openModal(
-                // Cancelled/rejected requests are final, so they open read-only;
-                // anything still actionable opens the editable form.
-                req.status === 'CANCELLED' || req.status === 'REJECTED'
-                  ? 'VIEW_LEAVE_FORM'
-                  : 'EDIT_LEAVE_FORM',
-                undefined,
-                req
-              )
-            }
-          >
-            {/* Map the type but leave the CSS class as English */}
-            <span className={`badge badge-${req.type.toLowerCase()}`}>
-              {typeMap[req.type] || req.type}
-            </span>
-            <span className="date-span">{req.dateRange}</span>
-            <div className="emp-meta">
-              {/* Map the status but leave the CSS class as English */}
-              <span className={`status-label status-${req.status.toLowerCase()}`}>
-                {statusMap[req.status] || req.status}
-              </span>
-            </div>
-
-            <button
-              className="slide-bin-btn"
-              onClick={e => {
-                e.stopPropagation() // Don't also open the row's edit modal
-                openModal(
-                  req.status === 'APPROVED' ? 'CANCEL_LEAVE' : 'DELETE_LEAVE',
-                  undefined,
-                  req
-                )
-              }}
-              title={req.status === 'APPROVED' ? t.cancelApproved : t.deleteRecord}
         renderRow={req => {
           // Cancelled/rejected requests are final: they open read-only and carry no
           // row action, so the slide-out bin (and its hover reveal) is dropped.
@@ -114,11 +60,14 @@ const MyRequestsScreen: React.FC = () => {
                 openModal(isFinal ? 'VIEW_LEAVE_FORM' : 'EDIT_LEAVE_FORM', undefined, req)
               }
             >
-              <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
+              {/* Map the type/status for display but leave the CSS class as English */}
+              <span className={`badge badge-${req.type.toLowerCase()}`}>
+                {typeMap[req.type] || req.type}
+              </span>
               <span className="date-span">{req.dateRange}</span>
               <div className="emp-meta">
                 <span className={`status-label status-${req.status.toLowerCase()}`}>
-                  {req.status}
+                  {statusMap[req.status] || req.status}
                 </span>
               </div>
 
@@ -133,7 +82,7 @@ const MyRequestsScreen: React.FC = () => {
                       req
                     )
                   }}
-                  title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
+                  title={req.status === 'APPROVED' ? t.cancelApproved : t.deleteRecord}
                 >
                   {req.status === 'APPROVED' ? (
                     <img

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useLanguage } from '../../hooks/useLanguage'
 import { translations } from '../../utils/translations'
+import { useWeekdayLabels } from '../../hooks/useWeekdayLabels'
 
 interface Props {
   closeModal: () => void
@@ -17,12 +18,8 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
   const { language } = useLanguage()
   const t = translations[language].modals
 
-  // A helper map so we can display the day in the active language 
-  // without breaking the hardcoded object keys.
-  const dayLabels: Record<string, string> = {
-    Monday: t.monday, Tuesday: t.tuesday, Wednesday: t.wednesday, 
-    Thursday: t.thursday, Friday: t.friday, Saturday: t.saturday, Sunday: t.sunday
-  }
+  // Display the day in the active language without breaking the hardcoded keys.
+  const dayLabels = useWeekdayLabels()
 
   const [schedule, setSchedule] = useState<Schedule>({
     Monday: [{ start: '09:00', end: '17:00' }],
@@ -75,7 +72,9 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
       >
         {DAYS.map(day => (
           <div key={day} style={{ marginBottom: '16px' }}>
-            <h4 style={{ fontSize: '15px', fontWeight: 500, marginBottom: '8px' }}>{dayLabels[day]}</h4>
+            <h4 style={{ fontSize: '15px', fontWeight: 500, marginBottom: '8px' }}>
+              {dayLabels[day]}
+            </h4>
 
             {schedule[day].map((shift, index) => (
               <div
