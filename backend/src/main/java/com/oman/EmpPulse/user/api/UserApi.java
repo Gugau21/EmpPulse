@@ -31,6 +31,10 @@ public interface UserApi {
    * <p>Called during bootstrap to seed the application with an initial owner. If an owner with this
    * email already exists, the method returns without modification.
    *
+   * <p>Must run after {@link
+   * com.oman.EmpPulse.department.api.DepartmentApi#ensureDefaultDepartmentExists} so that the owner
+   * is assigned to the default department on creation.
+   *
    * @param email the owner's email address
    * @param rawPassword the owner's password in plaintext.
    */

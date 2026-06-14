@@ -2,14 +2,17 @@ import React, { useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import type { Employee } from '../types'
 import type { OutletContext } from '../components/AppLayout'
-import trashIcon from '../assets/trash-icon.png.webp'
+import trashIcon from '../assets/bin_icon_dark.png'
+import trashIconLight from '../assets/bin_icon_light.png'
 import blackTriangleIcon from '../assets/black_triangle.png'
+import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useEmployeesList } from '../hooks/useEmployeesList'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useAuth } from '../context/useAuth'
 import FilterDropdown from '../components/FilterDropdown'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
+import { useTheme } from '../hooks/useTheme'
 
 // Employees grouped by their department NAME (admins are sourced separately from
 // the departments list). Employees with no department are not shown — this page
@@ -33,6 +36,7 @@ const EmployeesPage: React.FC = () => {
   const { isOwner } = useAuth()
   const { language } = useLanguage()
   const t = translations[language].employeesPage
+  const { theme } = useTheme()
   const {
     data: employees = [],
     isLoading: employeesLoading,
@@ -77,8 +81,10 @@ const EmployeesPage: React.FC = () => {
   // A single person row. `deleteEmployee` is passed only for employee rows owned
   // by the owner, who may remove them from the department; admin rows are never
   // deletable here (admin assignment is managed via the department's admins modal).
+  // `status`/`untilDate` come from the employee's active leave (absent = working,
+  // and admins are listed without a status).
   const renderPersonRow = (
-    person: { id: string; name: string; surname: string },
+    person: { id: string; name: string; surname: string } & Pick<Employee, 'status' | 'untilDate'>,
     keyPrefix: string,
     deleteEmployee?: Employee
   ) => {
@@ -91,6 +97,12 @@ const EmployeesPage: React.FC = () => {
       >
         <span className="emp-name">{[person.name, person.surname].filter(Boolean).join(' ')}</span>
         <div className="emp-meta">
+          {/* On-leave employees show a type badge and the date they return; a
+              working employee (no active leave) shows nothing. */}
+          {person.status && (
+            <span className={`badge badge-${person.status.toLowerCase()}`}>{person.status}</span>
+          )}
+          {person.untilDate && <span className="until-text">until {person.untilDate}</span>}
           {/* Removing an employee from a department is owner-only. */}
           {deletable && (
             <button
@@ -101,7 +113,12 @@ const EmployeesPage: React.FC = () => {
               }}
               title={t.removeFromDept}
             >
-              <img src={trashIcon} alt="Delete" width={30} height={30} />
+              <img
+                src={theme === 'dark' ? trashIconLight : trashIcon}
+                alt="Delete"
+                width={30}
+                height={30}
+              />
             </button>
           )}
         </div>
@@ -147,7 +164,7 @@ const EmployeesPage: React.FC = () => {
             <h3 className="department-title" onClick={() => toggle(dept.id)}>
               {dept.name}
               <img
-                src={blackTriangleIcon}
+                src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
                 alt=""
                 className={`chevron ${expanded ? 'expanded' : ''}`}
               />

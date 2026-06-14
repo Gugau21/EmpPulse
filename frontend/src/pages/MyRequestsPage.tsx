@@ -9,6 +9,11 @@ import { useAuth } from '../context/useAuth'
 import trashIcon from '../assets/trash-icon.png.webp'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
+import trashIcon from '../assets/bin_icon_dark.png'
+import trashIconLight from '../assets/bin_icon_light.png'
+import crossIcon from '../assets/cross_icon_dark.png'
+import crossIconLight from '../assets/cross_icon_light.png'
+import { useTheme } from '../hooks/useTheme'
 
 const MyRequestsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
@@ -41,6 +46,7 @@ const MyRequestsScreen: React.FC = () => {
       ? (myRequestsQuery.data ?? []).filter(req => req.employeeId === myEmployeeId)
       : []
   const { visibleRequests, filterNode } = useRequestStatusFilter(myRequests)
+  const { theme } = useTheme()
 
   return (
     <AccordionScreen
@@ -96,15 +102,59 @@ const MyRequestsScreen: React.FC = () => {
                 )
               }}
               title={req.status === 'APPROVED' ? t.cancelApproved : t.deleteRecord}
+        renderRow={req => {
+          // Cancelled/rejected requests are final: they open read-only and carry no
+          // row action, so the slide-out bin (and its hover reveal) is dropped.
+          const isFinal = req.status === 'CANCELLED' || req.status === 'REJECTED'
+          return (
+            <div
+              key={req.id}
+              className={`employee-row clickable ${isFinal ? '' : 'hover-slide-container'} ${req.status === 'PENDING' ? 'dashed-active-row' : ''}`}
+              onClick={() =>
+                openModal(isFinal ? 'VIEW_LEAVE_FORM' : 'EDIT_LEAVE_FORM', undefined, req)
+              }
             >
-              {req.status === 'APPROVED' ? (
-                '✕'
-              ) : (
-                <img src={trashIcon} alt="Delete" width={30} height={30} />
+              <span className={`badge badge-${req.type.toLowerCase()}`}>{req.type}</span>
+              <span className="date-span">{req.dateRange}</span>
+              <div className="emp-meta">
+                <span className={`status-label status-${req.status.toLowerCase()}`}>
+                  {req.status}
+                </span>
+              </div>
+
+              {!isFinal && (
+                <button
+                  className="slide-bin-btn"
+                  onClick={e => {
+                    e.stopPropagation() // Don't also open the row's edit modal
+                    openModal(
+                      req.status === 'APPROVED' ? 'CANCEL_LEAVE' : 'DELETE_LEAVE',
+                      undefined,
+                      req
+                    )
+                  }}
+                  title={req.status === 'APPROVED' ? 'Cancel Approved Leave' : 'Delete Record'}
+                >
+                  {req.status === 'APPROVED' ? (
+                    <img
+                      src={theme === 'dark' ? crossIconLight : crossIcon}
+                      alt="Cancel"
+                      width={30}
+                      height={30}
+                    />
+                  ) : (
+                    <img
+                      src={theme === 'dark' ? trashIconLight : trashIcon}
+                      alt="Delete"
+                      width={30}
+                      height={30}
+                    />
+                  )}
+                </button>
               )}
-            </button>
-          </div>
-        )}
+            </div>
+          )
+        }}
       />
     </AccordionScreen>
   )

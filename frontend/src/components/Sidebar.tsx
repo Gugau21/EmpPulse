@@ -7,9 +7,10 @@ import UkranianFlag from '../assets/ukraine_icon.png'
 import profileIcon from '../assets/profile_icon.png'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
+import moonIcon from '../assets/moon_icon.png'
+import sunIcon from '../assets/sun_icon.png'
+import { useTheme } from '../hooks/useTheme'
 
-// NavLink className callback: keep the base `nav-item` class and add `active`
-// when the link matches the current URL (router-driven, replacing currentScreen).
 const navItemClass = ({ isActive }: { isActive: boolean }) => `nav-item${isActive ? ' active' : ''}`
 
 const Sidebar: React.FC = () => {
@@ -18,12 +19,15 @@ const Sidebar: React.FC = () => {
   const { language, changeLanguage } = useLanguage()
   const t = translations[language].sidebar
 
+  const { theme, toggleTheme } = useTheme()
+
   const showEmployees = isOwner || isAdmin
   const showRequestMgr = isOwner || isAdmin
   const showDepartments = isOwner || isAdmin
   const showMyRequests = isEmployee
   const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : ''
   const displayRole = isOwner ? t.owner : isAdmin ? t.administrator : t.employee
+  const isLightMode = theme === 'light'
 
   return (
     <aside className="sidebar">
@@ -67,18 +71,17 @@ const Sidebar: React.FC = () => {
         </div>
 
         <div className="sidebar-controls">
-          <div className="theme-toggle">
+          {/* Here is the perfectly structured toggle! */}
+          <div className={`theme-toggle ${isLightMode ? 'light' : ''}`} onClick={toggleTheme}>
             <div className="toggle-thumb">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-              </svg>
+              {!isLightMode ? (
+                // Solid Moon Icon
+                <img src={sunIcon} alt="Light mode" width={22} height={22} />
+              ) : (
+                // Solid Center Sun Icon with thick rays
+
+                <img src={moonIcon} alt="Dark mode" width={25} height={25} />
+              )}
             </div>
           </div>
           <div className="lang-toggles">

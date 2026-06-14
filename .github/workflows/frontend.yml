@@ -30,6 +30,11 @@ jobs:
           VALIDATE_TYPESCRIPT_STANDARD: false
           VALIDATE_TYPESCRIPT_ESLINT: true
           VALIDATE_PRETTIER: true
+          # super-linter bundles an old stylelint whose `string-quotes` rule
+          # (removed upstream in stylelint 16) demands double quotes and so
+          # conflicts with our Prettier `singleQuote`. Prettier owns CSS style;
+          # CSS is still linted locally via `npm run lint:css` (stylelint 17).
+          VALIDATE_CSS: false
 
   build_frontend:
 

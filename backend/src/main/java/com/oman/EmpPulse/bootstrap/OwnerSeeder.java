@@ -3,9 +3,11 @@ package com.oman.EmpPulse.bootstrap;
 import com.oman.EmpPulse.user.api.UserApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(2)
 public class OwnerSeeder implements CommandLineRunner {
 
   private final UserApi userApi;

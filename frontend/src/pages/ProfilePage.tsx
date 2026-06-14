@@ -7,9 +7,12 @@ import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { landingPath } from '../utils/guards'
+import { describeActiveLeave } from '../utils/activeLeave'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
+import whiteTriangleIcon from '../assets/white_triangle.png'
+import { useTheme } from '../hooks/useTheme'
 
 // A single row in the "Logged hours" table. The clickable/edit wiring is
 // identical across rows, so it lives here to avoid duplicating the wrapper.
@@ -34,6 +37,7 @@ const LoggedHoursRow: React.FC<LoggedHoursRowProps> = ({ isMyProfile, onEdit, ch
 const ProfilePage: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
+  const { theme } = useTheme()
   // A :userId param means we're viewing someone else's profile (employee mode);
   // no param means the signed-in user's own profile.
   const { userId } = useParams()
@@ -80,15 +84,17 @@ const ProfilePage: React.FC = () => {
   const targetUser = isMyProfile ? currentUser : employeeUser
   const employeeProfile = targetUser?.employeeProfile ?? null
   const adminDepartmentIds = targetUser?.adminProfile?.departmentIds ?? []
+  // Current leave from the profile's active leave (null = working, no badge).
+  const { status, untilDate } = describeActiveLeave(employeeProfile?.activeLeave)
 
   // Resolve admin department IDs to real names. The list is gated to owners/admins
   // and an admin only receives their own departments, so a name may be missing
   // (e.g. an admin viewing another admin) — fall back to the ID in that case.
   const { data: departments } = useDepartmentsList()
   const departmentNamesById = new Map((departments ?? []).map(d => [d.id, d.name]))
-  const adminDepartmentNames = adminDepartmentIds.map(
-    id => departmentNamesById.get(id) ?? `Department ${id}`
-  )
+  const adminDepartmentNames = adminDepartmentIds
+    .map(id => departmentNamesById.get(id) ?? `Department ${id}`)
+    .sort((a, b) => a.localeCompare(b))
 
   // Viewing your own id in employee mode (e.g. an admin who appears in the
   // employees list and clicks themselves) is really the personal profile —
@@ -106,7 +112,10 @@ const ProfilePage: React.FC = () => {
     return (
       <div className="screen-container">
         <button className="btn-pill-secondary" onClick={onBack}>
-          <img src={blackTriangleIcon} alt="Back to employees list" />
+          <img
+            src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
+            alt="Back to employees list"
+          />
         </button>
         {employeeId == null ? (
           <p className="form-error">{t.doesNotExist}</p>
@@ -122,7 +131,10 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="screen-container">
       <button className="btn-pill-secondary" onClick={onBack}>
-        <img src={blackTriangleIcon} alt="Back to employees list" />
+        <img
+          src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
+          alt="Back to employees list"
+        />
       </button>
       <header className="page-header profile-header">
         <h2>{isMyProfile ? t.myProfile : t.userProfile}</h2>
@@ -157,20 +169,23 @@ const ProfilePage: React.FC = () => {
               )}
             </div>
 
-            {/*
-              HIDDEN FOR NOW: current leave status. Neither GET /api/me nor
-              GET /api/users/{id} returns a status field, so there is nothing
-              real to render. Restore once a leave/status API is wired:
-
-              {!isOwnerPersonal && (
-                <div className="banner-side-info">
-                  <div className="banner-stacked-detail">
-                    <label>Status:</label>
-                    <span>{targetUser?.status}</span>
-                  </div>
+            {/* Current leave status. Only employees have one; a working employee
+                (no active leave) shows "Working" rather than a badge. */}
+            {!isOwnerPersonal && employeeProfile && (
+              <div className="banner-side-info">
+                <div className="banner-stacked-detail">
+                  <label>Status:</label>
+                  {status ? (
+                    <span className="banner-status">
+                      <span className={`badge badge-${status.toLowerCase()}`}>{status}</span>
+                      {untilDate && <span className="until-text">until {untilDate}</span>}
+                    </span>
+                  ) : (
+                    <span>Working</span>
+                  )}
                 </div>
-              )}
-            */}
+              </div>
+            )}
           </div>
 
           <div className="banner-center-action">
@@ -218,7 +233,7 @@ const ProfilePage: React.FC = () => {
           >
             {t.defaultWorkingHours}
             <img
-              src={blackTriangleIcon}
+              src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
               alt="Toggle working hours"
               className={`chevron ${workingHoursExpanded ? 'expanded' : ''}`}
             />
@@ -282,7 +297,7 @@ const ProfilePage: React.FC = () => {
           >
             {t.loggedHours}
             <img
-              src={blackTriangleIcon}
+              src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
               alt="Toggle logged hours"
               className={`chevron ${loggedExpanded ? 'expanded' : ''}`}
             />

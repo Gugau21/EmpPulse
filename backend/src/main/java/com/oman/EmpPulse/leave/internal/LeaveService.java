@@ -1,7 +1,10 @@
 package com.oman.EmpPulse.leave.internal;
 
+import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
+import com.oman.EmpPulse.leave.api.LeaveApi;
 import com.oman.EmpPulse.leave.dto.LeaveCreateRequest;
 import com.oman.EmpPulse.leave.dto.LeaveListResponse;
+import com.oman.EmpPulse.leave.dto.LeaveModificationRequest;
 import com.oman.EmpPulse.leave.dto.LeaveResponse;
 import com.oman.EmpPulse.leave.dto.LeaveResponseRequest;
 import com.oman.EmpPulse.leave.dto.LeaveUpdateRequest;
@@ -9,15 +12,19 @@ import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class LeaveService {
+public class LeaveService implements LeaveApi {
 
   private final LeaveRepository leaveRepository;
   private final EmployeeApi employeeApi;
@@ -27,6 +34,33 @@ public class LeaveService {
     this.leaveRepository = leaveRepository;
     this.employeeApi = employeeApi;
     this.adminApi = adminApi;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Map<Long, ActiveLeaveResponse> findActiveLeavesByEmployeeIds(
+      Collection<Long> employeeIds) {
+    if (employeeIds == null || employeeIds.isEmpty()) {
+      return Map.of();
+    }
+    List<Leave> activeLeaves =
+        leaveRepository.findActiveApprovedByEmployeeIds(employeeIds, LocalDate.now());
+    Map<Long, ActiveLeaveResponse> result = new HashMap<>();
+    activeLeaves.stream()
+        .collect(Collectors.groupingBy(Leave::getEmployeeId))
+        .forEach(
+            (employeeId, leaves) -> {
+              if (leaves.size() > 1) {
+                throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency");
+              }
+              result.put(employeeId, toActiveLeaveResponse(leaves.getFirst()));
+            });
+    return result;
+  }
+
+  private ActiveLeaveResponse toActiveLeaveResponse(Leave leave) {
+    return new ActiveLeaveResponse(leave.getType(), leave.getStartDate(), leave.getEndDate());
   }
 
   /**
@@ -186,9 +220,18 @@ public class LeaveService {
     boolean adminOversees = adminApi.overseesDepartment(callerId, employee.getDepartmentId());
     validateUpdatePermissions(
         ownRequest, adminOversees, isAdmin, leave.getStatus(), req.getAdminComment());
+    if (leaveRepository.existsByModificationId(leave.getId())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Request has a pending modification; resolve it first");
+    }
 
     ResolvedFields fields = resolveFields(req, leave);
-    validateLeaveUpdate(fields, leave.getEmployeeId(), leave.getId());
+    // A modification and the original are linked, so they are both exempt from the overlap rule
+    List<Long> overlapExcludeIds =
+        leave.getModificationId() != null
+            ? List.of(leave.getId(), leave.getModificationId())
+            : List.of(leave.getId());
+    validateLeaveUpdate(fields, leave.getEmployeeId(), overlapExcludeIds);
     applyLeaveUpdate(leave, fields, req.getAdminComment(), adminOversees, callerId);
     return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
   }
@@ -224,16 +267,61 @@ public class LeaveService {
           HttpStatus.CONFLICT, "Only pending leave requests can be approved or rejected");
     }
 
-    // TODO(modification requests): once POST /{id}/modifications exists, approving/rejecting a
-    // request that carries a modificationId must resolve the linked modification (approve
-    // overwrites the original and deletes the mod row; reject unlinks it to a standalone rejected
-    // request).
+    if (leave.getModificationId() != null) {
+      return resolveModification(leave, req, callerId, employee);
+    }
+
     leave.setStatus(req.getStatus());
     leave.setAdminReviewerId(callerId);
     if (req.getAdminComment() != null) {
       leave.setAdminComment(req.getAdminComment());
     }
     return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
+  }
+
+  /**
+   * Resolves a pending modification request.
+   *
+   * <p>Approving overrides the original with the modification's values and self-deletes the
+   * modification.
+   *
+   * <p>Rejecting unlinks the modification, which becomes a standalone rejected request. The
+   * original is left approved on rejection.
+   */
+  private LeaveResponse resolveModification(
+      Leave modification,
+      LeaveResponseRequest req,
+      Long callerId,
+      EmployeeSummaryResponse employee) {
+    if (req.getStatus() == LeaveStatus.approved) {
+      Leave original =
+          leaveRepository
+              .findById(modification.getModificationId())
+              .orElseThrow(
+                  () ->
+                      new ResponseStatusException(
+                          HttpStatus.INTERNAL_SERVER_ERROR, "Data inconsistency"));
+      original.setType(modification.getType());
+      original.setPaid(modification.isPaid());
+      original.setStartDate(modification.getStartDate());
+      original.setEndDate(modification.getEndDate());
+      original.setDescription(modification.getDescription());
+      original.setAdminReviewerId(callerId);
+      if (req.getAdminComment() != null) {
+        original.setAdminComment(req.getAdminComment());
+      }
+      LeaveResponse response = toLeaveResponse(leaveRepository.saveAndFlush(original), employee);
+      leaveRepository.delete(modification);
+      return response;
+    }
+
+    modification.setStatus(LeaveStatus.rejected);
+    modification.setAdminReviewerId(callerId);
+    if (req.getAdminComment() != null) {
+      modification.setAdminComment(req.getAdminComment());
+    }
+    modification.setModificationId(null);
+    return toLeaveResponse(leaveRepository.saveAndFlush(modification), employee);
   }
 
   /**
@@ -259,14 +347,70 @@ public class LeaveService {
           HttpStatus.CONFLICT, "Only approved leave requests can be cancelled");
     }
 
-    // TODO(modification requests): once POST /{id}/modifications exists, cancelling a request that
-    // has a pending modification linked via modificationId should set the modificationId of that
-    // pending
-    // modifcation to null. In short: in this case the pending modification becomes like any normal
-    // pending request
     leave.setStatus(LeaveStatus.cancelled);
+    // A pending modification linked to this request is unlinked and acts as normal pending request.
+    leaveRepository
+        .findByModificationId(leave.getId())
+        .ifPresent(
+            modification -> {
+              modification.setModificationId(null);
+              leaveRepository.save(modification);
+            });
     EmployeeSummaryResponse employee = findEmployeeForLeave(leave);
     return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
+  }
+
+  /**
+   * Creates a modification request for the caller's own approved leave request: a new {@code
+   * pending} leave holding the proposed values and linked to the original.
+   *
+   * <p>Allowed only for the employee the request belongs to and only while the original is {@code
+   * approved}; at most one pending modification may exist per request, and at least one field must
+   * change.
+   *
+   * @param leaveRequestId the original (approved) leave request ID
+   * @param req the proposed changes; fields left null inherit the original's value
+   * @param callerId the user ID of the authenticated caller
+   * @return the created modification request
+   */
+  @Transactional
+  public LeaveResponse createModification(
+      Long leaveRequestId, LeaveModificationRequest req, Long callerId) {
+    Leave original = findLeaveOrThrow(leaveRequestId);
+
+    if (!original.getEmployeeId().equals(callerId)) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "Only the employee the request belongs to can modify it");
+    }
+    if (original.getStatus() != LeaveStatus.approved) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Modifications can only be proposed for approved requests");
+    }
+    if (leaveRepository.existsByModificationId(original.getId())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "A pending modification already exists for this request");
+    }
+
+    ResolvedFields fields = resolveFields(req, original);
+    if (isUnchanged(fields, original)) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "A modification must change at least one field");
+    }
+    validateLeaveUpdate(fields, original.getEmployeeId(), List.of(original.getId()));
+
+    Leave modification =
+        new Leave(
+            original.getEmployeeId(),
+            fields.type(),
+            fields.startDate(),
+            fields.endDate(),
+            fields.paid(),
+            LeaveStatus.pending,
+            fields.reason(),
+            null,
+            null);
+    modification.setModificationId(original.getId());
+    return toLeaveResponse(leaveRepository.save(modification), findEmployeeForLeave(original));
   }
 
   private void validateUpdatePermissions(
@@ -281,8 +425,6 @@ public class LeaveService {
           HttpStatus.CONFLICT, "Rejected or cancelled requests cannot be edited");
     }
     validateAdminComment(adminComment, isAdmin);
-    // TODO(modification requests): once POST /{id}/modifications exists, reject edits with 409
-    // when a pending modification request references this leave (existsByModificationId).
     if (!adminOversees && status == LeaveStatus.approved) {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Approved requests are edited via a modification request");
@@ -301,11 +443,29 @@ public class LeaveService {
         req.getReason() != null ? req.getReason() : leave.getDescription());
   }
 
-  private void validateLeaveUpdate(ResolvedFields fields, Long employeeId, Long excludeLeaveId) {
+  private ResolvedFields resolveFields(LeaveModificationRequest req, Leave leave) {
+    return new ResolvedFields(
+        req.getType() != null ? req.getType() : leave.getType(),
+        req.getPaid() != null ? req.getPaid() : leave.isPaid(),
+        req.getStartDate() != null ? req.getStartDate() : leave.getStartDate(),
+        req.getEndDate() != null ? req.getEndDate() : leave.getEndDate(),
+        req.getReason() != null ? req.getReason() : leave.getDescription());
+  }
+
+  private boolean isUnchanged(ResolvedFields fields, Leave leave) {
+    return fields.type() == leave.getType()
+        && fields.paid() == leave.isPaid()
+        && fields.startDate().equals(leave.getStartDate())
+        && fields.endDate().equals(leave.getEndDate())
+        && Objects.equals(fields.reason(), leave.getDescription());
+  }
+
+  private void validateLeaveUpdate(
+      ResolvedFields fields, Long employeeId, Collection<Long> excludeLeaveIds) {
     validateDateRange(fields.startDate(), fields.endDate());
     validatePersonalLeaveReason(fields.type(), fields.reason());
-    if (leaveRepository.existsActiveOverlapExcluding(
-        employeeId, fields.startDate(), fields.endDate(), excludeLeaveId)) {
+    if (leaveRepository.existsActiveOverlapExcludingIds(
+        employeeId, fields.startDate(), fields.endDate(), excludeLeaveIds)) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Overlapping leave request exists");
     }
   }

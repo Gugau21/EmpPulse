@@ -80,14 +80,20 @@ public class DepartmentService implements DepartmentApi {
     }
   }
 
+  @Override
+  @Transactional
+  public void ensureDefaultDepartmentExists() {
+    if (departmentRepository.existsByIsDefaultTrue()) {
+      return;
+    }
+    Department department = new Department("Default Department");
+    department.setDefault(true);
+    departmentRepository.save(department);
+  }
+
   @Transactional(readOnly = true)
   public DepartmentResponse getDepartment(Long departmentId) {
-    Department department =
-        departmentRepository
-            .findById(departmentId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
-    return toDepartmentResponse(department);
+    return toDepartmentResponse(findDepartmentById(departmentId));
   }
 
   @Transactional(readOnly = true)
@@ -97,11 +103,11 @@ public class DepartmentService implements DepartmentApi {
 
   @Transactional
   public void deleteDepartment(Long departmentId) {
-    Department department =
-        departmentRepository
-            .findById(departmentId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+    Department department = findDepartmentById(departmentId);
+    if (department.isDefault()) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Cannot delete the default department");
+    }
     if (employeeApi.hasEmployeesInDepartment(departmentId)) {
       throw new ResponseStatusException(
           HttpStatus.CONFLICT, "Cannot delete department: employees are assigned");
@@ -142,11 +148,7 @@ public class DepartmentService implements DepartmentApi {
 
   @Transactional
   public void updateDepartment(Long departmentId, DepartmentUpdateRequest req) {
-    Department department =
-        departmentRepository
-            .findById(departmentId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
+    Department department = findDepartmentById(departmentId);
 
     if (req.getName() != null) {
       validateNameAvailable(req.getName(), department.getName());
@@ -159,6 +161,13 @@ public class DepartmentService implements DepartmentApi {
       adminApi.getOwnerAdmin().ifPresent(newAdmins::add); // owner is always preserved
       department.setAdmins(newAdmins);
     }
+  }
+
+  private Department findDepartmentById(Long departmentId) {
+    return departmentRepository
+        .findById(departmentId)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Department not found"));
   }
 
   private void validateNameAvailable(String newName, String currentName) {

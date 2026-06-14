@@ -37,6 +37,7 @@ CREATE TABLE app_user (
 );
 
 CREATE UNIQUE INDEX uq_app_user_email_active ON app_user (email) WHERE (active = true);
+CREATE UNIQUE INDEX uq_app_user_is_owner ON app_user (is_owner) WHERE (is_owner = true);
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -46,9 +47,12 @@ CREATE UNIQUE INDEX uq_app_user_email_active ON app_user (email) WHERE (active =
 CREATE TABLE department (
   id                   INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name                 text    NOT NULL UNIQUE,
+  is_default           boolean NOT NULL DEFAULT false,
   week_schedule_id integer REFERENCES week_schedule (id)
                                ON DELETE SET NULL ON UPDATE CASCADE
 );
+
+CREATE UNIQUE INDEX uq_department_is_default ON department (is_default) WHERE (is_default = true);
 
 
 -- ─────────────────────────────────────────────────────────────────────────────

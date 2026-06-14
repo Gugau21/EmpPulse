@@ -1,6 +1,7 @@
 package com.oman.EmpPulse.leave.web;
 
 import com.oman.EmpPulse.leave.dto.LeaveCreateRequest;
+import com.oman.EmpPulse.leave.dto.LeaveModificationRequest;
 import com.oman.EmpPulse.leave.dto.LeaveResponseRequest;
 import com.oman.EmpPulse.leave.dto.LeaveUpdateRequest;
 import com.oman.EmpPulse.leave.internal.LeaveService;
@@ -60,6 +61,18 @@ public class LeaveController {
     return ResponseEntity.ok(
         leaveService.respondToLeaveRequest(
             leaveRequestId, req, AuthUtils.getUserId(authentication)));
+  }
+
+  @PreAuthorize("hasAuthority('EMPLOYEE')")
+  @PostMapping("/{leaveRequestId}/modifications")
+  public ResponseEntity<?> createModification(
+      @PathVariable Long leaveRequestId,
+      @RequestBody LeaveModificationRequest req,
+      Authentication authentication) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(
+            leaveService.createModification(
+                leaveRequestId, req, AuthUtils.getUserId(authentication)));
   }
 
   @PreAuthorize("hasAuthority('EMPLOYEE')")

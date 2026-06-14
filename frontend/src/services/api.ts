@@ -1,4 +1,13 @@
-import type { MeUser, Department, DepartmentAdmin, Employee, LeaveRequest } from '../types'
+import type {
+  ActiveLeave,
+  MeUser,
+  Department,
+  DepartmentAdmin,
+  Employee,
+  LeaveRequest
+} from '../types'
+import { isoToDisplayDate } from '../utils/date'
+import { describeActiveLeave } from '../utils/activeLeave'
 
 // Abort a request that hasn't responded in this long so a hung backend surfaces as
 // a retryable failure rather than an indefinite spinner. React Query then retries
@@ -218,29 +227,45 @@ interface EmployeeSummaryDto {
   departmentName: string | null
 }
 
+// Raw item shape from GET /api/employees (EmployeeListItemResponse): the summary
+// plus the employee's active state and current approved leave (null when working).
+interface EmployeeListItemDto extends EmployeeSummaryDto {
+  active: boolean
+  activeLeave: ActiveLeave | null
+}
+
 export const employeeService = {
   // GET /api/employees (OWNER lists all; ADMIN receives only employees in their
   // departments — filtered server-side). Mapped into the app's Employee shape;
-  // the API summary carries no leave/status data, so those fields stay absent.
+  // activeLeave (null when the employee is working) becomes the status badge.
   getAll: async (signal?: AbortSignal): Promise<Employee[]> => {
     const res = await apiRequest('/api/employees', {
       signal,
       errorFallback: 'Failed to load employees.'
     })
     const data = await res.json()
-    const items = (data.items ?? []) as EmployeeSummaryDto[]
+    const items = (data.items ?? []) as EmployeeListItemDto[]
     return items.map(e => ({
       id: String(e.id),
       name: e.name,
       surname: e.surname,
-      department: e.departmentName ?? undefined
+      department: e.departmentName ?? undefined,
+      ...describeActiveLeave(e.activeLeave)
     }))
   }
 }
 
-// Wire format for leave types (LeaveType in the API contract); the UI's
-// display values ('Vacation' | 'Sick' | 'Personal') must be mapped to these.
-export type ApiLeaveType = 'SICK' | 'VACATION' | 'PERSONAL'
+// Wire format for leave types (LeaveType in the API contract). The server's enum
+// is lower-cased and matched case-sensitively, so these must be lower-case too.
+export type ApiLeaveType = 'sick' | 'vacation' | 'personal'
+
+// Maps the UI's display-cased leave type to the wire enum. Shared by every form
+// that sends a type (create, update, modification) so the casing lives in one place.
+export const LEAVE_TYPE_TO_API: Record<LeaveRequest['type'], ApiLeaveType> = {
+  Vacation: 'vacation',
+  Sick: 'sick',
+  Personal: 'personal'
+}
 
 // PATCH /api/leave-requests/{id} body (LeaveRequestUpdate in the API contract).
 // All fields optional; dates are ISO yyyy-mm-dd. reason is required server-side
@@ -253,13 +278,21 @@ export interface LeaveRequestUpdatePayload {
   reason?: string | null
 }
 
+// PATCH /api/leave-requests/{id}/response body (LeaveResponseRequest in the API
+// contract). The decision must be 'approved' or 'rejected' (the server rejects
+// any other value); adminComment is an optional note recorded with the decision.
+export interface LeaveResponsePayload {
+  status: 'approved' | 'rejected'
+  adminComment?: string | null
+}
+
 // POST /api/leave-requests body (LeaveCreateRequest in the API contract). The
 // wire enum is lower-cased to match the server's LeaveType; dates are ISO
 // yyyy-mm-dd. reason is required server-side when type is personal; adminComment
 // is accepted only from administrators (filing on behalf of an employee).
 export interface LeaveRequestCreatePayload {
   employeeId: number
-  type: 'vacation' | 'sick' | 'personal'
+  type: ApiLeaveType
   paid: boolean
   startDate: string
   endDate: string
@@ -291,12 +324,6 @@ const LEAVE_TYPE_FROM_API: Record<LeaveResponseDto['type'], LeaveRequest['type']
   personal: 'Personal'
 }
 
-// ISO yyyy-mm-dd → the dd.mm.yyyy display the request rows and edit modal expect.
-function isoToDisplayDate(iso: string): string {
-  const [y, m, d] = iso.split('-')
-  return `${d}.${m}.${y}`
-}
-
 function mapLeaveResponse(dto: LeaveResponseDto): LeaveRequest {
   return {
     id: String(dto.id),
@@ -304,6 +331,7 @@ function mapLeaveResponse(dto: LeaveResponseDto): LeaveRequest {
     employeeName: `${dto.employee.name} ${dto.employee.surname}`,
     type: LEAVE_TYPE_FROM_API[dto.type],
     startDate: dto.startDate,
+    endDate: dto.endDate,
     // When the request has never been edited the server leaves updatedAt null,
     // so fall back to its creation time as the "last edit".
     lastEditedAt: dto.updatedAt ?? dto.createdAt,
@@ -363,6 +391,41 @@ export const leaveRequestService = {
       errorFallback: 'Failed to update leave request.',
       errorOverrides: {
         409: 'This request was changed elsewhere. Please refresh and retry.'
+      }
+    })
+  },
+
+  // POST /api/leave-requests/{id}/modifications — an employee proposes changes to
+  // their own APPROVED request. The server creates a pending modification linked to
+  // the original (an admin then approves or rejects it via the response endpoint);
+  // it rejects callers who don't own the request (403), a request that is not
+  // approved or already has a pending modification (409), and a proposal that
+  // changes nothing (400). Fields left undefined inherit the original's value.
+  modify: async (id: number, payload: LeaveRequestUpdatePayload): Promise<void> => {
+    await apiRequest(`/api/leave-requests/${id}/modifications`, {
+      method: 'POST',
+      body: payload,
+      errorFallback: 'Failed to submit modification request.',
+      errorOverrides: {
+        400: 'Change at least one field before submitting the modification.',
+        403: 'Only the employee the request belongs to can modify it.',
+        409: 'This approved request already has a pending change awaiting review.'
+      }
+    })
+  },
+
+  // PATCH /api/leave-requests/{id}/response — an admin approves or rejects a
+  // PENDING request for an employee in a department they oversee. The decision
+  // moves the request to APPROVED/REJECTED; the server rejects admins without
+  // access to it (403) and a request that is no longer pending (409).
+  respond: async (id: number, payload: LeaveResponsePayload): Promise<void> => {
+    await apiRequest(`/api/leave-requests/${id}/response`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to respond to leave request.',
+      errorOverrides: {
+        403: 'You do not have access to this leave request.',
+        409: 'Only pending requests can be approved or rejected.'
       }
     })
   },

@@ -155,6 +155,10 @@ public class Leave {
     return modificationId;
   }
 
+  public void setModificationId(Long modificationId) {
+    this.modificationId = modificationId;
+  }
+
   public OffsetDateTime getCreatedAt() {
     return createdAt;
   }

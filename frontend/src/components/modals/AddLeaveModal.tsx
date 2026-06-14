@@ -1,11 +1,12 @@
 import React, { useMemo, useRef, useState } from 'react'
 import type { LeaveRequest, ModalType } from '../../types'
-import type { LeaveRequestCreatePayload } from '../../services/api'
+import { LEAVE_TYPE_TO_API } from '../../services/api'
 import { useAuth } from '../../context/useAuth'
 import { useEmployeesList } from '../../hooks/useEmployeesList'
 import { useUserDetail } from '../../hooks/useUserDetail'
 import { useCreateLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import { useOutsideClick } from '../../hooks/useOutsideClick'
+import { todayISO } from '../../utils/date'
 import LeaveTypeSelects from './LeaveTypeSelects'
 import { useLanguage } from '../../hooks/useLanguage'
 import { translations } from '../../utils/translations'
@@ -30,6 +31,12 @@ function todayISO(): string {
   return new Date(now.getTime() - off * 60_000).toISOString().slice(0, 10)
 }
 
+const REASON_MAX = 300
+
+// Type-ahead picker the admin/owner uses to choose whose request they're filing.
+// The list it draws from is already scoped server-side: an admin receives only
+// employees in the departments they oversee, the owner receives everyone — so no
+// extra filtering by role is needed here, just narrowing by the typed text.
 interface EmployeePickerProps {
   selectedId: number | null
   onSelect: (id: number | null) => void

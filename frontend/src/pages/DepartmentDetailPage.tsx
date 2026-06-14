@@ -4,9 +4,12 @@ import type { OutletContext } from '../components/AppLayout'
 import { useAuth } from '../context/useAuth'
 import { useDepartmentDetail } from '../hooks/useDepartmentDetail'
 import blackTriangleIcon from '../assets/black_triangle.png'
+import whiteTriangleIcon from '../assets/white_triangle.png'
 import EditIcon from '../assets/edit_icon.png'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
+import EditIconLight from '../assets/edit_icon_light.png'
+import { useTheme } from '../hooks/useTheme'
 
 // NOTE: The default working-hours feature is not wired to the API yet, so the
 // working-hours table and its button are commented out below (kept for later).
@@ -21,6 +24,7 @@ const DepartmentDetailScreen: React.FC = () => {
   const { isOwner } = useAuth()
   const { language } = useLanguage()
   const t = translations[language].departmentDetail
+  const { theme } = useTheme()
   // Guard against NaN from invalid route params
   const parsedId = deptId ? Number(deptId) : null
   const validId = parsedId && !isNaN(parsedId) ? parsedId : null
@@ -56,7 +60,10 @@ const DepartmentDetailScreen: React.FC = () => {
       <header className="page-header">
         <div className="department-detail-title">
           <button className="btn-pill-secondary" onClick={onBack}>
-            <img src={blackTriangleIcon} alt="Back to departments list" />
+            <img
+              src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
+              alt="Back to departments list"
+            />
           </button>
           <div className="department-detail-title-row">
             <h2>{department.name}</h2>
@@ -64,9 +71,13 @@ const DepartmentDetailScreen: React.FC = () => {
               <button
                 className="btn-edit-action"
                 onClick={() => openModal('EDIT_DEPARTMENT', department)}
-                style={{ marginLeft: '12px' }}
               >
-                <img src={EditIcon} alt="Edit department name" />
+                <img
+                  src={theme === 'dark' ? EditIconLight : EditIcon}
+                  alt="Edit department name"
+                  width={30}
+                  height={30}
+                />
               </button>
             )}
           </div>

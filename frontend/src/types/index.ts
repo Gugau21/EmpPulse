@@ -22,6 +22,16 @@ export interface Department {
   admins: DepartmentAdmin[]
 }
 
+// A currently-active approved leave, as returned on the employee list and the
+// user profile. The wire `type` is the lower-cased LeaveType enum; the UI maps it
+// to a display-cased status badge and an "until …" label (see describeActiveLeave).
+export interface ActiveLeave {
+  type: 'vacation' | 'sick' | 'personal'
+  // ISO yyyy-mm-dd bounds of the leave; endDate drives the "until …" label.
+  startDate: string
+  endDate: string
+}
+
 export interface Employee {
   id: string
   name: string
@@ -31,6 +41,7 @@ export interface Employee {
   role?: string
   // "Working" is not a status — an employee is working when this is absent.
   status?: 'Personal' | 'Sick' | 'Vacation'
+  // dd.mm.yyyy end date of the active leave, paired with `status`.
   untilDate?: string
 }
 
@@ -44,6 +55,9 @@ export interface LeaveRequest {
   // ISO yyyy-mm-dd start of the leave, kept alongside the display `dateRange`
   // so the request lists can sort by when the leave begins.
   startDate: string
+  // ISO yyyy-mm-dd end of the leave; with `startDate` it lets the lists bucket a
+  // request as current/future/past relative to today.
+  endDate: string
   // ISO timestamp of the last edit: the server's updatedAt, or its createdAt when
   // the request has never been edited. Lets the lists sort by most recently touched.
   lastEditedAt: string
@@ -66,6 +80,8 @@ export interface MeUser {
     departmentId: number | null
     departmentName: string | null
     yearlyVacationBalance: number
+    // The employee's current approved leave, or null when they are working.
+    activeLeave: ActiveLeave | null
   } | null
   adminProfile: { id: number; departmentIds: number[] } | null
 }
