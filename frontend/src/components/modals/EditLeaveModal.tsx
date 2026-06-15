@@ -75,8 +75,8 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
     !isMine && (isOwner || isAdmin) ? requestEmployeeId : null
   )
   const vacationDaysLeft = isMine
-    ? currentUser?.employeeProfile?.yearlyVacationBalance
-    : requestEmployee?.employeeProfile?.yearlyVacationBalance
+    ? currentUser?.employeeProfile?.vacationBalance
+    : requestEmployee?.employeeProfile?.vacationBalance
 
   // An employee can't edit their own APPROVED request in place — the server only
   // accepts that as a modification request an admin then reviews. Pending requests,

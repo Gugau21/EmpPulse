@@ -179,6 +179,22 @@ export interface UserUpdatePayload {
   adminDepartmentIds?: number[]
 }
 
+// GET /api/users/{userId}/bonus-vacation-days response (BonusVacationDaysResponse
+// in the API contract). `year` is the current year the server resolved the bonus
+// for; `days` is 0 when no bonus has been granted for that year.
+export interface BonusVacationDaysResponse {
+  year: number
+  days: number
+}
+
+// PATCH /api/users/{userId}/bonus-vacation-days body (BonusVacationDayRequest).
+// Both fields are required server-side; days must be >= 0. Setting days to 0
+// clears the bonus for that year.
+export interface BonusVacationDayPayload {
+  year: number
+  days: number
+}
+
 export const userService = {
   create: async (payload: UserCreatePayload): Promise<void> => {
     await apiRequest('/api/users', {
@@ -214,6 +230,34 @@ export const userService = {
         403: 'You do not have permission to change these fields.',
         409: 'A user with this email already exists.'
       }
+    })
+  },
+
+  // GET /api/users/{userId}/bonus-vacation-days (ADMIN for employees in a
+  // department they oversee) — the bonus days granted for the current year.
+  getBonusVacationDays: async (
+    userId: number,
+    signal?: AbortSignal
+  ): Promise<BonusVacationDaysResponse> => {
+    const res = await apiRequest(`/api/users/${userId}/bonus-vacation-days`, {
+      signal,
+      errorFallback: 'Failed to load bonus vacation days.',
+      errorOverrides: { 403: 'You do not have access to this employee.' }
+    })
+    return (await res.json()) as BonusVacationDaysResponse
+  },
+
+  // PATCH /api/users/{userId}/bonus-vacation-days (ADMIN for employees in a
+  // department they oversee) — set the bonus days for the given year (0 clears it).
+  updateBonusVacationDays: async (
+    userId: number,
+    payload: BonusVacationDayPayload
+  ): Promise<void> => {
+    await apiRequest(`/api/users/${userId}/bonus-vacation-days`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to update bonus vacation days.',
+      errorOverrides: { 403: 'You do not have access to this employee.' }
     })
   }
 }

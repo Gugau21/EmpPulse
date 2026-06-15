@@ -199,9 +199,18 @@ const ProfilePage: React.FC = () => {
         {employeeProfile && (
           <div className="vacation-widget">
             <h4>Vacation balance</h4>
-            <div className="balance-badge-card">
-              Vacations day left: {employeeProfile.yearlyVacationBalance}
-            </div>
+            <div className="balance-badge-card">Days left: {employeeProfile.vacationBalance}</div>
+            {/* Granting bonus days is an admin action: only shown when viewing
+                someone else's profile (the employees list is gated to owners/
+                admins), so an employee never sees it on their own profile. */}
+            {!isMyProfile && (
+              <button
+                className="primary-btn full-width"
+                onClick={() => openModal('ADD_BONUS_DAYS', employee as Employee)}
+              >
+                add bonus days
+              </button>
+            )}
           </div>
         )}
       </div>
