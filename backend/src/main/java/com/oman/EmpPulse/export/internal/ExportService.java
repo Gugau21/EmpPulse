@@ -19,6 +19,8 @@ import com.oman.EmpPulse.user.internal.Employee;
 import com.oman.EmpPulse.user.internal.User;
 import com.oman.EmpPulse.user.api.UserApi;
 import com.oman.EmpPulse.user.api.Admin;
+import com.oman.EmpPulse.loggedhours.internal.LoggedHours;
+import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
 
 @Service
 public class ExportService {
@@ -30,6 +32,7 @@ public class ExportService {
     private final EmployeeApi employeeApi;
     private final UserApi userApi;
     private final LeaveApi leaveApi;
+    private final LoggedHoursApi loggedHoursApi;
 
     public ExportService(DepartmentApi departmentApi,
                          AdminApi adminApi,
@@ -37,7 +40,8 @@ public class ExportService {
                          ZipService zipService,
                          EmployeeApi employeeApi,
                          UserApi userApi,
-                         LeaveApi leaveApi) {
+                         LeaveApi leaveApi,
+                         LoggedHoursApi loggedHoursApi) {
         this.departmentApi = departmentApi;
         this.adminApi = adminApi;
         this.csvExportService = csvExportService;
@@ -45,6 +49,7 @@ public class ExportService {
         this.employeeApi = employeeApi;
         this.userApi = userApi;
         this.leaveApi = leaveApi;
+        this.loggedHoursApi = loggedHoursApi;
     }
 
     public byte[] export(Authentication authentication) {
@@ -57,11 +62,13 @@ public class ExportService {
         Set<User> users = userApi.findByIdIn(employees.stream().map(Employee::getId).collect(Collectors.toSet())).stream().collect(Collectors.toSet());
         users.addAll(userApi.findByIdIn(admins.stream().map(Admin::getId).collect(Collectors.toSet())));
         users.add(userApi.findById(AuthUtils.getUserId(authentication)).orElseThrow());
+        List<LoggedHours> loggedHours = loggedHoursApi.findAllByEmployeeIdIn(employees.stream().map(Employee::getId).collect(Collectors.toSet())).stream().toList();
         Map<String, byte[]> files = new HashMap<>();
         files.put("departments.csv", csvExportService.departmentsToCsv(departments));
         files.put("employees.csv", csvExportService.employeesToCsv(employees));
         files.put("users.csv", csvExportService.usersToCsv(users));
         files.put("leaves.csv", csvExportService.leavesToCsv(leaves));
+        files.put("logged_hours.csv", csvExportService.loggedHoursToCsv(loggedHours));
         return zipService.zip(files);
     }
 

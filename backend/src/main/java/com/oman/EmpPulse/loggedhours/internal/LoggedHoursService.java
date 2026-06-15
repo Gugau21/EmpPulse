@@ -11,6 +11,7 @@ import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Collection;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +37,12 @@ public class LoggedHoursService implements LoggedHoursApi {
       Long employeeId, LocalDate startDate, LocalDate endDate) {
     loggedHoursRepository.deleteAll(
         loggedHoursRepository.findAllByEmployeeIdAndDateBetween(employeeId, startDate, endDate));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<LoggedHours> findAllByEmployeeIdIn(Collection<Long> employeeIds) {
+    return loggedHoursRepository.findAllByEmployeeIdInOrderByDateDescStartTimeDesc(employeeIds);
   }
 
   private record MergedInterval(LocalTime start, LocalTime end) {}
