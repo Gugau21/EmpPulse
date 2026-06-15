@@ -148,10 +148,13 @@ const Modals: React.FC<Props> = ({
           <EditDepartmentModal closeModal={closeModal} selectedDepartment={selectedDepartment} />
         )}
 
-        {(activeModal === 'ADD_WORKING_HOURS' || activeModal === 'EDIT_WORKING_HOURS') && (
+        {(activeModal === 'ADD_WORKING_HOURS' ||
+          activeModal === 'EDIT_WORKING_HOURS' ||
+          activeModal === 'EDIT_DEPARTMENT_WORKING_HOURS') && (
           <AddDefaultWorkingHoursModal
             closeModal={closeModal}
-            isEditMode={activeModal === 'EDIT_WORKING_HOURS'}
+            isEditMode={activeModal !== 'ADD_WORKING_HOURS'}
+            isDepartment={activeModal === 'EDIT_DEPARTMENT_WORKING_HOURS'}
           />
         )}
 

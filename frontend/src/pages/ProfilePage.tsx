@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import type { Employee } from '../types'
 import type { OutletContext } from '../components/AppLayout'
-import { MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
@@ -14,7 +13,7 @@ import { buildLoggedHoursDays, formatDuration, formatInterval } from '../utils/l
 import blackTriangleIcon from '../assets/black_triangle.png'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
-import { useWeekdayLabels } from '../hooks/useWeekdayLabels'
+import { useWeekdayLabels, WEEKDAYS } from '../hooks/useWeekdayLabels'
 import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useTheme } from '../hooks/useTheme'
 
@@ -264,30 +263,12 @@ const ProfilePage: React.FC = () => {
 
           {workingHoursExpanded && (
             <>
+              {/* One column per weekday. Shifts are intentionally empty until the
+                  default-working-hours API is wired up. */}
               <div className="card-box working-hours-grid">
-                {MOCK_DEFAULT_WORKING_HOURS.map((column, ci) => (
-                  <div className="shifts-stack" key={ci}>
-                    {column.map((day, di) => {
-                      // Map the hardcoded English day to our translation
-                      const displayDay = weekdayLabels[day.label] || day.label
-
-                      return (
-                        <React.Fragment key={day.label}>
-                          <div className={`day-label ${di > 0 ? 'day-label-margin' : ''}`}>
-                            {displayDay}
-                          </div>
-                          {day.shifts.map((shift, si) => (
-                            <div className="shift-pill-row" key={si}>
-                              <span className="shift-index">{si + 1})</span>
-                              <div className="time-range-display">
-                                <span>{shift.start}</span>{' '}
-                                <span className="muted-separator">—</span> <span>{shift.end}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </React.Fragment>
-                      )
-                    })}
+                {WEEKDAYS.map(day => (
+                  <div className="shifts-stack" key={day}>
+                    <div className="day-label">{weekdayLabels[day] || day}</div>
                   </div>
                 ))}
               </div>

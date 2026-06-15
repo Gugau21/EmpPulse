@@ -50,7 +50,9 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
     setCreateError(null)
   }
 
-  const handleCreateUser = () => {
+  // onCreated runs after a successful create. Defaults to closing the modal; the
+  // "with default working hours" button passes a callback that opens the hours editor.
+  const handleCreateUser = (onCreated: () => void = closeModal) => {
     setCreateError(null)
     if (!newName.trim() || !newSurname.trim() || !newEmail.trim() || !newPassword) {
       setCreateError(t.errAllFieldsRequired)
@@ -96,7 +98,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
       {
         onSuccess: () => {
           resetCreateUserForm()
-          closeModal()
+          onCreated()
         }
       }
     )
@@ -144,7 +146,7 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
             the employee role is selected we offer both create-with/without-hours options. */}
         <button
           className="btn-modal-action"
-          onClick={handleCreateUser}
+          onClick={() => handleCreateUser()}
           disabled={createUser.isPending}
         >
           {isEmployeeChecked ? t.addWithoutHours : t.addUser}
@@ -152,9 +154,8 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         {isEmployeeChecked && (
           <button
             className="btn-modal-action"
-            onClick={() => {
-              openModal('ADD_WORKING_HOURS')
-            }}
+            onClick={() => handleCreateUser(() => openModal('ADD_WORKING_HOURS'))}
+            disabled={createUser.isPending}
           >
             {t.addWithHours}
           </button>

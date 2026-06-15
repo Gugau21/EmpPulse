@@ -28,7 +28,9 @@ export const translations = {
       back: '🡄 Back',
       adminsTitle: 'Admins',
       noAdmins: 'No administrators assigned.',
-      editAdmins: 'edit admins'
+      editAdmins: 'edit admins',
+      defaultWorkingHours: 'Default working hours',
+      editWorkingHours: 'edit working hours'
     },
     departmentsPage: {
       title: 'Departments',
@@ -150,6 +152,7 @@ export const translations = {
       editDefaultWorkingHours: 'Edit default',
       addDefaultWorkingHours: 'Add default',
       workingHoursSuffix: 'working hours',
+      editDepartmentWorkingHours: 'Edit department default working hours',
       monday: 'Monday',
       tuesday: 'Tuesday',
       wednesday: 'Wednesday',
@@ -158,7 +161,8 @@ export const translations = {
       saturday: 'Saturday',
       sunday: 'Sunday',
       saveChanges: 'Save changes',
-      addEmployeeBtnWorkingHours: '+ add employee',
+      editWithHours: '+ edit default working hours',
+      editDepartmentWithHours: '+ edit department default working hours',
       addDepartment: 'Add department',
       editDepartment: 'Edit department',
       nameOfDepartment: 'Name of department',
@@ -278,7 +282,9 @@ export const translations = {
       back: '🡄 Назад',
       adminsTitle: 'Адміністратори',
       noAdmins: 'Немає призначених адміністраторів.',
-      editAdmins: 'редагувати адміністраторів'
+      editAdmins: 'редагувати адміністраторів',
+      defaultWorkingHours: 'Стандартні робочі години',
+      editWorkingHours: 'редагувати робочі години'
     },
     departmentsPage: {
       title: 'Відділи',
@@ -400,6 +406,7 @@ export const translations = {
       editDefaultWorkingHours: 'Редагувати стандартні',
       addDefaultWorkingHours: 'Додати стандартні',
       workingHoursSuffix: 'робочі години',
+      editDepartmentWorkingHours: 'Редагувати стандартні робочі години відділу',
       monday: 'Понеділок',
       tuesday: 'Вівторок',
       wednesday: 'Середа',
@@ -408,7 +415,8 @@ export const translations = {
       saturday: 'Субота',
       sunday: 'Неділя',
       saveChanges: 'Зберегти зміни',
-      addEmployeeBtnWorkingHours: '+ додати робітника',
+      editWithHours: '+ редагувати стандартні робочі години',
+      editDepartmentWithHours: '+ редагувати стандартні робочі години відділу',
       addDepartment: 'Додати відділ',
       editDepartment: 'Редагувати відділ',
       nameOfDepartment: 'Назва відділу',

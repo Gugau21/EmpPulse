@@ -1,35 +1,33 @@
 import React, { useState } from 'react'
 import { useLanguage } from '../../hooks/useLanguage'
 import { translations } from '../../utils/translations'
-import { useWeekdayLabels } from '../../hooks/useWeekdayLabels'
+import { useWeekdayLabels, WEEKDAYS } from '../../hooks/useWeekdayLabels'
 
 interface Props {
   closeModal: () => void
   isEditMode?: boolean
+  // Editing a department's default hours (vs an employee's) — changes the wording only.
+  isDepartment?: boolean
 }
-
-// DO NOT translate these string keys, as the state object relies on them.
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 type Shift = { start: string; end: string }
 type Schedule = Record<string, Shift[]>
 
-const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }) => {
+const AddDefaultWorkingHoursModal: React.FC<Props> = ({
+  closeModal,
+  isEditMode,
+  isDepartment
+}) => {
   const { language } = useLanguage()
   const t = translations[language].modals
 
   // Display the day in the active language without breaking the hardcoded keys.
   const dayLabels = useWeekdayLabels()
 
-  const [schedule, setSchedule] = useState<Schedule>({
-    Monday: [{ start: '09:00', end: '17:00' }],
-    Tuesday: [{ start: '09:00', end: '17:00' }],
-    Wednesday: [{ start: '09:00', end: '17:00' }],
-    Thursday: [{ start: '09:00', end: '17:00' }],
-    Friday: [{ start: '09:00', end: '17:00' }],
-    Saturday: [],
-    Sunday: []
-  })
+  // Start with no shifts; the user adds intervals per day via the "+" button.
+  const [schedule, setSchedule] = useState<Schedule>(() =>
+    Object.fromEntries(WEEKDAYS.map(day => [day, []]))
+  )
 
   const handleAddShift = (day: string) => {
     setSchedule(prev => ({
@@ -62,19 +60,32 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
   return (
     <div className="modal-form">
       <h2 style={{ lineHeight: '1.2' }}>
-        {isEditMode ? t.editDefaultWorkingHours : t.addDefaultWorkingHours}
-        <br />
-        {t.workingHoursSuffix}
+        {isDepartment ? (
+          t.editDepartmentWorkingHours
+        ) : (
+          <>
+            {isEditMode ? t.editDefaultWorkingHours : t.addDefaultWorkingHours}
+            <br />
+            {t.workingHoursSuffix}
+          </>
+        )}
       </h2>
 
       <div
         style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '8px', marginBottom: '24px' }}
       >
-        {DAYS.map(day => (
+        {WEEKDAYS.map(day => (
           <div key={day} style={{ marginBottom: '16px' }}>
-            <h4 style={{ fontSize: '15px', fontWeight: 500, marginBottom: '8px' }}>
-              {dayLabels[day]}
-            </h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '15px', fontWeight: 500, margin: 0 }}>{dayLabels[day]}</h4>
+              <button
+                className="btn-tiny-pill"
+                onClick={() => handleAddShift(day)}
+                style={{ backgroundColor: '#5932EA', fontSize: '14px', padding: '2px 12px' }}
+              >
+                +
+              </button>
+            </div>
 
             {schedule[day].map((shift, index) => (
               <div
@@ -113,22 +124,12 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
                 </button>
               </div>
             ))}
-
-            <div style={{ display: 'flex', justifyContent: 'center', width: '250px' }}>
-              <button
-                className="btn-tiny-pill"
-                onClick={() => handleAddShift(day)}
-                style={{ backgroundColor: '#5932EA', fontSize: '14px', padding: '2px 12px' }}
-              >
-                +
-              </button>
-            </div>
           </div>
         ))}
       </div>
 
       <button className="primary-btn full-width" onClick={closeModal}>
-        {isEditMode ? t.saveChanges : t.addEmployeeBtnWorkingHours}
+        {isDepartment ? t.editDepartmentWithHours : isEditMode ? t.editWithHours : t.addWithHours}
       </button>
     </div>
   )
