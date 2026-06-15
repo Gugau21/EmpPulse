@@ -14,7 +14,6 @@
   --btn-outline-primary: #5932ea;
   --btn-outline-primary2: transparent;
 
-  /* New Dynamic Color Variables */
   --text-dark: #333;
   --text-muted: #666;
   --border-dashed: #a0a0a0;
@@ -256,6 +255,7 @@ select {
   border-radius: 8px;
   display: flex;
   align-items: center;
+  color: var(--text-secondary);
 }
 
 .search-bar input {
@@ -267,6 +267,11 @@ select {
   width: 160px;
   text-align: left;
   color: var(--text-primary);
+}
+
+.search-bar input::placeholder {
+  color: var(--text-secondary);
+  opacity: 1; /* This overrides the default browser transparency */
 }
 
 .filter-dropdown {
@@ -292,7 +297,8 @@ select {
   right: 0;
   z-index: 10;
   min-width: 160px;
-  background-color: #fff;
+  background-color: var(--bg-surface); /* Swapped from #fff */
+  border: 1px solid var(--border-color); /* Added to prevent blending into dark backgrounds */
   border-radius: 8px;
   box-shadow: 0 6px 24px rgb(0 0 0 / 12%);
   padding: 8px;
@@ -313,11 +319,12 @@ select {
 }
 
 .filter-option:hover {
-  background-color: #f4f4f4;
+  background-color: var(--bg-hover); /* Swapped from #f4f4f4 */
 }
 
 .filter-option input {
   cursor: pointer;
+  accent-color: #5932ea; /* Changes the active checkbox color from blue */
 }
 
 /* ============================================================
@@ -1301,6 +1308,11 @@ select {
   margin-bottom: 20px;
 }
 
+.auth-card .auth-title,
+.auth-card .muted {
+  color: var(--text-primary);
+}
+
 .form-error {
   display: block;
   color: #c0392b;
@@ -1363,6 +1375,10 @@ select {
   color: #5932ea;
   text-decoration: underline;
   cursor: pointer;
+}
+
+.muted p{
+  color: var(--text-muted);
 }
 
 /* ============================================================
