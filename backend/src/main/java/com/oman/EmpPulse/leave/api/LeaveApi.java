@@ -2,6 +2,8 @@ package com.oman.EmpPulse.leave.api;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.List;
+import com.oman.EmpPulse.leave.internal.Leave;
 
 public interface LeaveApi {
 
@@ -15,4 +17,12 @@ public interface LeaveApi {
    * @return a map from employee ID to their active leave snapshot
    */
   Map<Long, ActiveLeaveResponse> findActiveLeavesByEmployeeIds(Collection<Long> employeeIds);
+
+  /**
+   * Finds all leaves for the given employee IDs.
+   *
+   * @param employeeIds the employee IDs to look up
+   * @return a list of leaves for the given employee IDs
+   */
+  List<Leave> findAllByEmployeeIdIn(Collection<Long> employeeIds);
 }
