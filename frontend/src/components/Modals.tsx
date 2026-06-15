@@ -18,6 +18,7 @@ import EditDepartmentModal from './modals/EditDepartmentModal'
 import AddDefaultWorkingHoursModal from './modals/AddDefaultWorkingHoursModal'
 import EditEmployeeModal from './modals/EditEmployeeModal'
 import EditHoursModal from './modals/EditHoursModal'
+import AddBonusVacationDaysModal from './modals/AddBonusVacationDaysModal'
 import EditLeaveModal from './modals/EditLeaveModal'
 import ViewLeaveModal from './modals/ViewLeaveModal'
 import ChangePasswordFormModal from './modals/ChangePasswordModal'
@@ -168,6 +169,10 @@ const Modals: React.FC<Props> = ({
             selectedEmployee={selectedEmployee}
             selectedLoggedHours={selectedLoggedHours}
           />
+        )}
+
+        {activeModal === 'ADD_BONUS_DAYS' && (
+          <AddBonusVacationDaysModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
         )}
 
         {activeModal === 'CHANGE_PASSWORD_FORM' && (

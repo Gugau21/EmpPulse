@@ -1,6 +1,8 @@
 package com.oman.EmpPulse.user.web;
 
 import com.oman.EmpPulse.shared.security.AuthUtils;
+import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
+import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import com.oman.EmpPulse.user.internal.UserService;
@@ -56,6 +58,24 @@ public class UserController {
       Authentication authentication) {
     userService.updateUser(
         userId, req, AuthUtils.getUserId(authentication), AuthUtils.isOwner(authentication));
+    return ResponseEntity.noContent().build();
+  }
+
+  @PreAuthorize("hasAuthority('ADMIN')")
+  @GetMapping("/api/users/{userId}/bonus-vacation-days")
+  public ResponseEntity<BonusVacationDaysResponse> getBonusVacationDays(
+      @PathVariable Long userId, Authentication authentication) {
+    return ResponseEntity.ok(
+        userService.getBonusVacationDaysForEmployee(userId, AuthUtils.getUserId(authentication)));
+  }
+
+  @PreAuthorize("hasAuthority('ADMIN')")
+  @PatchMapping("/api/users/{userId}/bonus-vacation-days")
+  public ResponseEntity<?> updateBonusVacationDays(
+      @PathVariable Long userId,
+      @RequestBody BonusVacationDayRequest req,
+      Authentication authentication) {
+    userService.updateBonusVacationDays(userId, req, AuthUtils.getUserId(authentication));
     return ResponseEntity.noContent().build();
   }
 }

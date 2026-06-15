@@ -12,6 +12,7 @@ import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
@@ -68,6 +69,32 @@ public class LeaveService implements LeaveApi {
 
   private ActiveLeaveResponse toActiveLeaveResponse(Leave leave) {
     return new ActiveLeaveResponse(leave.getType(), leave.getStartDate(), leave.getEndDate());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public int countUsedVacationDays(Long employeeId, int year) {
+    LocalDate yearStart = LocalDate.of(year, 1, 1);
+    LocalDate yearEnd = LocalDate.of(year, 12, 31);
+    int total = 0;
+    for (Leave leave :
+        leaveRepository.findActiveVacationLeavesOverlapping(employeeId, yearStart, yearEnd)) {
+      LocalDate from = leave.getStartDate().isBefore(yearStart) ? yearStart : leave.getStartDate();
+      LocalDate to = leave.getEndDate().isAfter(yearEnd) ? yearEnd : leave.getEndDate();
+      total += countWeekdays(from, to);
+    }
+    return total;
+  }
+
+  private static int countWeekdays(LocalDate from, LocalDate to) {
+    int weekdays = 0;
+    for (LocalDate day = from; !day.isAfter(to); day = day.plusDays(1)) {
+      DayOfWeek dow = day.getDayOfWeek();
+      if (dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY) {
+        weekdays++;
+      }
+    }
+    return weekdays;
   }
 
   /**

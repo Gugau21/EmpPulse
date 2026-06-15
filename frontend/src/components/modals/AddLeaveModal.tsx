@@ -110,8 +110,8 @@ const AddLeaveModal: React.FC<Props> = ({ activeModal, closeModal }) => {
   // balance feeds the self flow. Treated as "days left" to match the profile page.
   const { data: selectedEmployee } = useUserDetail(isMine ? null : employeeId)
   const vacationDaysLeft = isMine
-    ? currentUser?.employeeProfile?.yearlyVacationBalance
-    : selectedEmployee?.employeeProfile?.yearlyVacationBalance
+    ? currentUser?.employeeProfile?.vacationBalance
+    : selectedEmployee?.employeeProfile?.vacationBalance
 
   // The balance hint only makes sense for a vacation request, and in the on-behalf
   // flow only once an employee (whose balance we show) has been chosen.

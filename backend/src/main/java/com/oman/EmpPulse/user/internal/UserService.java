@@ -11,8 +11,11 @@ import com.oman.EmpPulse.user.api.UserApi;
 import com.oman.EmpPulse.user.api.UserCredential;
 import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.api.UserResponse;
+import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
+import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,7 @@ public class UserService implements UserApi {
   private final UserRepository userRepository;
   private final AdminRepository adminRepository;
   private final EmployeeRepository employeeRepository;
+  private final BonusVacationDaysRepository bonusVacationDaysRepository;
   private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
   private final DepartmentApi departmentApi;
   private final PasswordEncoder passwordEncoder;
@@ -42,6 +46,7 @@ public class UserService implements UserApi {
       UserRepository userRepository,
       AdminRepository adminRepository,
       EmployeeRepository employeeRepository,
+      BonusVacationDaysRepository bonusVacationDaysRepository,
       FindByIndexNameSessionRepository<? extends Session> sessionRepository,
       DepartmentApi departmentApi,
       PasswordEncoder passwordEncoder,
@@ -49,6 +54,7 @@ public class UserService implements UserApi {
     this.userRepository = userRepository;
     this.adminRepository = adminRepository;
     this.employeeRepository = employeeRepository;
+    this.bonusVacationDaysRepository = bonusVacationDaysRepository;
     this.sessionRepository = sessionRepository;
     this.departmentApi = departmentApi;
     this.passwordEncoder = passwordEncoder;
@@ -116,13 +122,7 @@ public class UserService implements UserApi {
   @Transactional(readOnly = true)
   public UserResponse getUserProfile(Long userId, Long callerId, boolean callerIsOwner) {
     if (!callerIsOwner) {
-      Optional<Employee> employeeOpt = employeeRepository.findById(userId);
-      Employee employee =
-          employeeOpt.orElseThrow(
-              () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
-      if (!employee.isActive()) {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-      }
+      Employee employee = requireActiveEmployee(userId);
       verifyAdminOverseesDepartment(callerId, employee.getDepartmentId());
     }
 
@@ -150,12 +150,23 @@ public class UserService implements UserApi {
         String deptName = departmentApi.findNameById(employee.getDepartmentId()).orElse(null);
         Map<Long, ActiveLeaveResponse> activeLeaves =
             leaveApi.findActiveLeavesByEmployeeIds(List.of(employee.getId()));
+
+        int year = LocalDate.now().getYear();
+        int bonus =
+            bonusVacationDaysRepository
+                .findByEmployeeIdAndYear(employee.getId(), year)
+                .map(BonusVacationDays::getDays)
+                .orElse(0);
+        int used = leaveApi.countUsedVacationDays(employee.getId(), year);
+        int vacationBalance = employee.getVacationBalance() + bonus - used;
+
         employeeProfile =
             new EmployeeProfileResponse(
                 employee.getId(),
                 employee.getDepartmentId(),
                 deptName,
                 employee.getVacationBalance(),
+                vacationBalance,
                 activeLeaves.get(employee.getId()));
       }
     }
@@ -257,6 +268,72 @@ public class UserService implements UserApi {
         || !StringUtils.hasText(req.getPassword())) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Name, surname, email and password are required");
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public BonusVacationDaysResponse getBonusVacationDaysForEmployee(Long userId, Long callerId) {
+    Employee employee = requireActiveEmployee(userId);
+    verifyAdminOverseesDepartment(callerId, employee.getDepartmentId());
+
+    int year = LocalDate.now().getYear();
+    int days =
+        bonusVacationDaysRepository
+            .findByEmployeeIdAndYear(employee.getId(), year)
+            .map(BonusVacationDays::getDays)
+            .orElse(0);
+
+    return new BonusVacationDaysResponse(year, days);
+  }
+
+  @Transactional
+  public void updateBonusVacationDays(Long userId, BonusVacationDayRequest req, Long callerUserId) {
+    Employee employee = requireActiveEmployee(userId);
+    verifyAdminOverseesDepartment(callerUserId, employee.getDepartmentId());
+
+    requireBonusVacationDayFields(req);
+    requireNonNegativeBonusVacationDays(req.getDays());
+
+    int year = req.getYear();
+    int days = req.getDays();
+    Optional<BonusVacationDays> existing =
+        bonusVacationDaysRepository.findByEmployeeIdAndYear(employee.getId(), year);
+
+    if (days == 0) {
+      existing.ifPresent(bonusVacationDaysRepository::delete);
+      return;
+    }
+
+    if (existing.isPresent()) {
+      BonusVacationDays bonusVacationDays = existing.get();
+      bonusVacationDays.setDays(days);
+      bonusVacationDaysRepository.save(bonusVacationDays);
+    } else {
+      bonusVacationDaysRepository.save(new BonusVacationDays(employee.getId(), year, days));
+    }
+  }
+
+  private Employee requireActiveEmployee(Long userId) {
+    Employee employee =
+        employeeRepository
+            .findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+    if (!employee.isActive()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+    }
+    return employee;
+  }
+
+  private void requireBonusVacationDayFields(BonusVacationDayRequest req) {
+    if (req.getYear() == null || req.getDays() == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Year and days are required");
+    }
+  }
+
+  private void requireNonNegativeBonusVacationDays(int days) {
+    if (days < 0) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Bonus vacation days must be greater or equal to 0");
     }
   }
 
