@@ -21,6 +21,8 @@ import EditHoursModal from './modals/EditHoursModal'
 import EditLeaveModal from './modals/EditLeaveModal'
 import ViewLeaveModal from './modals/ViewLeaveModal'
 import ChangePasswordFormModal from './modals/ChangePasswordModal'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 interface Props {
   activeModal: ModalType
@@ -60,6 +62,9 @@ const Modals: React.FC<Props> = ({
   onConfirmErrorClear,
   openModal
 }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   if (!activeModal) return null
 
   const closeOnOverlayClick = CONFIRM_MODALS.includes(activeModal)
@@ -84,11 +89,11 @@ const Modals: React.FC<Props> = ({
         {activeModal === 'ADD_EMPLOYEE' &&
           (departments.length === 0 ? (
             <div className="modal-form">
-              <h2>Employee can't be added</h2>
-              <p>No departments were created. Create a department first.</p>
+              <h2>{t.cantAddEmployee}</h2>
+              <p>{t.noDeptsCreated}</p>
               <div className="modal-actions">
                 <button className="btn-modal-action" onClick={closeModal}>
-                  OK
+                  {t.ok}
                 </button>
               </div>
             </div>

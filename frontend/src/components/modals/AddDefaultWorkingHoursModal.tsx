@@ -1,16 +1,26 @@
 import React, { useState } from 'react'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
+import { useWeekdayLabels } from '../../hooks/useWeekdayLabels'
 
 interface Props {
   closeModal: () => void
   isEditMode?: boolean
 }
 
+// DO NOT translate these string keys, as the state object relies on them.
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 type Shift = { start: string; end: string }
 type Schedule = Record<string, Shift[]>
 
 const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
+  // Display the day in the active language without breaking the hardcoded keys.
+  const dayLabels = useWeekdayLabels()
+
   const [schedule, setSchedule] = useState<Schedule>({
     Monday: [{ start: '09:00', end: '17:00' }],
     Tuesday: [{ start: '09:00', end: '17:00' }],
@@ -52,9 +62,9 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
   return (
     <div className="modal-form">
       <h2 style={{ lineHeight: '1.2' }}>
-        {isEditMode ? 'Edit default' : 'Add default'}
+        {isEditMode ? t.editDefaultWorkingHours : t.addDefaultWorkingHours}
         <br />
-        working hours
+        {t.workingHoursSuffix}
       </h2>
 
       <div
@@ -62,7 +72,9 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
       >
         {DAYS.map(day => (
           <div key={day} style={{ marginBottom: '16px' }}>
-            <h4 style={{ fontSize: '15px', fontWeight: 500, marginBottom: '8px' }}>{day}</h4>
+            <h4 style={{ fontSize: '15px', fontWeight: 500, marginBottom: '8px' }}>
+              {dayLabels[day]}
+            </h4>
 
             {schedule[day].map((shift, index) => (
               <div
@@ -116,7 +128,7 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
       </div>
 
       <button className="primary-btn full-width" onClick={closeModal}>
-        {isEditMode ? 'Save changes' : '+ add employee'}
+        {isEditMode ? t.saveChanges : t.addEmployeeBtnWorkingHours}
       </button>
     </div>
   )

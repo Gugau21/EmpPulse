@@ -1,5 +1,7 @@
 import React from 'react'
 import type { ModalType } from '../../types'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   activeModal: ModalType
@@ -15,32 +17,37 @@ const ConfirmModal: React.FC<Props> = ({
   confirmModal,
   confirmError,
   onConfirmErrorClear
-}) => (
-  <div className="modal-confirm">
-    <h3>
-      {activeModal === 'DELETE_EMPLOYEE' && 'Do you really want to delete employee?'}
-      {activeModal === 'DELETE_LEAVE' && 'Do you really want to delete a leave?'}
-      {activeModal === 'CANCEL_LEAVE' && 'Do you really want to cancel a leave?'}
-      {activeModal === 'DELETE_DEPARTMENT' && 'Do you really want to delete a department?'}
-      {activeModal === 'LOGOUT' && 'Do you really want to log out?'}
-      {activeModal === 'CHANGE_PASSWORD' && 'Do you really want to change password?'}
-    </h3>
-    {confirmError && <p className="form-error">{confirmError}</p>}
-    <div className="modal-buttons">
-      <button
-        className="btn-secondary"
-        onClick={() => {
-          onConfirmErrorClear?.()
-          confirmModal()
-        }}
-      >
-        YES
-      </button>
-      <button className="btn-outline-primary" onClick={closeModal}>
-        NO
-      </button>
+}) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
+  return (
+    <div className="modal-confirm">
+      <h3>
+        {activeModal === 'DELETE_EMPLOYEE' && t.confirmDeleteEmp}
+        {activeModal === 'DELETE_LEAVE' && t.confirmDeleteLeave}
+        {activeModal === 'CANCEL_LEAVE' && t.confirmCancelLeave}
+        {activeModal === 'DELETE_DEPARTMENT' && t.confirmDeleteDept}
+        {activeModal === 'LOGOUT' && t.confirmLogout}
+        {activeModal === 'CHANGE_PASSWORD' && t.confirmChangePwd}
+      </h3>
+      {confirmError && <p className="form-error">{confirmError}</p>}
+      <div className="modal-buttons">
+        <button
+          className="btn-secondary"
+          onClick={() => {
+            onConfirmErrorClear?.()
+            confirmModal()
+          }}
+        >
+          {t.yes}
+        </button>
+        <button className="btn-outline-primary" onClick={closeModal}>
+          {t.no}
+        </button>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 export default ConfirmModal

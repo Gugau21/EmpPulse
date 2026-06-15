@@ -2,6 +2,8 @@ import React from 'react'
 import type { LeaveRequest } from '../../types'
 import { useLeaveRequestDetail } from '../../hooks/useLeaveRequestDetail'
 import LeaveRequestLoadState from './LeaveRequestLoadState'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   // Only the id is read from the selected row; the request is fetched fresh so the
@@ -24,6 +26,9 @@ const LeaveRequestModalShell: React.FC<Props> = ({
   onBack,
   children
 }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   const rawId = selectedRequest ? Number(selectedRequest.id) : NaN
   const id = Number.isInteger(rawId) ? rawId : null
   const { data: request, isLoading, error } = useLeaveRequestDetail(id)
@@ -31,11 +36,13 @@ const LeaveRequestModalShell: React.FC<Props> = ({
   return (
     <div className="modal-form">
       {onBack && (
-        <button className="modal-back" onClick={onBack} aria-label="Go back">
+        <button className="modal-back" onClick={onBack} aria-label={t.goBack}>
           ‹
         </button>
       )}
-      <h2>{heading ?? `${request?.type ?? selectedRequest?.type ?? 'Vacation'} leave`}</h2>
+      <h2>
+        {heading ?? `${request?.type ?? selectedRequest?.type ?? 'Vacation'} ${t.leaveSuffix}`}
+      </h2>
 
       <LeaveRequestLoadState isLoading={isLoading} error={error} loaded={!!request} />
 

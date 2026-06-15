@@ -15,6 +15,8 @@ import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useDeleteDepartment } from '../hooks/useDepartmentMutations'
 import { useDeleteEmployee } from '../hooks/useEmployeeMutations'
 import { useCancelLeaveRequest, useDeleteLeaveRequest } from '../hooks/useLeaveRequestMutations'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 // Context shared with child pages via <Outlet>. Pages pull `openModal` from here
 // instead of receiving it as a prop, so the modal state can live in one place.
@@ -29,6 +31,9 @@ const AppLayout: React.FC = () => {
   const { currentUser, isBootstrapping, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  const { language } = useLanguage()
+  const t = translations[language].appLayout
 
   const [activeModal, setActiveModal] = useState<ModalType>(null)
   // The modal a back button should return to, set when one modal opens another.
@@ -73,7 +78,7 @@ const AppLayout: React.FC = () => {
     return (
       <div className="dashboard-layout">
         <main className="main-content-area">
-          <p className="muted">Loading…</p>
+          <p className="muted">{t.loading}</p>
         </main>
       </div>
     )
@@ -145,9 +150,7 @@ const AppLayout: React.FC = () => {
               },
               onError: () => {
                 setConfirmError(
-                  dept.admins.length > 0
-                    ? 'This department still has administrators attached to it. Unassign all administrators before deleting.'
-                    : 'This department still has employees assigned to it. Unassign all employees before deleting.'
+                  dept.admins.length > 0 ? t.errAdminsAttached : t.errEmployeesAttached
                 )
               }
             })

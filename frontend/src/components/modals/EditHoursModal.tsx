@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
+import React from 'react'
 import type { Employee, LoggedHours } from '../../types'
 import { useDeleteLoggedHours, useUpdateLoggedHours } from '../../hooks/useLoggedHoursMutations'
 import TimeRangeFields from './TimeRangeFields'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   closeModal: () => void

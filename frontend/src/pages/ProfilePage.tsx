@@ -12,6 +12,9 @@ import { describeActiveLeave } from '../utils/activeLeave'
 import { isoToDisplayDate } from '../utils/date'
 import { buildLoggedHoursDays, formatDuration, formatInterval } from '../utils/loggedHours'
 import blackTriangleIcon from '../assets/black_triangle.png'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
+import { useWeekdayLabels } from '../hooks/useWeekdayLabels'
 import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useTheme } from '../hooks/useTheme'
 
@@ -44,6 +47,9 @@ const ProfilePage: React.FC = () => {
   const { userId } = useParams()
   const isMyProfile = userId == null
   const { currentUser, isOwner } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].profilePage
+  const weekdayLabels = useWeekdayLabels()
   // The owner's own profile is a stripped-down view: no department/admin/status
   // banner details and no working-hours/logged-hours tables (none apply to them).
   const isOwnerPersonal = isMyProfile && isOwner
@@ -124,11 +130,11 @@ const ProfilePage: React.FC = () => {
           />
         </button>
         {employeeId == null ? (
-          <p className="form-error">This profile does not exist.</p>
+          <p className="form-error">{t.doesNotExist}</p>
         ) : isLoading ? (
-          <p className="muted">Loading profile…</p>
+          <p className="muted">{t.loading}</p>
         ) : (
-          <p className="form-error">{error?.message ?? 'Failed to load employee details.'}</p>
+          <p className="form-error">{error?.message ?? t.failedLoad}</p>
         )}
       </div>
     )
@@ -143,10 +149,10 @@ const ProfilePage: React.FC = () => {
         />
       </button>
       <header className="page-header profile-header">
-        <h2>{isMyProfile ? 'My Profile' : 'User Profile'}</h2>
+        <h2>{isMyProfile ? t.myProfile : t.userProfile}</h2>
         {isMyProfile && (
           <button className="btn-logout-pill" onClick={() => openModal('LOGOUT')}>
-            log out
+            {t.logOut}
           </button>
         )}
       </header>
@@ -161,7 +167,7 @@ const ProfilePage: React.FC = () => {
               {/* Department only applies to employees; admin-only users have none. */}
               {!isOwnerPersonal && employeeProfile && (
                 <div className="banner-stacked-detail">
-                  <label>Department:</label>
+                  <label>{t.departmentLabel}</label>
                   <span>{employeeProfile.departmentName ?? 'None'}</span>
                 </div>
               )}
@@ -169,7 +175,7 @@ const ProfilePage: React.FC = () => {
               {/* "Administrator of" only shown when the user actually administers a department. */}
               {!isOwnerPersonal && adminDepartmentIds.length > 0 && (
                 <div className="banner-stacked-detail">
-                  <label>Administrator of:</label>
+                  <label>{t.adminOfLabel}</label>
                   <span>{adminDepartmentNames.join(', ')}</span>
                 </div>
               )}
@@ -195,12 +201,19 @@ const ProfilePage: React.FC = () => {
           </div>
 
           <div className="banner-center-action">
-            {!isMyProfile && (
+            {isMyProfile ? (
+              <button
+                className="btn-change-password"
+                onClick={() => openModal('CHANGE_PASSWORD_FORM')}
+              >
+                {t.changePassword}
+              </button>
+            ) : (
               <button
                 className="btn-change-password"
                 onClick={() => openModal('EDIT_EMPLOYEE', employee as Employee)}
               >
-                Edit profile
+                {t.editProfile}
               </button>
             )}
           </div>
@@ -208,9 +221,9 @@ const ProfilePage: React.FC = () => {
 
         {employeeProfile && (
           <div className="vacation-widget">
-            <h4>Vacation balance</h4>
+            <h4>{t.vacationBalance}</h4>
             <div className="balance-badge-card">
-              Vacations day left: {employeeProfile.yearlyVacationBalance}
+              {t.daysLeft} {employeeProfile.yearlyVacationBalance}
             </div>
           </div>
         )}
@@ -230,7 +243,7 @@ const ProfilePage: React.FC = () => {
               gap: '8px'
             }}
           >
-            Default working hours
+            {t.defaultWorkingHours}
             <img
               src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
               alt="Toggle working hours"
@@ -243,22 +256,27 @@ const ProfilePage: React.FC = () => {
               <div className="card-box working-hours-grid">
                 {MOCK_DEFAULT_WORKING_HOURS.map((column, ci) => (
                   <div className="shifts-stack" key={ci}>
-                    {column.map((day, di) => (
-                      <React.Fragment key={day.label}>
-                        <div className={`day-label ${di > 0 ? 'day-label-margin' : ''}`}>
-                          {day.label}
-                        </div>
-                        {day.shifts.map((shift, si) => (
-                          <div className="shift-pill-row" key={si}>
-                            <span className="shift-index">{si + 1})</span>
-                            <div className="time-range-display">
-                              <span>{shift.start}</span> <span className="muted-separator">—</span>{' '}
-                              <span>{shift.end}</span>
-                            </div>
+                    {column.map((day, di) => {
+                      // Map the hardcoded English day to our translation
+                      const displayDay = weekdayLabels[day.label] || day.label
+
+                      return (
+                        <React.Fragment key={day.label}>
+                          <div className={`day-label ${di > 0 ? 'day-label-margin' : ''}`}>
+                            {displayDay}
                           </div>
-                        ))}
-                      </React.Fragment>
-                    ))}
+                          {day.shifts.map((shift, si) => (
+                            <div className="shift-pill-row" key={si}>
+                              <span className="shift-index">{si + 1})</span>
+                              <div className="time-range-display">
+                                <span>{shift.start}</span>{' '}
+                                <span className="muted-separator">—</span> <span>{shift.end}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </React.Fragment>
+                      )
+                    })}
                   </div>
                 ))}
               </div>
@@ -269,7 +287,7 @@ const ProfilePage: React.FC = () => {
                     className="primary-btn"
                     onClick={() => openModal('EDIT_WORKING_HOURS', employee as Employee)}
                   >
-                    edit working hours
+                    {t.editWorkingHours}
                   </button>
                 </div>
               )}
@@ -285,7 +303,7 @@ const ProfilePage: React.FC = () => {
             onClick={() => setLoggedExpanded(!loggedExpanded)}
             style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            Logged hours
+            {t.loggedHours}
             <img
               src={theme === 'dark' ? whiteTriangleIcon : blackTriangleIcon}
               alt="Toggle logged hours"
@@ -298,12 +316,12 @@ const ProfilePage: React.FC = () => {
               {loggedHoursError && (
                 <p className="form-error form-error-block">{loggedHoursError.message}</p>
               )}
-
-              <div className="table-header-grid logged-hours-grid">
-                <span>Date</span>
-                <span>Time interval</span>
-                <span>Duration</span>
-              </div>
+              <div className="card-box table-box">
+                <div className="table-header-grid logged-hours-grid">
+                  <span>{t.dateCol}</span>
+                  <span>{t.timeIntervalCol}</span>
+                  <span>{t.durationCol}</span>
+                </div>
 
               {/* One box per day that has logged hours; days with nothing logged
                   are not shown. On multi-interval days only the first row carries
@@ -338,7 +356,7 @@ const ProfilePage: React.FC = () => {
                     className="primary-btn"
                     onClick={() => openModal('LOG_HOURS', employee as Employee)}
                   >
-                    + log hours
+                    {t.logHours}
                   </button>
                 </div>
               )}
