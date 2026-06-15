@@ -65,6 +65,25 @@ public class DefaultHoursService {
   }
 
   /**
+   * Returns an employee's weekly default hours. An employee that has never had default hours set
+   * yields an empty schedule (no days).
+   *
+   * @param employeeId the employee whose default hours to read
+   * @param callerAdminId the user ID of the authenticated admin
+   * @return the employee's schedule, empty if none has been set
+   */
+  @Transactional(readOnly = true)
+  public DefaultWeekHoursResponse getEmployeeDefaultHours(Long employeeId, Long callerAdminId) {
+    employeeApi.requireAdminAccessToEmployee(callerAdminId, employeeId);
+
+    Long setId = employeeApi.getWeekScheduleId(employeeId);
+    if (setId == null) {
+      return new DefaultWeekHoursResponse(List.of());
+    }
+    return toDefaultWeekHours(setId);
+  }
+
+  /**
    * Validates the request and turns it into one block per day that carries an interval. The blocks
    * are detached (no set ID yet); the caller assigns the set and persists them.
    */

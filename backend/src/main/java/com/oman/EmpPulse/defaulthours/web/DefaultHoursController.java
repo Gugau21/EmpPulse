@@ -28,4 +28,13 @@ public class DefaultHoursController {
         defaultHoursService.setEmployeeDefaultHours(
             employeeId, req, AuthUtils.getUserId(authentication)));
   }
+
+  @PreAuthorize("hasAuthority('ADMIN')")
+  @GetMapping("/{employeeId}/default-hours")
+  public ResponseEntity<?> getDefaultHours(
+      @PathVariable Long employeeId, Authentication authentication) {
+    return ResponseEntity.ok(
+        defaultHoursService.getEmployeeDefaultHours(
+            employeeId, AuthUtils.getUserId(authentication)));
+  }
 }
