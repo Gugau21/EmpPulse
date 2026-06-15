@@ -349,6 +349,7 @@ const ProfilePage: React.FC = () => {
                   ))}
                 </div>
               ))}
+              </div>
 
               {!isMyProfile && (
                 <div className="center-action tight">

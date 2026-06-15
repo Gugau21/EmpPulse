@@ -3,8 +3,6 @@ import type { Employee } from '../../types'
 import { useCreateLoggedHours } from '../../hooks/useLoggedHoursMutations'
 import { todayISO } from '../../utils/date'
 import TimeRangeFields from './TimeRangeFields'
-import { useLanguage } from '../../hooks/useLanguage'
-import { translations } from '../../utils/translations'
 
 interface Props {
   closeModal: () => void
