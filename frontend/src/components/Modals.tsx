@@ -1,5 +1,12 @@
 import React from 'react'
-import type { ModalType, Employee, LeaveRequest, Department, OpenModal } from '../types'
+import type {
+  ModalType,
+  Employee,
+  LeaveRequest,
+  Department,
+  LoggedHours,
+  OpenModal
+} from '../types'
 import ConfirmModal from './modals/ConfirmModal'
 import AddEmployeeModal from './modals/AddEmployeeModal'
 import EditAdminsModal from './modals/EditAdminsModal'
@@ -11,9 +18,12 @@ import EditDepartmentModal from './modals/EditDepartmentModal'
 import AddDefaultWorkingHoursModal from './modals/AddDefaultWorkingHoursModal'
 import EditEmployeeModal from './modals/EditEmployeeModal'
 import EditHoursModal from './modals/EditHoursModal'
+import AddBonusVacationDaysModal from './modals/AddBonusVacationDaysModal'
 import EditLeaveModal from './modals/EditLeaveModal'
 import ViewLeaveModal from './modals/ViewLeaveModal'
 import ChangePasswordFormModal from './modals/ChangePasswordModal'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 interface Props {
   activeModal: ModalType
@@ -23,6 +33,7 @@ interface Props {
   confirmModal: () => void
   selectedEmployee: Employee | null
   selectedRequest: LeaveRequest | null
+  selectedLoggedHours: LoggedHours | null
   selectedDepartment: Department | null
   departments: Department[]
   confirmError?: string | null
@@ -45,12 +56,16 @@ const Modals: React.FC<Props> = ({
   confirmModal,
   selectedEmployee,
   selectedRequest,
+  selectedLoggedHours,
   selectedDepartment,
   departments,
   confirmError,
   onConfirmErrorClear,
   openModal
 }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   if (!activeModal) return null
 
   const closeOnOverlayClick = CONFIRM_MODALS.includes(activeModal)
@@ -75,11 +90,11 @@ const Modals: React.FC<Props> = ({
         {activeModal === 'ADD_EMPLOYEE' &&
           (departments.length === 0 ? (
             <div className="modal-form">
-              <h2>Employee can't be added</h2>
-              <p>No departments were created. Create a department first.</p>
+              <h2>{t.cantAddEmployee}</h2>
+              <p>{t.noDeptsCreated}</p>
               <div className="modal-actions">
                 <button className="btn-modal-action" onClick={closeModal}>
-                  OK
+                  {t.ok}
                 </button>
               </div>
             </div>
@@ -149,7 +164,15 @@ const Modals: React.FC<Props> = ({
         )}
 
         {activeModal === 'EDIT_LOGGED_HOURS' && (
-          <EditHoursModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
+          <EditHoursModal
+            closeModal={closeModal}
+            selectedEmployee={selectedEmployee}
+            selectedLoggedHours={selectedLoggedHours}
+          />
+        )}
+
+        {activeModal === 'ADD_BONUS_DAYS' && (
+          <AddBonusVacationDaysModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
         )}
 
         {activeModal === 'CHANGE_PASSWORD_FORM' && (

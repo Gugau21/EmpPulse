@@ -1,4 +1,6 @@
 import React from 'react'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   isLoading: boolean
@@ -11,9 +13,12 @@ interface Props {
 // The shared loading / error / not-found block for the view and edit leave modals.
 // Renders nothing once the request has loaded — the parent renders the body then.
 const LeaveRequestLoadState: React.FC<Props> = ({ isLoading, error, loaded }) => {
-  if (isLoading) return <p>Loading request…</p>
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
+  if (isLoading) return <p>{t.loadingRequest}</p>
   if (error) return <p className="form-error">{error.message}</p>
-  if (!loaded) return <p className="form-error">This leave request could not be loaded.</p>
+  if (!loaded) return <p className="form-error">{t.errLoadRequest}</p>
   return null
 }
 

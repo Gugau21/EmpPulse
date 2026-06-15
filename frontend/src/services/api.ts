@@ -4,7 +4,8 @@ import type {
   Department,
   DepartmentAdmin,
   Employee,
-  LeaveRequest
+  LeaveRequest,
+  LoggedHours
 } from '../types'
 import { isoToDisplayDate } from '../utils/date'
 import { describeActiveLeave } from '../utils/activeLeave'
@@ -179,6 +180,22 @@ export interface UserUpdatePayload {
   adminDepartmentIds?: number[]
 }
 
+// GET /api/users/{userId}/bonus-vacation-days response (BonusVacationDaysResponse
+// in the API contract). `year` is the current year the server resolved the bonus
+// for; `days` is 0 when no bonus has been granted for that year.
+export interface BonusVacationDaysResponse {
+  year: number
+  days: number
+}
+
+// PATCH /api/users/{userId}/bonus-vacation-days body (BonusVacationDayRequest).
+// Both fields are required server-side; days must be >= 0. Setting days to 0
+// clears the bonus for that year.
+export interface BonusVacationDayPayload {
+  year: number
+  days: number
+}
+
 export const userService = {
   create: async (payload: UserCreatePayload): Promise<void> => {
     await apiRequest('/api/users', {
@@ -214,6 +231,34 @@ export const userService = {
         403: 'You do not have permission to change these fields.',
         409: 'A user with this email already exists.'
       }
+    })
+  },
+
+  // GET /api/users/{userId}/bonus-vacation-days (ADMIN for employees in a
+  // department they oversee) — the bonus days granted for the current year.
+  getBonusVacationDays: async (
+    userId: number,
+    signal?: AbortSignal
+  ): Promise<BonusVacationDaysResponse> => {
+    const res = await apiRequest(`/api/users/${userId}/bonus-vacation-days`, {
+      signal,
+      errorFallback: 'Failed to load bonus vacation days.',
+      errorOverrides: { 403: 'You do not have access to this employee.' }
+    })
+    return (await res.json()) as BonusVacationDaysResponse
+  },
+
+  // PATCH /api/users/{userId}/bonus-vacation-days (ADMIN for employees in a
+  // department they oversee) — set the bonus days for the given year (0 clears it).
+  updateBonusVacationDays: async (
+    userId: number,
+    payload: BonusVacationDayPayload
+  ): Promise<void> => {
+    await apiRequest(`/api/users/${userId}/bonus-vacation-days`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to update bonus vacation days.',
+      errorOverrides: { 403: 'You do not have access to this employee.' }
     })
   }
 }
@@ -519,6 +564,89 @@ export const adminService = {
     const res = await apiRequest('/api/admins', { errorFallback: 'Failed to load admins.' })
     const data = await res.json()
     return (data.items ?? []) as DepartmentAdmin[]
+  }
+}
+
+// Raw item from GET /api/employees/{id}/logged-hours (LoggedHoursResponse). Times
+// arrive as "HH:mm:ss"; the UI drops the seconds. date stays ISO yyyy-mm-dd so
+// callers can group and sort by it as plain strings.
+interface LoggedHoursDto {
+  id: number
+  employeeId: number
+  adminId: number
+  date: string
+  startTime: string
+  endTime: string
+}
+
+// POST/PATCH body. Both endpoints take the same fields; dates are ISO yyyy-mm-dd
+// and times "HH:mm" (Spring's LocalTime parses the seconds-less ISO form).
+export interface LoggedHoursPayload {
+  date: string
+  startTime: string
+  endTime: string
+}
+
+function mapLoggedHours(dto: LoggedHoursDto): LoggedHours {
+  return {
+    id: dto.id,
+    date: dto.date,
+    startTime: dto.startTime.slice(0, 5),
+    endTime: dto.endTime.slice(0, 5)
+  }
+}
+
+export const loggedHoursService = {
+  // GET /api/employees/{employeeId}/logged-hours — every logged interval for the
+  // employee (the employee themselves, or an admin overseeing them). The server
+  // sorts date/startTime descending; the UI regroups the flat rows by day.
+  list: async (employeeId: number, signal?: AbortSignal): Promise<LoggedHours[]> => {
+    const res = await apiRequest(`/api/employees/${employeeId}/logged-hours`, {
+      signal,
+      errorFallback: 'Failed to load logged hours.'
+    })
+    const data = await res.json()
+    const items = (data.items ?? []) as LoggedHoursDto[]
+    return items.map(mapLoggedHours)
+  },
+
+  // POST /api/employees/{employeeId}/logged-hours (admin only) — logs a single-day
+  // interval. The server merges it with any overlapping/adjacent interval on the
+  // same day, so callers must refetch rather than assume the input was stored as-is.
+  create: async (employeeId: number, payload: LoggedHoursPayload): Promise<void> => {
+    await apiRequest(`/api/employees/${employeeId}/logged-hours`, {
+      method: 'POST',
+      body: payload,
+      errorFallback: 'Failed to log hours.',
+      errorOverrides: {
+        400: 'Enter a valid interval: start before end, and not in the future.'
+      }
+    })
+  },
+
+  // PATCH /api/employees/{employeeId}/logged-hours/{loggedHoursId} (admin only) —
+  // updates an interval's times (its day stays fixed); same merge behaviour as create.
+  update: async (
+    employeeId: number,
+    loggedHoursId: number,
+    payload: LoggedHoursPayload
+  ): Promise<void> => {
+    await apiRequest(`/api/employees/${employeeId}/logged-hours/${loggedHoursId}`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to update logged hours.',
+      errorOverrides: {
+        400: 'Enter a valid interval: start before end, and not in the future.'
+      }
+    })
+  },
+
+  // DELETE /api/employees/{employeeId}/logged-hours/{loggedHoursId} (admin only).
+  delete: async (employeeId: number, loggedHoursId: number): Promise<void> => {
+    await apiRequest(`/api/employees/${employeeId}/logged-hours/${loggedHoursId}`, {
+      method: 'DELETE',
+      errorFallback: 'Failed to delete logged hours.'
+    })
   }
 }
 

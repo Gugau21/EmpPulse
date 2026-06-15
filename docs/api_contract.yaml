@@ -68,7 +68,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/auth/password/forgot:
+  /api/auth/password/forgot: TODO
     post:
       tags:
         - Auth
@@ -89,7 +89,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/auth/password/reset:
+  /api/auth/password/reset: TODO
     post:
       tags:
         - Auth
@@ -149,7 +149,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/me/preferences:
+  /api/me/preferences: TODO
     patch:
       tags:
         - Preferences
@@ -426,7 +426,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/departments/{departmentId}/default-hours:
+  /api/departments/{departmentId}/default-hours: TODO
     get:
       tags:
         - DefaultHours
@@ -513,7 +513,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/default-hours:
+  /api/employees/{employeeId}/default-hours: TODO
     get:
       tags:
         - DefaultHours
@@ -573,7 +573,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/logged-hours:
+  /api/employees/{employeeId}/logged-hours: TODO
     get:
       tags:
         - LoggedHours
@@ -645,7 +645,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/logged-hours/{loggedHoursId}:
+  /api/employees/{employeeId}/logged-hours/{loggedHoursId}: TODO
     patch:
       tags:
         - LoggedHours

@@ -5,6 +5,8 @@ import { useAuth } from '../../context/useAuth'
 import { useUserDetail } from '../../hooks/useUserDetail'
 import { useUpdateLeaveRequest, useModifyLeaveRequest } from '../../hooks/useLeaveRequestMutations'
 import LeaveTypeSelects from './LeaveTypeSelects'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 import LeaveRequestModalShell from './LeaveRequestModalShell'
 
 interface Props {
@@ -30,10 +32,13 @@ const formatDate = (dateStr?: string) => {
 // current state. The form itself is a child that mounts only once the request has
 // loaded, so its initial state seeds cleanly from the fetched values.
 const EditLeaveModal: React.FC<Props> = ({ closeModal, selectedRequest, onBack }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   return (
     <LeaveRequestModalShell
       selectedRequest={selectedRequest}
-      heading="Edit request"
+      heading={t.editRequestTitle}
       onBack={onBack}
     >
       {request => <EditLeaveForm request={request} closeModal={closeModal} onBack={onBack} />}
@@ -48,6 +53,9 @@ interface FormProps {
 }
 
 const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   const [startStr, endStr] = request.dateRange?.split(' - ') ?? []
 
   const [paymentType, setPaymentType] = useState(request.paid ? 'Paid' : 'Unpaid')
@@ -75,8 +83,8 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
     !isMine && (isOwner || isAdmin) ? requestEmployeeId : null
   )
   const vacationDaysLeft = isMine
-    ? currentUser?.employeeProfile?.yearlyVacationBalance
-    : requestEmployee?.employeeProfile?.yearlyVacationBalance
+    ? currentUser?.employeeProfile?.vacationBalance
+    : requestEmployee?.employeeProfile?.vacationBalance
 
   // An employee can't edit their own APPROVED request in place — the server only
   // accepts that as a modification request an admin then reviews. Pending requests,
@@ -87,16 +95,16 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
   const handleSubmit = () => {
     setValidationError(null)
     if (!from || !till) {
-      setValidationError('Both dates are required.')
+      setValidationError(t.errDatesRequired)
       return
     }
     // ISO yyyy-mm-dd strings compare correctly as plain strings.
     if (from > till) {
-      setValidationError('The "From" date must not be after the "Till" date.')
+      setValidationError(t.errFromAfterTill)
       return
     }
     if (leaveType === 'Personal' && !reason.trim()) {
-      setValidationError('A reason is required for personal leave.')
+      setValidationError(t.errReasonRequired)
       return
     }
     const vars = {
@@ -125,24 +133,24 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
         <div className="balance-hint">
           {vacationDaysLeft != null
             ? isMine
-              ? `You have ${vacationDaysLeft} vacation days left`
-              : `${request.employeeName} has ${vacationDaysLeft} vacation days left`
-            : 'Vacation balance unavailable'}
+              ? `${t.youHave}${vacationDaysLeft}${t.daysLeft}`
+              : `${request.employeeName}${t.has}${vacationDaysLeft}${t.daysLeft}`
+            : t.vacationBalanceUnavailable}
         </div>
       )}
 
       <label>
-        From
+        {t.fromLabel}
         <input type="date" value={from} onChange={e => setFrom(e.target.value)} />
       </label>
 
       <label>
-        Till
+        {t.tillLabel}
         <input type="date" value={till} onChange={e => setTill(e.target.value)} />
       </label>
 
       <label>
-        Reason
+        {t.reason}
         <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)}></textarea>
       </label>
 
@@ -150,22 +158,14 @@ const EditLeaveForm: React.FC<FormProps> = ({ request, closeModal, onBack }) => 
         <p className="form-error">{validationError ?? activeMutation.error?.message}</p>
       )}
 
-      {isModification && (
-        <div className="balance-hint">
-          Editing an approved request submits the change for admin approval.
-        </div>
-      )}
+      {isModification && <div className="balance-hint">{t.modificationHint}</div>}
 
       <button
         className="primary-btn full-width"
         onClick={handleSubmit}
         disabled={activeMutation.isPending}
       >
-        {isModification
-          ? 'request change'
-          : onBack
-            ? 'edit and auto approve request'
-            : 'edit request'}
+        {isModification ? t.requestChange : onBack ? t.editAutoApproveBtn : t.editRequest}
       </button>
     </>
   )

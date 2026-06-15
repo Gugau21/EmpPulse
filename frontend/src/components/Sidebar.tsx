@@ -2,6 +2,11 @@ import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/useAuth'
 import { landingPath } from '../utils/guards'
+import UKflag from '../assets/uk_icon.png'
+import UkranianFlag from '../assets/ukraine_icon.png'
+import profileIcon from '../assets/profile_icon.png'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 import moonIcon from '../assets/moon_icon.png'
 import sunIcon from '../assets/sun_icon.png'
 import { useTheme } from '../hooks/useTheme'
@@ -11,6 +16,8 @@ const navItemClass = ({ isActive }: { isActive: boolean }) => `nav-item${isActiv
 const Sidebar: React.FC = () => {
   const { currentUser, isOwner, isAdmin, isEmployee } = useAuth()
   const navigate = useNavigate()
+  const { language, changeLanguage } = useLanguage()
+  const t = translations[language].sidebar
 
   const { theme, toggleTheme } = useTheme()
 
@@ -19,7 +26,7 @@ const Sidebar: React.FC = () => {
   const showDepartments = isOwner || isAdmin
   const showMyRequests = isEmployee
   const displayName = currentUser ? `${currentUser.name} ${currentUser.surname}` : ''
-  const displayRole = isOwner ? 'Owner' : isAdmin ? 'Administrator' : 'Employee'
+  const displayRole = isOwner ? t.owner : isAdmin ? t.administrator : t.employee
   const isLightMode = theme === 'light'
 
   return (
@@ -31,22 +38,22 @@ const Sidebar: React.FC = () => {
         <nav className="sidebar-nav">
           {showDepartments && (
             <NavLink to="/departments" className={navItemClass}>
-              Department list
+              {t.departmentList}
             </NavLink>
           )}
           {showEmployees && (
             <NavLink to="/employees" className={navItemClass}>
-              Employees
+              {t.employees}
             </NavLink>
           )}
           {showRequestMgr && (
             <NavLink to="/request-manager" className={navItemClass}>
-              Request manager
+              {t.requestManager}
             </NavLink>
           )}
           {showMyRequests && (
             <NavLink to="/my-requests" className={navItemClass}>
-              My requests
+              {t.myRequests}
             </NavLink>
           )}
         </nav>
@@ -54,7 +61,9 @@ const Sidebar: React.FC = () => {
 
       <div className="sidebar-bottom">
         <div className="user-profile clickable" onClick={() => navigate('/profile')}>
-          <div className="user-avatar"></div>
+          <div className="user-avatar">
+            <img src={profileIcon} alt="Profile" width={35} height={35} />
+          </div>
           <div className="user-info">
             <span className="user-name">{displayName}</span>
             {isOwner && <span className="user-role">{displayRole}</span>}
@@ -76,8 +85,18 @@ const Sidebar: React.FC = () => {
             </div>
           </div>
           <div className="lang-toggles">
-            <span className="lang-icon">🇬🇧</span>
-            <span className="lang-icon is-dimmed">🇺🇦</span>
+            <span
+              className={`lang-icon ${language === 'uk' ? 'is-dimmed' : ''}`}
+              onClick={() => changeLanguage('en')}
+            >
+              <img src={UKflag} alt="English" width={27} height={27} />
+            </span>
+            <span
+              className={`lang-icon ${language === 'en' ? 'is-dimmed' : ''}`}
+              onClick={() => changeLanguage('uk')}
+            >
+              <img src={UkranianFlag} alt="Ukrainian" width={27} height={27} />
+            </span>
           </div>
         </div>
       </div>

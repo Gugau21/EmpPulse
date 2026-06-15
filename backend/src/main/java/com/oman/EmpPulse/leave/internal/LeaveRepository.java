@@ -96,4 +96,32 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
       nativeQuery = true)
   List<Leave> findActiveApprovedByEmployeeIds(
       @Param("employeeIds") Collection<Long> employeeIds, @Param("today") LocalDate today);
+
+  /**
+   * Finds the employee's active (pending or approved) Vacation leaves whose date range overlaps
+   * [yearStart, yearEnd], for counting used vacation days.
+   *
+   * <p>A pending modification request overrides the original it targets: the modification (with its
+   * new dates) is counted, while its parent is excluded. So this excludes any leave that currently
+   * has a live (pending or approved) modification pointing at it.
+   */
+  @Query(
+      value =
+          """
+          select l.* from leave l
+          where l.employee_id = :employeeId
+            and l.type = 'vacation'
+            and l.status in ('pending', 'approved')
+            and l.start_date <= :yearEnd
+            and l.end_date >= :yearStart
+            and not exists (
+                select 1 from leave m
+                where m.modification_id = l.id
+                  and m.status in ('pending', 'approved'))
+          """,
+      nativeQuery = true)
+  List<Leave> findActiveVacationLeavesOverlapping(
+      @Param("employeeId") Long employeeId,
+      @Param("yearStart") LocalDate yearStart,
+      @Param("yearEnd") LocalDate yearEnd);
 }

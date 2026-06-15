@@ -8,9 +8,11 @@ import com.oman.EmpPulse.leave.dto.LeaveModificationRequest;
 import com.oman.EmpPulse.leave.dto.LeaveResponse;
 import com.oman.EmpPulse.leave.dto.LeaveResponseRequest;
 import com.oman.EmpPulse.leave.dto.LeaveUpdateRequest;
+import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,11 +31,17 @@ public class LeaveService implements LeaveApi {
   private final LeaveRepository leaveRepository;
   private final EmployeeApi employeeApi;
   private final AdminApi adminApi;
+  private final LoggedHoursApi loggedHoursApi;
 
-  public LeaveService(LeaveRepository leaveRepository, EmployeeApi employeeApi, AdminApi adminApi) {
+  public LeaveService(
+      LeaveRepository leaveRepository,
+      EmployeeApi employeeApi,
+      AdminApi adminApi,
+      LoggedHoursApi loggedHoursApi) {
     this.leaveRepository = leaveRepository;
     this.employeeApi = employeeApi;
     this.adminApi = adminApi;
+    this.loggedHoursApi = loggedHoursApi;
   }
 
   @Override
@@ -70,6 +78,32 @@ public class LeaveService implements LeaveApi {
 
   private ActiveLeaveResponse toActiveLeaveResponse(Leave leave) {
     return new ActiveLeaveResponse(leave.getType(), leave.getStartDate(), leave.getEndDate());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public int countUsedVacationDays(Long employeeId, int year) {
+    LocalDate yearStart = LocalDate.of(year, 1, 1);
+    LocalDate yearEnd = LocalDate.of(year, 12, 31);
+    int total = 0;
+    for (Leave leave :
+        leaveRepository.findActiveVacationLeavesOverlapping(employeeId, yearStart, yearEnd)) {
+      LocalDate from = leave.getStartDate().isBefore(yearStart) ? yearStart : leave.getStartDate();
+      LocalDate to = leave.getEndDate().isAfter(yearEnd) ? yearEnd : leave.getEndDate();
+      total += countWeekdays(from, to);
+    }
+    return total;
+  }
+
+  private static int countWeekdays(LocalDate from, LocalDate to) {
+    int weekdays = 0;
+    for (LocalDate day = from; !day.isAfter(to); day = day.plusDays(1)) {
+      DayOfWeek dow = day.getDayOfWeek();
+      if (dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY) {
+        weekdays++;
+      }
+    }
+    return weekdays;
   }
 
   /**
@@ -130,6 +164,7 @@ public class LeaveService implements LeaveApi {
                 req.getReason(),
                 adminReviewerId,
                 req.getAdminComment()));
+    clearLoggedHoursIfUnpaidApproved(leave);
     return toLeaveResponse(leave, employee);
   }
 
@@ -242,7 +277,9 @@ public class LeaveService implements LeaveApi {
             : List.of(leave.getId());
     validateLeaveUpdate(fields, leave.getEmployeeId(), overlapExcludeIds);
     applyLeaveUpdate(leave, fields, req.getAdminComment(), adminOversees, callerId);
-    return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
+    Leave saved = leaveRepository.saveAndFlush(leave);
+    clearLoggedHoursIfUnpaidApproved(saved);
+    return toLeaveResponse(saved, employee);
   }
 
   /**
@@ -285,7 +322,9 @@ public class LeaveService implements LeaveApi {
     if (req.getAdminComment() != null) {
       leave.setAdminComment(req.getAdminComment());
     }
-    return toLeaveResponse(leaveRepository.saveAndFlush(leave), employee);
+    Leave saved = leaveRepository.saveAndFlush(leave);
+    clearLoggedHoursIfUnpaidApproved(saved);
+    return toLeaveResponse(saved, employee);
   }
 
   /**
@@ -319,7 +358,9 @@ public class LeaveService implements LeaveApi {
       if (req.getAdminComment() != null) {
         original.setAdminComment(req.getAdminComment());
       }
-      LeaveResponse response = toLeaveResponse(leaveRepository.saveAndFlush(original), employee);
+      Leave savedOriginal = leaveRepository.saveAndFlush(original);
+      clearLoggedHoursIfUnpaidApproved(savedOriginal);
+      LeaveResponse response = toLeaveResponse(savedOriginal, employee);
       leaveRepository.delete(modification);
       return response;
     }
@@ -331,6 +372,17 @@ public class LeaveService implements LeaveApi {
     }
     modification.setModificationId(null);
     return toLeaveResponse(leaveRepository.saveAndFlush(modification), employee);
+  }
+
+  /**
+   * Deletes the employee's logged hours within the leave's date range when the leave is approved
+   * and unpaid. Called wherever a leave reaches its final approved state.
+   */
+  private void clearLoggedHoursIfUnpaidApproved(Leave leave) {
+    if (leave.getStatus() == LeaveStatus.approved && !leave.isPaid()) {
+      loggedHoursApi.deleteByEmployeeAndDateRange(
+          leave.getEmployeeId(), leave.getStartDate(), leave.getEndDate());
+    }
   }
 
   /**
