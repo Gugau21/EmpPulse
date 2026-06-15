@@ -119,8 +119,28 @@ public class DefaultHoursService {
   @Transactional(readOnly = true)
   public DefaultWeekHoursResponse getEmployeeDefaultHours(Long employeeId, Long callerAdminId) {
     employeeApi.requireAdminAccessToEmployee(callerAdminId, employeeId);
+    return readSchedule(employeeApi.getWeekScheduleId(employeeId));
+  }
 
-    Long setId = employeeApi.getWeekScheduleId(employeeId);
+  /**
+   * Returns a department's weekly default hours. A department that has never had default hours set
+   * yields an empty schedule (no days).
+   *
+   * @param departmentId the department whose default hours to read
+   * @param callerAdminId the user ID of the authenticated admin
+   * @return the department's schedule, empty if none has been set
+   */
+  @Transactional(readOnly = true)
+  public DefaultWeekHoursResponse getDepartmentDefaultHours(Long departmentId, Long callerAdminId) {
+    departmentApi.requireAdminAccessToDepartment(callerAdminId, departmentId);
+    return readSchedule(departmentApi.getWeekScheduleId(departmentId));
+  }
+
+  /**
+   * Builds the response for the given week schedule. A null set ID (owner has never had default
+   * hours set) yields an empty schedule.
+   */
+  private DefaultWeekHoursResponse readSchedule(Long setId) {
     if (setId == null) {
       return new DefaultWeekHoursResponse(List.of());
     }
