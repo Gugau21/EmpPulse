@@ -12,6 +12,7 @@ import com.oman.EmpPulse.user.api.UserCredential;
 import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.api.UserResponse;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
+import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.time.LocalDate;
@@ -268,6 +269,21 @@ public class UserService implements UserApi {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Name, surname, email and password are required");
     }
+  }
+
+  @Transactional(readOnly = true)
+  public BonusVacationDaysResponse getBonusVacationDaysForEmployee(Long userId, Long callerId) {
+    Employee employee = requireActiveEmployee(userId);
+    verifyAdminOverseesDepartment(callerId, employee.getDepartmentId());
+
+    int year = LocalDate.now().getYear();
+    int days =
+        bonusVacationDaysRepository
+            .findByEmployeeIdAndYear(employee.getId(), year)
+            .map(BonusVacationDays::getDays)
+            .orElse(0);
+
+    return new BonusVacationDaysResponse(year, days);
   }
 
   @Transactional
