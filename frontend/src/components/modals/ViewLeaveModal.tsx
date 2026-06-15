@@ -1,5 +1,7 @@
 import React from 'react'
 import type { LeaveRequest } from '../../types'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 import LeaveRequestModalShell from './LeaveRequestModalShell'
 
 interface Props {
@@ -12,6 +14,9 @@ interface Props {
 // Opened when a request can no longer be acted on (cancelled or rejected), so the
 // person can inspect it but not change it.
 const ViewLeaveModal: React.FC<Props> = ({ selectedRequest }) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
+
   return (
     <LeaveRequestModalShell selectedRequest={selectedRequest}>
       {request => {
@@ -21,11 +26,18 @@ const ViewLeaveModal: React.FC<Props> = ({ selectedRequest }) => {
         return (
           <div className="request-summary-box">
             <h3>{request.employeeName}</h3>
-            <p>From: {from}</p>
-            <p>Till: {till}</p>
-            <p>Payment: {request.paid ? 'Paid' : 'Unpaid'}</p>
+            <p>
+              {t.from} {from}
+            </p>
+            <p>
+              {t.till} {till}
+            </p>
+            <p>
+              {t.payment} {request.paid ? t.paid : t.unpaid}
+            </p>
             <label>
-              Reason<div className="reason-box">{request.reason?.trim() || '—'}</div>
+              {t.reason}
+              <div className="reason-box">{request.reason?.trim() || t.emptyReason}</div>
             </label>
           </div>
         )

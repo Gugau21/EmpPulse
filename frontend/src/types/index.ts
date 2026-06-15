@@ -90,6 +90,15 @@ export interface MeUser {
   adminProfile: { id: number; departmentIds: number[] } | null
 }
 
+// A single logged working interval on the profile's "Logged hours" table. `date`
+// is ISO yyyy-mm-dd (grouped/sorted as a plain string); times are "HH:mm".
+export interface LoggedHours {
+  id: number
+  date: string
+  startTime: string
+  endTime: string
+}
+
 // --- App State Types ---
 export type ModalType =
   | null
@@ -131,5 +140,7 @@ export type OpenModal = (
   modal: ModalType,
   payload?: ModalPayload,
   requestObj?: LeaveRequest,
-  returnTo?: ModalType
+  returnTo?: ModalType,
+  // The logged-hours interval an EDIT_LOGGED_HOURS modal should edit.
+  loggedHours?: LoggedHours
 ) => void

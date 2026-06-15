@@ -1,5 +1,7 @@
 import React from 'react'
 import type { LeaveRequest } from '../../types'
+import { useLanguage } from '../../hooks/useLanguage'
+import { translations } from '../../utils/translations'
 
 interface Props {
   paymentType: string
@@ -16,28 +18,34 @@ const LeaveTypeSelects: React.FC<Props> = ({
   onPaymentTypeChange,
   leaveType,
   onLeaveTypeChange
-}) => (
-  <>
-    <label>
-      Type of leave (by payment)
-      <select value={paymentType} onChange={e => onPaymentTypeChange(e.target.value)}>
-        <option value="Paid">Paid</option>
-        <option value="Unpaid">Unpaid</option>
-      </select>
-    </label>
+}) => {
+  const { language } = useLanguage()
+  const t = translations[language].modals
 
-    <label>
-      Type of leave
-      <select
-        value={leaveType}
-        onChange={e => onLeaveTypeChange(e.target.value as LeaveRequest['type'])}
-      >
-        <option value="Vacation">Vacation</option>
-        <option value="Sick">Sick</option>
-        <option value="Personal">Personal</option>
-      </select>
-    </label>
-  </>
-)
+  return (
+    <>
+      <label>
+        {t.typeOfLeaveByPayment}
+        <select value={paymentType} onChange={e => onPaymentTypeChange(e.target.value)}>
+          {/* Values must remain exact strings for backend state mapping */}
+          <option value="Paid">{t.paid}</option>
+          <option value="Unpaid">{t.unpaid}</option>
+        </select>
+      </label>
+
+      <label>
+        {t.typeOfLeave}
+        <select
+          value={leaveType}
+          onChange={e => onLeaveTypeChange(e.target.value as LeaveRequest['type'])}
+        >
+          <option value="Vacation">{t.optVacation}</option>
+          <option value="Sick">{t.optSick}</option>
+          <option value="Personal">{t.optPersonal}</option>
+        </select>
+      </label>
+    </>
+  )
+}
 
 export default LeaveTypeSelects

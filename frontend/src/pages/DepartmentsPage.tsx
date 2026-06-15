@@ -5,13 +5,18 @@ import trashIconLight from '../assets/bin_icon_light.png'
 import type { OutletContext } from '../components/AppLayout'
 import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 import { useTheme } from '../hooks/useTheme'
+import PageHeader from '../components/PageHeader'
 
 const DepartmentsScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
   const navigate = useNavigate()
   const { theme } = useTheme()
   const { currentUser, isOwner } = useAuth()
+  const { language } = useLanguage()
+  const t = translations[language].departmentsPage
   const departmentsQuery = useDepartmentsList()
   const departments = departmentsQuery.data ?? []
   const loading = departmentsQuery.isLoading
@@ -28,26 +33,19 @@ const DepartmentsScreen: React.FC = () => {
 
   return (
     <div className="screen-container">
-      <header className="page-header">
-        <h2>Departments</h2>
-        <div className="header-actions">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              maxLength={100}
-            />
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={t.title}
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder={t.searchPlaceholder}
+        searchMaxLength={100}
+      />
 
       {(loading || filteredDepartments.length > 0) && (
         <div className="card-box list-box">
           {loading && (
             <div className="employee-row">
-              <span className="emp-name">Loading departments…</span>
+              <span className="emp-name">{t.loading}</span>
             </div>
           )}
           {!loading &&
@@ -68,7 +66,7 @@ const DepartmentsScreen: React.FC = () => {
                       e.stopPropagation()
                       openModal('DELETE_DEPARTMENT', dept)
                     }}
-                    title="Delete Department"
+                    title={t.deleteTitle}
                   >
                     <img
                       src={theme === 'dark' ? trashIconLight : trashIcon}
@@ -86,7 +84,7 @@ const DepartmentsScreen: React.FC = () => {
       {isOwner && (
         <div className="center-action">
           <button className="primary-btn" onClick={() => openModal('ADD_DEPARTMENT')}>
-            + add department
+            {t.addDepartment}
           </button>
         </div>
       )}

@@ -2,12 +2,21 @@ import React, { useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Modals from './Modals'
-import type { ModalType, Employee, LeaveRequest, Department, OpenModal } from '../types'
+import type {
+  ModalType,
+  Employee,
+  LeaveRequest,
+  Department,
+  LoggedHours,
+  OpenModal
+} from '../types'
 import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useDeleteDepartment } from '../hooks/useDepartmentMutations'
 import { useDeleteEmployee } from '../hooks/useEmployeeMutations'
 import { useCancelLeaveRequest, useDeleteLeaveRequest } from '../hooks/useLeaveRequestMutations'
+import { useLanguage } from '../hooks/useLanguage'
+import { translations } from '../utils/translations'
 
 // Context shared with child pages via <Outlet>. Pages pull `openModal` from here
 // instead of receiving it as a prop, so the modal state can live in one place.
@@ -23,11 +32,16 @@ const AppLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
 
+  const { language } = useLanguage()
+  const t = translations[language].appLayout
+
   const [activeModal, setActiveModal] = useState<ModalType>(null)
   // The modal a back button should return to, set when one modal opens another.
   const [previousModal, setPreviousModal] = useState<ModalType>(null)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
+  // The logged-hours interval the EDIT_LOGGED_HOURS modal edits (one row's record).
+  const [selectedLoggedHours, setSelectedLoggedHours] = useState<LoggedHours | null>(null)
   // Full department object passed into modals (e.g. EditAdmins seeds from .admins).
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null)
   // Error surfaced inside the confirm modal when a confirm action fails (delete
@@ -43,7 +57,7 @@ const AppLayout: React.FC = () => {
   const deleteLeaveRequest = useDeleteLeaveRequest()
   const cancelLeaveRequest = useCancelLeaveRequest()
 
-  const openModal: OpenModal = (modal, deptOrEmp, requestObj, returnTo) => {
+  const openModal: OpenModal = (modal, deptOrEmp, requestObj, returnTo, loggedHours) => {
     if (deptOrEmp) {
       // Departments carry an `admins` array; employees don't — discriminate on it.
       if ('admins' in deptOrEmp) {
@@ -53,6 +67,7 @@ const AppLayout: React.FC = () => {
       }
     }
     if (requestObj) setSelectedRequest(requestObj)
+    if (loggedHours) setSelectedLoggedHours(loggedHours)
     setPreviousModal(returnTo ?? null)
     setActiveModal(modal)
   }
@@ -63,7 +78,7 @@ const AppLayout: React.FC = () => {
     return (
       <div className="dashboard-layout">
         <main className="main-content-area">
-          <p className="muted">Loading…</p>
+          <p className="muted">{t.loading}</p>
         </main>
       </div>
     )
@@ -135,9 +150,7 @@ const AppLayout: React.FC = () => {
               },
               onError: () => {
                 setConfirmError(
-                  dept.admins.length > 0
-                    ? 'This department still has administrators attached to it. Unassign all administrators before deleting.'
-                    : 'This department still has employees assigned to it. Unassign all employees before deleting.'
+                  dept.admins.length > 0 ? t.errAdminsAttached : t.errEmployeesAttached
                 )
               }
             })
@@ -151,6 +164,7 @@ const AppLayout: React.FC = () => {
         }}
         selectedEmployee={selectedEmployee}
         selectedRequest={selectedRequest}
+        selectedLoggedHours={selectedLoggedHours}
         selectedDepartment={selectedDepartment}
         departments={departments}
         confirmError={confirmError}

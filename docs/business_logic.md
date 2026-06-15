@@ -333,7 +333,7 @@ Due to codependency, **User** and (**Employee** or **Admin**) must be created in
     Logged work hours creation
 </h4>
 
-1. **Employee** cannot create **Logged hours** created on his behalf.
+1. **Employee** cannot create **Logged hours** on his own behalf.
 2. **Admin** can create **Logged hours** for **Employees** in **Departments** they oversee.
 3. **Logged hours** requires date, start time and end time.
 4. End time must be after start time.
