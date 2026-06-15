@@ -521,3 +521,16 @@ export const adminService = {
     return (data.items ?? []) as DepartmentAdmin[]
   }
 }
+
+export const exportService = {
+  // GET /api/export (OWNER/ADMIN) — returns a ZIP bundling the in-scope
+  // departments/employees/users as CSV files. The response is binary, so we read
+  // it as a Blob rather than JSON.
+  download: async (signal?: AbortSignal): Promise<Blob> => {
+    const res = await apiRequest('/api/export', {
+      signal,
+      errorFallback: 'Failed to export data.'
+    })
+    return res.blob()
+  }
+}
