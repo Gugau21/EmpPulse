@@ -5,6 +5,7 @@ import type { OutletContext } from '../components/AppLayout'
 import { MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
+import { useExportData } from '../hooks/useExportData'
 import { landingPath } from '../utils/guards'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import whiteTriangleIcon from '../assets/white_triangle.png'
@@ -44,6 +45,9 @@ const ProfilePage: React.FC = () => {
   const isOwnerPersonal = isMyProfile && isOwner
   const [loggedExpanded, setLoggedExpanded] = useState(true)
   const [workingHoursExpanded, setWorkingHoursExpanded] = useState(true)
+  // Data export (ZIP of departments/employees/users CSVs) is offered only on the
+  // owner's own profile, so it's wired up here rather than in a shared layout.
+  const exportData = useExportData()
 
   // Parse userId as number, but guard against NaN (e.g., /employees/not-a-number)
   const parsedId = userId ? Number(userId) : null
@@ -188,6 +192,26 @@ const ProfilePage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Owner-only: export all in-scope data as a ZIP of CSVs. */}
+      {isOwnerPersonal && (
+        <div className="center-action tight">
+          <button
+            className="primary-btn"
+            onClick={() => exportData.mutate()}
+            disabled={exportData.isPending}
+          >
+            {exportData.isPending ? 'Preparing download…' : 'Download data export'}
+          </button>
+          {exportData.isError && (
+            <p className="form-error">
+              {exportData.error instanceof Error
+                ? exportData.error.message
+                : 'Failed to export data.'}
+            </p>
+          )}
+        </div>
+      )}
 
       {!isOwnerPersonal && (
         <div className="accordion-section">
