@@ -573,7 +573,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/logged-hours: TODO
+  /api/employees/{employeeId}/logged-hours:
     get:
       tags:
         - LoggedHours
@@ -645,7 +645,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/logged-hours/{loggedHoursId}: TODO
+  /api/employees/{employeeId}/logged-hours/{loggedHoursId}:
     patch:
       tags:
         - LoggedHours

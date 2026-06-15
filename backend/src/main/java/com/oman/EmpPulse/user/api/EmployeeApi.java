@@ -33,4 +33,33 @@ public interface EmployeeApi {
    * @return a map from employee ID to summary, containing only the employees that were found
    */
   Map<Long, EmployeeSummaryResponse> findSummariesByIds(Collection<Long> employeeIds);
+
+  /**
+   * Verifies that the given admin may act on the employee and returns the employee's summary.
+   * Access is granted only when the admin oversees the employee's department.
+   *
+   * @param adminId the user ID of the admin requesting access
+   * @param employeeId the employee being accessed
+   * @return the employee's summary
+   * @throws org.springframework.web.server.ResponseStatusException 404 if the employee does not
+   *     exist, 403 if the admin does not oversee the employee's department
+   */
+  EmployeeSummaryResponse requireAdminAccessToEmployee(Long adminId, Long employeeId);
+
+  /**
+   * Returns the ID of the week schedule currently linked to the employee, or null if none is set.
+   * The caller is expected to have already verified that the employee exists.
+   *
+   * @param employeeId the employee ID
+   * @return the linked week schedule ID, or null if the employee has no schedule
+   */
+  Long getWeekScheduleId(Long employeeId);
+
+  /**
+   * Links the given week schedule to the employee.
+   *
+   * @param employeeId the employee ID
+   * @param weekScheduleId the week schedule ID to assign
+   */
+  void assignWeekSchedule(Long employeeId, Long weekScheduleId);
 }
