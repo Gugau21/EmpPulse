@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.defaulthours.internal;
 
+import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursDayRequest;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursDayResponse;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursRequest;
@@ -19,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-public class DefaultHoursService {
+public class DefaultHoursService implements DefaultHoursApi {
 
   private final WeekScheduleRepository weekScheduleRepository;
   private final ScheduleBlockRepository scheduleBlockRepository;
@@ -75,6 +76,23 @@ public class DefaultHoursService {
         departmentApi.getWeekScheduleId(departmentId),
         req,
         setId -> departmentApi.assignWeekSchedule(departmentId, setId));
+  }
+
+  @Override
+  @Transactional
+  public Long inheritDepartmentSchedule(Long departmentId) {
+    Long departmentSetId = departmentApi.getWeekScheduleId(departmentId);
+    if (departmentSetId == null) {
+      return null;
+    }
+    Long newSetId = weekScheduleRepository.save(new WeekSchedule()).getId();
+    for (ScheduleBlock block :
+        scheduleBlockRepository.findAllBySetIdOrderByDayOfWeekAsc(departmentSetId)) {
+      scheduleBlockRepository.save(
+          new ScheduleBlock(
+              newSetId, block.getDayOfWeek(), block.getStartTime(), block.getEndTime()));
+    }
+    return newSetId;
   }
 
   /**
