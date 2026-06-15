@@ -139,21 +139,26 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
       )}
 
       <div className="modal-actions">
+        {/* Default working hours only apply to employees. For an admin-only user the
+            concept is meaningless, so we show a single plain "Add user" button; once
+            the employee role is selected we offer both create-with/without-hours options. */}
         <button
           className="btn-modal-action"
           onClick={handleCreateUser}
           disabled={createUser.isPending}
         >
-          {t.addWithoutHours}
+          {isEmployeeChecked ? t.addWithoutHours : t.addUser}
         </button>
-        <button
-          className="btn-modal-action"
-          onClick={() => {
-            openModal('ADD_WORKING_HOURS')
-          }}
-        >
-          {t.addWithHours}
-        </button>
+        {isEmployeeChecked && (
+          <button
+            className="btn-modal-action"
+            onClick={() => {
+              openModal('ADD_WORKING_HOURS')
+            }}
+          >
+            {t.addWithHours}
+          </button>
+        )}
       </div>
     </div>
   )

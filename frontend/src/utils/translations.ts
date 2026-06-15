@@ -173,6 +173,7 @@ export const translations = {
         'Please select a department for the employee role before creating the user.',
       errSelectAdminDept:
         'Please select at least one department for the administrator role before creating the user.',
+      addUser: '+ add user',
       addWithoutHours: '+ add without default working hours',
       addWithHours: '+ add default working hours',
       addRequest: 'Add request',
@@ -423,6 +424,7 @@ export const translations = {
         'Будь ласка, виберіть відділ для ролі робітника перед створенням користувача.',
       errSelectAdminDept:
         'Будь ласка, виберіть хоча б один відділ для ролі адміністратора перед створенням користувача.',
+      addUser: '+ додати користувача',
       addWithoutHours: '+ додати без стандартних робочих годин',
       addWithHours: '+ додати стандартні робочі години',
       addRequest: 'Додати запит',
