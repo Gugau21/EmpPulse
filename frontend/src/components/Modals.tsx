@@ -1,5 +1,12 @@
 import React from 'react'
-import type { ModalType, Employee, LeaveRequest, Department, OpenModal } from '../types'
+import type {
+  ModalType,
+  Employee,
+  LeaveRequest,
+  Department,
+  LoggedHours,
+  OpenModal
+} from '../types'
 import ConfirmModal from './modals/ConfirmModal'
 import AddEmployeeModal from './modals/AddEmployeeModal'
 import EditAdminsModal from './modals/EditAdminsModal'
@@ -23,6 +30,7 @@ interface Props {
   confirmModal: () => void
   selectedEmployee: Employee | null
   selectedRequest: LeaveRequest | null
+  selectedLoggedHours: LoggedHours | null
   selectedDepartment: Department | null
   departments: Department[]
   confirmError?: string | null
@@ -45,6 +53,7 @@ const Modals: React.FC<Props> = ({
   confirmModal,
   selectedEmployee,
   selectedRequest,
+  selectedLoggedHours,
   selectedDepartment,
   departments,
   confirmError,
@@ -149,7 +158,11 @@ const Modals: React.FC<Props> = ({
         )}
 
         {activeModal === 'EDIT_LOGGED_HOURS' && (
-          <EditHoursModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
+          <EditHoursModal
+            closeModal={closeModal}
+            selectedEmployee={selectedEmployee}
+            selectedLoggedHours={selectedLoggedHours}
+          />
         )}
 
         {activeModal === 'CHANGE_PASSWORD_FORM' && (

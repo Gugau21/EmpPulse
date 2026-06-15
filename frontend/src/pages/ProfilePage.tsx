@@ -6,8 +6,11 @@ import { MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
+import { useLoggedHours } from '../hooks/useLoggedHours'
 import { landingPath } from '../utils/guards'
 import { describeActiveLeave } from '../utils/activeLeave'
+import { isoToDisplayDate } from '../utils/date'
+import { buildLoggedHoursDays, formatDuration, formatInterval } from '../utils/loggedHours'
 import blackTriangleIcon from '../assets/black_triangle.png'
 import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useTheme } from '../hooks/useTheme'
@@ -51,6 +54,13 @@ const ProfilePage: React.FC = () => {
   const parsedId = userId ? Number(userId) : null
   const employeeId = parsedId && !isNaN(parsedId) ? parsedId : null
   const { data: employeeUser, isLoading, error } = useUserDetail(employeeId)
+
+  // Logged hours are read for the profile's own user id (the API keys them by user
+  // id): the viewed employee, or the signed-in user on their own profile. The flat
+  // rows are regrouped into one box per day that has logged hours, newest first.
+  const profileEmployeeId = isMyProfile ? (currentUser?.id ?? null) : employeeId
+  const { data: loggedHoursData, error: loggedHoursError } = useLoggedHours(profileEmployeeId)
+  const loggedHoursDays = buildLoggedHoursDays(loggedHoursData ?? [])
 
   // Route back based on user role: employees go to /my-requests, others to /employees
   const onBack = () => {
@@ -285,43 +295,42 @@ const ProfilePage: React.FC = () => {
 
           {loggedExpanded && (
             <>
-              <div className="card-box table-box">
-                <div className="table-header-grid logged-hours-grid">
-                  <span>Date</span>
-                  <span>Time interval</span>
-                  <span>Duration</span>
-                </div>
+              {loggedHoursError && (
+                <p className="form-error form-error-block">{loggedHoursError.message}</p>
+              )}
 
-                <LoggedHoursRow
-                  isMyProfile={isMyProfile}
-                  onEdit={() => openModal('EDIT_LOGGED_HOURS', employee as Employee)}
-                >
-                  <span>28.05.2026</span>
-                  <span>9:00 - 17:00</span>
-                  <span>8 hours</span>
-                </LoggedHoursRow>
-
-                <LoggedHoursRow
-                  isMyProfile={isMyProfile}
-                  onEdit={() => openModal('EDIT_LOGGED_HOURS', employee as Employee)}
-                >
-                  <span>28.05.2026</span>
-                  <div>
-                    <span
-                      className="badge badge-sick"
-                      style={{ padding: '4px 32px', borderRadius: '16px' }}
-                    >
-                      Sick
-                    </span>
-                  </div>
-                  <span>8 hours</span>
-                </LoggedHoursRow>
-
-                <div className="table-footer-actions">
-                  <button className="btn-tiny-pill wide">show more</button>
-                  <button className="btn-tiny-pill wide">show less</button>
-                </div>
+              <div className="table-header-grid logged-hours-grid">
+                <span>Date</span>
+                <span>Time interval</span>
+                <span>Duration</span>
               </div>
+
+              {/* One box per day that has logged hours; days with nothing logged
+                  are not shown. On multi-interval days only the first row carries
+                  the date and the day's total duration. */}
+              {loggedHoursDays.map(day => (
+                <div className="card-box table-box" key={day.date}>
+                  {day.intervals.map((interval, idx) => (
+                    <LoggedHoursRow
+                      key={interval.id}
+                      isMyProfile={isMyProfile}
+                      onEdit={() =>
+                        openModal(
+                          'EDIT_LOGGED_HOURS',
+                          employee as Employee,
+                          undefined,
+                          undefined,
+                          interval
+                        )
+                      }
+                    >
+                      <span>{idx === 0 ? isoToDisplayDate(day.date) : ''}</span>
+                      <span>{formatInterval(interval.startTime, interval.endTime)}</span>
+                      <span>{idx === 0 ? formatDuration(day.durationMinutes) : ''}</span>
+                    </LoggedHoursRow>
+                  ))}
+                </div>
+              ))}
 
               {!isMyProfile && (
                 <div className="center-action tight">

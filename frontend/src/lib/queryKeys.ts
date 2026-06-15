@@ -27,3 +27,9 @@ export const userKeys = {
   details: () => [...userKeys.all, 'detail'] as const,
   detail: (id: number) => [...userKeys.details(), id] as const
 }
+
+export const loggedHoursKeys = {
+  all: ['loggedHours'] as const,
+  lists: () => [...loggedHoursKeys.all, 'list'] as const,
+  list: (employeeId: number) => [...loggedHoursKeys.lists(), employeeId] as const
+}
