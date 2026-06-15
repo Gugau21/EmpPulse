@@ -426,7 +426,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/departments/{departmentId}/default-hours: TODO
+  /api/departments/{departmentId}/default-hours:
     get:
       tags:
         - DefaultHours
@@ -513,7 +513,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/default-hours: TODO
+  /api/employees/{employeeId}/default-hours:
     get:
       tags:
         - DefaultHours

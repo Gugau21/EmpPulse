@@ -6,11 +6,13 @@ import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursRequest;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursResponse;
 import com.oman.EmpPulse.defaulthours.dto.TimeIntervalRequest;
 import com.oman.EmpPulse.defaulthours.dto.TimeIntervalResponse;
+import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.LongConsumer;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,14 +24,17 @@ public class DefaultHoursService {
   private final WeekScheduleRepository weekScheduleRepository;
   private final ScheduleBlockRepository scheduleBlockRepository;
   private final EmployeeApi employeeApi;
+  private final DepartmentApi departmentApi;
 
   public DefaultHoursService(
       WeekScheduleRepository weekScheduleRepository,
       ScheduleBlockRepository scheduleBlockRepository,
-      EmployeeApi employeeApi) {
+      EmployeeApi employeeApi,
+      DepartmentApi departmentApi) {
     this.weekScheduleRepository = weekScheduleRepository;
     this.scheduleBlockRepository = scheduleBlockRepository;
     this.employeeApi = employeeApi;
+    this.departmentApi = departmentApi;
   }
 
   /**
@@ -46,12 +51,51 @@ public class DefaultHoursService {
   public DefaultWeekHoursResponse setEmployeeDefaultHours(
       Long employeeId, DefaultWeekHoursRequest req, Long callerAdminId) {
     employeeApi.requireAdminAccessToEmployee(callerAdminId, employeeId);
+    return replaceSchedule(
+        employeeApi.getWeekScheduleId(employeeId),
+        req,
+        setId -> employeeApi.assignWeekSchedule(employeeId, setId));
+  }
+
+  /**
+   * Replaces a department's weekly default hours with the given schedule, following the same rules
+   * as {@link #setEmployeeDefaultHours}. A department's default hours are inherited by its
+   * employees who have no schedule of their own.
+   *
+   * @param departmentId the department whose default hours to set
+   * @param req the schedule payload (days, each with at most one interval)
+   * @param callerAdminId the user ID of the authenticated admin
+   * @return the saved schedule
+   */
+  @Transactional
+  public DefaultWeekHoursResponse setDepartmentDefaultHours(
+      Long departmentId, DefaultWeekHoursRequest req, Long callerAdminId) {
+    departmentApi.requireAdminAccessToDepartment(callerAdminId, departmentId);
+    return replaceSchedule(
+        departmentApi.getWeekScheduleId(departmentId),
+        req,
+        setId -> departmentApi.assignWeekSchedule(departmentId, setId));
+  }
+
+  /**
+   * Validates the request and rewrites the owner's weekly schedule. The owner's week schedule is
+   * created on first use (and linked back via {@code scheduleAssigner}) and reused afterwards; its
+   * existing blocks are wiped and rewritten. Each day may carry at most one interval (the
+   * underlying table is unique per set/day).
+   *
+   * @param existingSetId the owner's current week schedule ID, or null if none is set yet
+   * @param req the schedule payload
+   * @param scheduleAssigner links a newly created week schedule back to the owner
+   * @return the saved schedule
+   */
+  private DefaultWeekHoursResponse replaceSchedule(
+      Long existingSetId, DefaultWeekHoursRequest req, LongConsumer scheduleAssigner) {
     List<ScheduleBlock> blocks = validateAndBuildBlocks(req);
 
-    Long setId = employeeApi.getWeekScheduleId(employeeId);
+    Long setId = existingSetId;
     if (setId == null) {
       setId = weekScheduleRepository.save(new WeekSchedule()).getId();
-      employeeApi.assignWeekSchedule(employeeId, setId);
+      scheduleAssigner.accept(setId);
     } else {
       scheduleBlockRepository.deleteAllBySetId(setId);
     }
