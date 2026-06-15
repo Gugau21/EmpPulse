@@ -139,7 +139,6 @@ CREATE TABLE logged_hours (
   date        date    NOT NULL,
   start_time  time    NOT NULL,
   end_time    time    NOT NULL,
-  paid        boolean NOT NULL,
 
   CONSTRAINT logged_hours_times_valid CHECK (end_time > start_time)
 );
