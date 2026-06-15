@@ -55,4 +55,12 @@ public interface AdminApi {
    * @return true if this admin oversees the department, false otherwise
    */
   boolean overseesDepartment(Long userId, Long departmentId);
+
+  /**
+   * Finds all admins assigned to any of the given departments.
+   *
+   * @param departmentIds the department IDs to look up
+   * @return a collection of Admin entities, possibly empty if no admins are found
+   */
+  Collection<Admin> findAllByDepartmentIdIn(Collection<Long> departmentIds);
 }

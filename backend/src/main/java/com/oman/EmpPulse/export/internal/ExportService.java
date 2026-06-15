@@ -53,7 +53,7 @@ public class ExportService {
             : new ArrayList<Department>(departmentApi.findAllByIds(adminApi.departmentIdsForAdminUser(AuthUtils.getUserId(authentication))));
         List<Employee> employees = employeeApi.findAllByDepartmentIdIn(departments.stream().map(Department::getId).collect(Collectors.toSet())).stream().toList();
         List<Leave> leaves = leaveApi.findAllByEmployeeIdIn(employees.stream().map(Employee::getId).collect(Collectors.toSet())).stream().toList();
-        List<Admin> admins = new ArrayList<Admin>();
+        List<Admin> admins = adminApi.findAllByDepartmentIdIn(departments.stream().map(Department::getId).collect(Collectors.toList())).stream().toList();
         Set<User> users = userApi.findByIdIn(employees.stream().map(Employee::getId).collect(Collectors.toSet())).stream().collect(Collectors.toSet());
         users.addAll(userApi.findByIdIn(admins.stream().map(Admin::getId).collect(Collectors.toSet())));
         users.add(userApi.findById(AuthUtils.getUserId(authentication)).orElseThrow());
