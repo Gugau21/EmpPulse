@@ -1338,6 +1338,33 @@ select {
   margin-top: 12px;
 }
 
+.auth-heading {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 32px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.auth-link {
+  display: block;
+  margin: 20px auto 0;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #5932ea;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* ============================================================
    DEPARTMENT DETAIL SCREEN
    ============================================================ */

@@ -3,6 +3,9 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
 import RequireRole from './components/RequireRole'
 import LoginPage from './pages/LoginPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import CheckEmailPage from './pages/CheckEmailPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import ForbiddenPage from './pages/ForbiddenPage'
 import EmployeesPage from './pages/EmployeesPage'
 import RequestManagerPage from './pages/RequestManagerPage'
@@ -25,6 +28,9 @@ const IndexRedirect: React.FC = () => {
 const App: React.FC = () => (
   <Routes>
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+    <Route path="/check-email" element={<CheckEmailPage />} />
+    <Route path="/reset-password" element={<ResetPasswordPage />} />
     <Route path="/forbidden" element={<ForbiddenPage />} />
 
     {/* Authenticated shell: sidebar + modals + the matched page in its <Outlet/>. */}

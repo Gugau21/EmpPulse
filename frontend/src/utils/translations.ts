@@ -49,7 +49,24 @@ export const translations = {
       invalidEmail: 'Please enter a valid email address.',
       loginFailed: 'Login failed',
       loggingIn: 'Logging in…',
-      loginBtn: 'log in'
+      loginBtn: 'log in',
+      forgotPassword: 'forgot password'
+    },
+    forgotPasswordPage: {
+      title: 'Forgot your password',
+      instruction: 'Enter your email to receive a code for reseting password',
+      emailLabel: 'Email',
+      continueBtn: 'continue'
+    },
+    checkEmailPage: {
+      title: 'Check your email',
+      instruction: 'The link to reset your password was sent to your email'
+    },
+    resetPasswordPage: {
+      title: 'Reset your password',
+      newPasswordLabel: 'Enter your new password',
+      repeatPasswordLabel: 'Repeat your new password',
+      resetBtn: 'reset password'
     },
     myRequestsPage: {
       title: 'My requests',
@@ -298,7 +315,24 @@ export const translations = {
       invalidEmail: 'Будь ласка, введіть дійсну електронну адресу.',
       loginFailed: 'Помилка входу',
       loggingIn: 'Вхід…',
-      loginBtn: 'увійти'
+      loginBtn: 'увійти',
+      forgotPassword: 'забули пароль?'
+    },
+    forgotPasswordPage: {
+      title: 'Забули пароль?',
+      instruction: 'Введіть свою електронну пошту, щоб отримати код для відновлення доступу',
+      emailLabel: 'Електронна пошта',
+      continueBtn: 'продовжити'
+    },
+    checkEmailPage: {
+      title: 'Перевірте електронну пошту',
+      instruction: 'Посилання для створення нового пароля було відправлене на вказану пошту'
+    },
+    resetPasswordPage: {
+      title: 'Скидання пароля',
+      newPasswordLabel: 'Введіть новий пароль',
+      repeatPasswordLabel: 'Повторіть новий пароль',
+      resetBtn: 'скинути пароль'
     },
     myRequestsPage: {
       title: 'Мої запити',
