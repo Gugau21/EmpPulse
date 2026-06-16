@@ -68,6 +68,14 @@ const LoginPage: React.FC = () => {
           <button type="submit" className="primary-btn auth-submit-btn" disabled={loading}>
             {loading ? t.loggingIn : t.loginBtn}
           </button>
+
+          <button 
+            type="button" 
+            className="auth-link" 
+            onClick={() => navigate('/forgot-password')}
+          >
+            {t.forgotPassword}
+          </button>
         </form>
       </div>
     </div>
