@@ -69,11 +69,7 @@ const LoginPage: React.FC = () => {
             {loading ? t.loggingIn : t.loginBtn}
           </button>
 
-          <button 
-            type="button" 
-            className="auth-link" 
-            onClick={() => navigate('/forgot-password')}
-          >
+          <button type="button" className="auth-link" onClick={() => navigate('/forgot-password')}>
             {t.forgotPassword}
           </button>
         </form>

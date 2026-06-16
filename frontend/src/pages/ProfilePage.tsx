@@ -48,7 +48,7 @@ const ProfilePage: React.FC = () => {
   // no param means the signed-in user's own profile.
   const { userId } = useParams()
   const isMyProfile = userId == null
-  const { currentUser, isOwner } = useAuth()
+  const { currentUser, isOwner, isAdmin } = useAuth()
   const { language } = useLanguage()
   const t = translations[language].profilePage
   const weekdayLabels = useWeekdayLabels()
@@ -57,8 +57,11 @@ const ProfilePage: React.FC = () => {
   const isOwnerPersonal = isMyProfile && isOwner
   const [loggedExpanded, setLoggedExpanded] = useState(true)
   const [workingHoursExpanded, setWorkingHoursExpanded] = useState(true)
-  // Data export (ZIP of departments/employees/users CSVs) is offered only on the
-  // owner's own profile, so it's wired up here rather than in a shared layout.
+  // Data export (ZIP of departments/employees/users CSVs) is offered on one's own
+  // profile to owners (all data) and admins (their departments' data), so it's
+  // wired up here rather than in a shared layout. The /api/export endpoint scopes
+  // the bundle per role server-side.
+  const canExportData = isMyProfile && (isOwner || isAdmin)
   const exportData = useExportData()
 
   // Parse userId as number, but guard against NaN (e.g., /employees/not-a-number)
@@ -262,26 +265,6 @@ const ProfilePage: React.FC = () => {
         )}
       </div>
 
-      {/* Owner-only: export all in-scope data as a ZIP of CSVs. */}
-      {isOwnerPersonal && (
-        <div className="center-action tight">
-          <button
-            className="primary-btn"
-            onClick={() => exportData.mutate()}
-            disabled={exportData.isPending}
-          >
-            {exportData.isPending ? 'Preparing download…' : 'Download data export'}
-          </button>
-          {exportData.isError && (
-            <p className="form-error">
-              {exportData.error instanceof Error
-                ? exportData.error.message
-                : 'Failed to export data.'}
-            </p>
-          )}
-        </div>
-      )}
-
       {!isOwnerPersonal && (
         <div className="accordion-section">
           <h3
@@ -406,6 +389,27 @@ const ProfilePage: React.FC = () => {
                 </div>
               )}
             </>
+          )}
+        </div>
+      )}
+
+      {/* Export all in-scope data as a ZIP of CSVs. Owners get everything; admins
+          get their departments' data. Pinned to the very end of the page. */}
+      {canExportData && (
+        <div className="center-action tight">
+          <button
+            className="primary-btn"
+            onClick={() => exportData.mutate()}
+            disabled={exportData.isPending}
+          >
+            {exportData.isPending ? 'Preparing download…' : 'Download data export'}
+          </button>
+          {exportData.isError && (
+            <p className="form-error">
+              {exportData.error instanceof Error
+                ? exportData.error.message
+                : 'Failed to export data.'}
+            </p>
           )}
         </div>
       )}
