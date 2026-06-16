@@ -5,10 +5,13 @@ import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
 import com.oman.EmpPulse.leave.api.LeaveApi;
+import com.oman.EmpPulse.notification.api.NotificationApi;
+import com.oman.EmpPulse.notification.api.NotificationRecipient;
 import com.oman.EmpPulse.user.api.Admin;
 import com.oman.EmpPulse.user.api.AdminProfileResponse;
 import com.oman.EmpPulse.user.api.EmployeeProfileResponse;
 import com.oman.EmpPulse.user.api.UserApi;
+import com.oman.EmpPulse.user.api.UserContact;
 import com.oman.EmpPulse.user.api.UserCredential;
 import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.api.UserResponse;
@@ -45,6 +48,7 @@ public class UserService implements UserApi {
   private final DefaultHoursApi defaultHoursApi;
   private final PasswordEncoder passwordEncoder;
   private final LeaveApi leaveApi;
+  private final NotificationApi notificationApi;
 
   public UserService(
       UserRepository userRepository,
@@ -55,7 +59,8 @@ public class UserService implements UserApi {
       DepartmentApi departmentApi,
       @Lazy DefaultHoursApi defaultHoursApi,
       PasswordEncoder passwordEncoder,
-      @Lazy LeaveApi leaveApi) {
+      @Lazy LeaveApi leaveApi,
+      NotificationApi notificationApi) {
     this.userRepository = userRepository;
     this.adminRepository = adminRepository;
     this.employeeRepository = employeeRepository;
@@ -65,6 +70,7 @@ public class UserService implements UserApi {
     this.defaultHoursApi = defaultHoursApi;
     this.passwordEncoder = passwordEncoder;
     this.leaveApi = leaveApi;
+    this.notificationApi = notificationApi;
   }
 
   @Override
@@ -79,6 +85,12 @@ public class UserService implements UserApi {
   @Transactional(readOnly = true)
   public UserResponse loadProfile(Long userId) {
     return buildUserResponse(userId);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<UserContact> findContactById(Long userId) {
+    return userRepository.findById(userId).map(u -> new UserContact(u.getEmail(), u.getName()));
   }
 
   @Override
@@ -274,9 +286,8 @@ public class UserService implements UserApi {
         .filter(sessionId -> !sessionId.equals(currentSessionId))
         .forEach(sessionRepository::deleteById);
 
-    // TODO(feat/notification): once the notification module is merged, notify the user, e.g.
-    // notificationApi.sendPasswordChangedNotification(
-    //     new NotificationRecipient(user.getEmail(), user.getName()));
+    notificationApi.sendPasswordChangedNotification(
+        new NotificationRecipient(user.getEmail(), user.getName()));
   }
 
   @Override
@@ -345,6 +356,9 @@ public class UserService implements UserApi {
       adminRepository.save(admin);
       departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
     }
+
+    notificationApi.sendAccountCredentials(
+        new NotificationRecipient(user.getEmail(), user.getName()), req.getPassword());
 
     return user.getId();
   }
@@ -476,16 +490,29 @@ public class UserService implements UserApi {
     if (req.getSurname() != null) {
       user.setSurname(req.getSurname());
     }
+    boolean emailChanged = false;
     if (req.getEmail() != null && !req.getEmail().equals(user.getEmail())) {
       if (userRepository.findByEmailAndActiveTrue(req.getEmail()).isPresent()) {
         throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already in use");
       }
       user.setEmail(req.getEmail());
+      emailChanged = true;
     }
-    if (req.getPassword() != null) {
+    boolean passwordChanged = req.getPassword() != null;
+    if (passwordChanged) {
       user.setPassHash(passwordEncoder.encode(req.getPassword()));
     }
     userRepository.save(user);
+
+    if (passwordChanged) {
+      notificationApi.sendAccountCredentials(
+          new NotificationRecipient(user.getEmail(), user.getName()), req.getPassword());
+    }
+    if (emailChanged) {
+      // user.getEmail() now holds the new address — the notification must go there.
+      notificationApi.sendEmailChangedNotification(
+          new NotificationRecipient(user.getEmail(), user.getName()));
+    }
   }
 
   private void handleEmployeeUpdate(

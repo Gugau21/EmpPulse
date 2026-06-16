@@ -26,6 +26,18 @@ public interface UserApi {
   UserResponse loadProfile(Long userId);
 
   /**
+   * Looks up a user's contact details (email and first name) for addressing a notification email.
+   *
+   * <p>Intentionally lightweight: unlike {@link #loadProfile}, it does not assemble role details or
+   * vacation balances, so it is safe to call from other modules (e.g. the leave module) without
+   * re-entering them.
+   *
+   * @param userId the user ID
+   * @return the user's contact details, or empty if no user with this ID exists
+   */
+  Optional<UserContact> findContactById(Long userId);
+
+  /**
    * Sets a new password for the given user and invalidates all of their active sessions.
    *
    * <p>Used by the forgot-password flow ({@code POST /api/auth/password/reset}) once a reset token
