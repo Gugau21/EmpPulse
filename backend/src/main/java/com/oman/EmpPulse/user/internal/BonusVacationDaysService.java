@@ -17,5 +17,4 @@ public class BonusVacationDaysService implements com.oman.EmpPulse.user.api.Bonu
   public List<BonusVacationDays> findByEmployeeIdIn(Collection<Long> employeeIds) {
     return repository.findByEmployeeIdIn(employeeIds);
   }
-    
 }

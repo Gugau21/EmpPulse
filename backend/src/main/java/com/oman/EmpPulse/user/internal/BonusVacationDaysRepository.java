@@ -1,8 +1,8 @@
 package com.oman.EmpPulse.user.internal;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Collection;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BonusVacationDaysRepository extends JpaRepository<BonusVacationDays, Long> {

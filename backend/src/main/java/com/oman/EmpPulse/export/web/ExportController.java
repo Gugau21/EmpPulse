@@ -14,21 +14,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/export")
 public class ExportController {
 
-    private final ExportService exportService;
+  private final ExportService exportService;
 
-    public ExportController(ExportService exportService) {
-        this.exportService = exportService;
-    }
+  public ExportController(ExportService exportService) {
+    this.exportService = exportService;
+  }
 
-    @GetMapping("")
-    @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
-    public ResponseEntity<byte[]> exportDepartments(Authentication authentication) {
-        byte[] zip = exportService.export(authentication);
+  @GetMapping("")
+  @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+  public ResponseEntity<byte[]> exportDepartments(Authentication authentication) {
+    byte[] zip = exportService.export(authentication);
 
-        return ResponseEntity.ok()
-            .header(HttpHeaders.CONTENT_DISPOSITION,
-                    "attachment; filename=\"export.zip\"")
-            .contentType(MediaType.parseMediaType("application/zip"))
-            .body(zip);
-    }
+    return ResponseEntity.ok()
+        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"export.zip\"")
+        .contentType(MediaType.parseMediaType("application/zip"))
+        .body(zip);
+  }
 }

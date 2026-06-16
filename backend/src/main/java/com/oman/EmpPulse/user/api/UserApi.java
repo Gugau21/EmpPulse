@@ -1,9 +1,9 @@
 package com.oman.EmpPulse.user.api;
 
-import java.util.Optional;
-import java.util.List;
-import java.util.Collection;
 import com.oman.EmpPulse.user.internal.User;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 public interface UserApi {
 

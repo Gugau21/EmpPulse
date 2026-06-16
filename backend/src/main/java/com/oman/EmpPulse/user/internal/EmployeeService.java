@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.user.internal;
 
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
 import com.oman.EmpPulse.leave.api.LeaveApi;
@@ -8,7 +9,6 @@ import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import com.oman.EmpPulse.user.dto.EmployeeListItemResponse;
 import com.oman.EmpPulse.user.dto.EmployeeListResponse;
-import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;

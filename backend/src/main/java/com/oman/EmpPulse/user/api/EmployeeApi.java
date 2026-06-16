@@ -1,11 +1,11 @@
 package com.oman.EmpPulse.user.api;
 
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
+import com.oman.EmpPulse.user.internal.Employee;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import com.oman.EmpPulse.user.internal.Employee;
-import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 
 public interface EmployeeApi {
 

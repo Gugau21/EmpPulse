@@ -1,14 +1,5 @@
 package com.oman.EmpPulse.department.internal;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.department.api.DepartmentApi;
@@ -20,6 +11,15 @@ import com.oman.EmpPulse.user.api.Admin;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.AdminSummaryResponse;
 import com.oman.EmpPulse.user.api.EmployeeApi;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class DepartmentService implements DepartmentApi {
@@ -118,13 +118,13 @@ public class DepartmentService implements DepartmentApi {
   @Override
   @Transactional(readOnly = true)
   public List<Department> findAll() {
-      return departmentRepository.findAll();
+    return departmentRepository.findAll();
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<Department> findAllByIds(Collection<Long> ids) {
-      return departmentRepository.findAllById(ids);
+    return departmentRepository.findAllById(ids);
   }
 
   @Override

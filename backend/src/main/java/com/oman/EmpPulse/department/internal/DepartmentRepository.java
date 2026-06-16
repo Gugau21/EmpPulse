@@ -1,7 +1,7 @@
 package com.oman.EmpPulse.department.internal;
 
-import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
+import com.oman.EmpPulse.department.api.Department;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +14,8 @@ public interface DepartmentRepository extends JpaRepository<Department, Long> {
   boolean existsByIsDefaultTrue();
 
   @Query(
-      "select distinct ws from WeekSchedule ws "
-          + "where ws.id in (select d.weekScheduleId from Department d where d.id in :departmentIds)")
-  List<WeekSchedule> findWeekScheduleByDepartmentIds(@Param("departmentIds") Collection<Long> departmentIds);
+      "select distinct ws from WeekSchedule ws where ws.id in (select d.weekScheduleId from"
+          + " Department d where d.id in :departmentIds)")
+  List<WeekSchedule> findWeekScheduleByDepartmentIds(
+      @Param("departmentIds") Collection<Long> departmentIds);
 }
