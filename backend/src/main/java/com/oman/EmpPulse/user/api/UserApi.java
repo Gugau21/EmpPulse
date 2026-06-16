@@ -1,5 +1,8 @@
 package com.oman.EmpPulse.user.api;
 
+import com.oman.EmpPulse.user.internal.User;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserApi {
@@ -64,4 +67,20 @@ public interface UserApi {
    * @param rawPassword the owner's password in plaintext.
    */
   void ensureOwnerExists(String email, String rawPassword);
+
+  /**
+   * Finds users by their IDs.
+   *
+   * @param userIds the collection of user IDs
+   * @return a list of users with the specified IDs
+   */
+  List<User> findByIdIn(Collection<Long> userIds);
+
+  /**
+   * Finds a user by their ID.
+   *
+   * @param userId the user ID
+   * @return an Optional containing the user if found, or empty if not found
+   */
+  Optional<User> findById(Long userId);
 }

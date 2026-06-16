@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.department.api;
 
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -82,4 +83,30 @@ public interface DepartmentApi {
    * owner is automatically assigned to the default department when the owner account is created.
    */
   void ensureDefaultDepartmentExists();
+
+  /**
+   * Finds all departments in the system. Owners get all departments; admins get only those they
+   * oversee.
+   *
+   * @return the list of departments the caller has access to
+   */
+  Collection<Department> findAll();
+
+  /**
+   * Finds all departments matching the given IDs. Does not throw if some IDs do not exist. Returns
+   * only the found departments.
+   *
+   * @param ids the department IDs to look up
+   * @return a list of Department entities, possibly smaller than the input if some IDs were not
+   *     found
+   */
+  Collection<Department> findAllByIds(Collection<Long> ids);
+
+  /**
+   * Finds the department with the given IDs.
+   *
+   * @param id the department IDs to look up
+   * @return the department entity, or empty if not found
+   */
+  List<WeekSchedule> findWeekScheduleByDepartmentIds(Collection<Long> departmentIds);
 }

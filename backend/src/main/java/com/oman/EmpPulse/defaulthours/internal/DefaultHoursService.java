@@ -11,6 +11,7 @@ import com.oman.EmpPulse.defaulthours.dto.TimeIntervalResponse;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -119,6 +120,12 @@ public class DefaultHoursService implements DefaultHoursApi {
     return scheduleBlockRepository
         .findBySetIdAndDayOfWeek(setId, dayOfWeek)
         .map(block -> new DefaultDayIntervalResponse(block.getStartTime(), block.getEndTime()));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<ScheduleBlock> findEmployeeScheduleBlocks(Collection<Long> weekScheduleIds) {
+    return scheduleBlockRepository.findAllBySetIdInOrderBySetIdAscDayOfWeekAsc(weekScheduleIds);
   }
 
   /**

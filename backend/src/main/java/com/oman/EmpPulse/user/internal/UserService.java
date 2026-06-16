@@ -23,6 +23,7 @@ import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -112,6 +113,18 @@ public class UserService implements UserApi {
 
     adminRepository.save(new Admin(owner.getId()));
     departmentApi.setAdminDepartments(owner.getId(), departmentApi.findAllDepartmentIds());
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<User> findByIdIn(Collection<Long> userIds) {
+    return userRepository.findByIdIn(userIds);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<User> findById(Long userId) {
+    return userRepository.findById(userId);
   }
 
   private User getUserById(Long userId) {

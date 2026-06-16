@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.department.internal;
 
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.department.dto.DepartmentCreateRequest;
@@ -112,6 +113,24 @@ public class DepartmentService implements DepartmentApi {
     Department department = new Department("Default Department");
     department.setDefault(true);
     departmentRepository.save(department);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Department> findAll() {
+    return departmentRepository.findAll();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Department> findAllByIds(Collection<Long> ids) {
+    return departmentRepository.findAllById(ids);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<WeekSchedule> findWeekScheduleByDepartmentIds(Collection<Long> departmentIds) {
+    return departmentRepository.findWeekScheduleByDepartmentIds(departmentIds);
   }
 
   @Transactional(readOnly = true)

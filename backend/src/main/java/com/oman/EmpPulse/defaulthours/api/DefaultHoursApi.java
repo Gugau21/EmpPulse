@@ -1,5 +1,8 @@
 package com.oman.EmpPulse.defaulthours.api;
 
+import com.oman.EmpPulse.defaulthours.internal.ScheduleBlock;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface DefaultHoursApi {
@@ -27,4 +30,12 @@ public interface DefaultHoursApi {
    * @return the interval when a schedule block exists for that day, otherwise empty
    */
   Optional<DefaultDayIntervalResponse> findEmployeeIntervalForDay(Long employeeId, int dayOfWeek);
+
+  /**
+   * Returns the schedule blocks for the specified week schedules.
+   *
+   * @param weekScheduleIds the IDs of the week schedules whose schedule blocks to retrieve
+   * @return the list of schedule blocks for the specified week schedules
+   */
+  List<ScheduleBlock> findEmployeeScheduleBlocks(Collection<Long> weekScheduleIds);
 }

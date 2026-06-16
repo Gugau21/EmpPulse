@@ -59,6 +59,8 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
 
   List<Leave> findAllByEmployeeIdOrderByUpdatedAtDesc(Long employeeId);
 
+  List<Leave> findAllByEmployeeIdInOrderByUpdatedAtDesc(Collection<Long> employeeIds);
+
   /**
    * Finds the leaves visible to an admin: those of employees in the given departments, plus the
    * admin's own. Sorted by last change, newest first.

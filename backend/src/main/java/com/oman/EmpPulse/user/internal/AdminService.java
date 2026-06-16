@@ -79,6 +79,12 @@ public class AdminService implements AdminApi {
         .orElse(false);
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public Collection<Admin> findAllByDepartmentIdIn(Collection<Long> departmentIds) {
+    return adminRepository.findAllByDepartmentsIdIn(departmentIds);
+  }
+
   @Transactional(readOnly = true)
   public AdminListResponse getAllAdmins() {
     Long ownerId = userRepository.findByIsOwnerTrue().map(User::getId).orElse(null);

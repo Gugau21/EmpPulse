@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.user.internal;
 
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
 import com.oman.EmpPulse.leave.api.LeaveApi;
@@ -44,6 +45,11 @@ public class EmployeeService implements EmployeeApi {
   @Override
   public boolean hasEmployeesInDepartment(Long departmentId) {
     return employeeRepository.existsByDepartmentId(departmentId);
+  }
+
+  @Override
+  public Collection<Employee> findAllByDepartmentIdIn(Collection<Long> departmentIds) {
+    return employeeRepository.findByDepartmentIdIn(departmentIds);
   }
 
   @Override
@@ -97,6 +103,12 @@ public class EmployeeService implements EmployeeApi {
   @Transactional(readOnly = true)
   public List<Long> findActiveEmployeeIds() {
     return employeeRepository.findByActiveTrue().stream().map(Employee::getId).toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<WeekSchedule> findWeekScheduleByEmployeeIds(Collection<Long> employeeIds) {
+    return employeeRepository.findWeekScheduleByEmployeeIds(employeeIds);
   }
 
   @Transactional(readOnly = true)

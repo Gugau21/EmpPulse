@@ -1,5 +1,7 @@
 package com.oman.EmpPulse.user.api;
 
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
+import com.oman.EmpPulse.user.internal.Employee;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -70,4 +72,20 @@ public interface EmployeeApi {
    * @return list of active employee IDs
    */
   List<Long> findActiveEmployeeIds();
+
+  /**
+   * Finds all employees assigned to any of the given departments.
+   *
+   * @param departmentIds the department IDs to look up
+   * @return a collection of Employee entities, possibly empty if no employees are found
+   */
+  Collection<Employee> findAllByDepartmentIdIn(Collection<Long> departmentIds);
+
+  /**
+   * Finds the week schedules for the specified employees.
+   *
+   * @param employeeIds the IDs of the employees whose week schedules to retrieve
+   * @return the list of week schedules for the specified employees
+   */
+  List<WeekSchedule> findWeekScheduleByEmployeeIds(Collection<Long> employeeIds);
 }

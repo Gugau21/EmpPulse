@@ -79,6 +79,15 @@ public class LeaveService implements LeaveApi {
     return result;
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public List<Leave> findAllByEmployeeIdIn(Collection<Long> employeeIds) {
+    if (employeeIds == null || employeeIds.isEmpty()) {
+      return List.of();
+    }
+    return leaveRepository.findAllByEmployeeIdInOrderByUpdatedAtDesc(employeeIds);
+  }
+
   private ActiveLeaveResponse toActiveLeaveResponse(Leave leave) {
     return new ActiveLeaveResponse(leave.getType(), leave.getStartDate(), leave.getEndDate());
   }

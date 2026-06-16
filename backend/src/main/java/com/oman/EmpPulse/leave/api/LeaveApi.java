@@ -1,7 +1,9 @@
 package com.oman.EmpPulse.leave.api;
 
+import com.oman.EmpPulse.leave.internal.Leave;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,4 +42,12 @@ public interface LeaveApi {
    * @return employee IDs on unpaid approved leave that day
    */
   Set<Long> findEmployeeIdsOnUnpaidApprovedLeave(Collection<Long> employeeIds, LocalDate date);
+
+  /**
+   * Finds all leaves for the given employee IDs.
+   *
+   * @param employeeIds the employee IDs to look up
+   * @return a list of leaves for the given employee IDs
+   */
+  List<Leave> findAllByEmployeeIdIn(Collection<Long> employeeIds);
 }

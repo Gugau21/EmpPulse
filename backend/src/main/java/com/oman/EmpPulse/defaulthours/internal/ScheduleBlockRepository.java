@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.defaulthours.internal;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -25,4 +26,6 @@ public interface ScheduleBlockRepository extends JpaRepository<ScheduleBlock, Lo
   @Modifying(clearAutomatically = true)
   @Query("delete from ScheduleBlock b where b.setId = :setId")
   void deleteAllBySetId(@Param("setId") Long setId);
+
+  List<ScheduleBlock> findAllBySetIdInOrderBySetIdAscDayOfWeekAsc(Collection<Long> setIds);
 }

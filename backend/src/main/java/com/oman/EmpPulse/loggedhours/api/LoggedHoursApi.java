@@ -1,6 +1,9 @@
 package com.oman.EmpPulse.loggedhours.api;
 
+import com.oman.EmpPulse.loggedhours.internal.LoggedHours;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 
 public interface LoggedHoursApi {
 
@@ -13,4 +16,12 @@ public interface LoggedHoursApi {
    * @param endDate the last date of the range (inclusive)
    */
   void deleteByEmployeeAndDateRange(Long employeeId, LocalDate startDate, LocalDate endDate);
+
+  /**
+   * Finds all logged hours of the employees whose IDs are in {@code employeeIds}.
+   *
+   * @param employeeIds the IDs of the employees whose logged hours to find
+   * @return a list of logged hours of the specified employees
+   */
+  List<LoggedHours> findAllByEmployeeIdIn(Collection<Long> employeeIds);
 }
