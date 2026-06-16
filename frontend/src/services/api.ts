@@ -168,7 +168,41 @@ export const authService = {
       errorFallback: 'Failed to change password.',
       errorOverrides: { 400: 'Your current password is incorrect.' }
     })
+  },
+
+  // POST /api/auth/password/forgot — issues a reset link for the given email and
+  // emails it. The server answers 404 when no active account has that address; we
+  // surface that so the user can correct a typo (the endpoint is unauthenticated).
+  forgotPassword: async (email: string): Promise<void> => {
+    await apiRequest('/api/auth/password/forgot', {
+      method: 'POST',
+      body: { email },
+      errorFallback: 'Unable to send the reset link. Please try again.',
+      errorOverrides: { 404: 'No account was found for that email address.' }
+    })
+  },
+
+  // POST /api/auth/password/reset — completes the flow with the token from the
+  // emailed link plus the new password. The confirm-match check happens
+  // client-side before the request, so a 400 here means the token is invalid or
+  // expired (a fresh reset link must be requested).
+  resetPassword: async (payload: PasswordResetPayload): Promise<void> => {
+    await apiRequest('/api/auth/password/reset', {
+      method: 'POST',
+      body: payload,
+      errorFallback: 'Failed to reset password.',
+      errorOverrides: { 400: 'This reset link is invalid or has expired. Please request a new one.' }
+    })
   }
+}
+
+// POST /api/auth/password/reset body (PasswordResetRequest in the API contract).
+// `token` is the raw token from the emailed reset link; newPassword must match
+// confirmNewPassword (validated client-side before the request is sent).
+export interface PasswordResetPayload {
+  token: string
+  newPassword: string
+  confirmNewPassword: string
 }
 
 // POST /api/me/password/change body (PasswordChangeRequest in the API contract).
