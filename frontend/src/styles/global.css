@@ -13,7 +13,6 @@
   --bg-hover: #dfdfdf;
   --btn-outline-primary: #5932ea;
   --btn-outline-primary2: transparent;
-
   --text-dark: #333;
   --text-muted: #666;
   --border-dashed: #a0a0a0;
@@ -1373,7 +1372,7 @@ select {
   cursor: pointer;
 }
 
-.muted p{
+.muted p {
   color: var(--text-muted);
 }
 

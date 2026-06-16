@@ -17,7 +17,7 @@ const ResetPasswordPage: React.FC = () => {
     <div className="auth-layout">
       <div className="auth-card">
         <h2 className="auth-heading">{t.title}</h2>
-        
+
         <form onSubmit={handleSubmit} className="auth-form">
           <label className="auth-input-label">
             {t.newPasswordLabel}
@@ -28,7 +28,7 @@ const ResetPasswordPage: React.FC = () => {
               required
             />
           </label>
-          
+
           <label className="auth-input-label">
             {t.repeatPasswordLabel}
             <input
@@ -38,7 +38,7 @@ const ResetPasswordPage: React.FC = () => {
               required
             />
           </label>
-          
+
           <button type="submit" className="primary-btn auth-submit-btn">
             {t.resetBtn}
           </button>
