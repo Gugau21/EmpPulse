@@ -59,4 +59,5 @@ logs/
 ### GitHub Copilot auto-generated ###
 .github/modernize/
 
-.env
+### Maven ###
+backend/.m2/

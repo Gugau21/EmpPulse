@@ -41,6 +41,22 @@ CREATE UNIQUE INDEX uq_app_user_is_owner ON app_user (is_owner) WHERE (is_owner 
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- Password reset tokens
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE password_reset_token (
+  id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id     INTEGER     NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+  token_hash  text        NOT NULL UNIQUE,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  expires_at  timestamptz NOT NULL,
+  used_at     timestamptz
+);
+
+CREATE INDEX idx_password_reset_token_user ON password_reset_token (user_id);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Departments
 -- ─────────────────────────────────────────────────────────────────────────────
 
