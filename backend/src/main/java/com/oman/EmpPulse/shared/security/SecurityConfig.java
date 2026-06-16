@@ -39,7 +39,8 @@ public class SecurityConfig {
             csrf ->
                 csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                     .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
-                    .ignoringRequestMatchers("/api/auth/login"))
+                    .ignoringRequestMatchers(
+                        "/api/auth/login", "/api/auth/password/forgot", "/api/auth/password/reset"))
         .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class)
         .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
         .authorizeHttpRequests(
@@ -54,6 +55,8 @@ public class SecurityConfig {
                         "/*.ico",
                         "/api/auth/login",
                         "/api/auth/logout",
+                        "/api/auth/password/forgot",
+                        "/api/auth/password/reset",
                         "/actuator/health",
                         "/error")
                     .permitAll()

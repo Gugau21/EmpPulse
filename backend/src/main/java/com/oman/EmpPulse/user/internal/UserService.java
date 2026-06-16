@@ -15,6 +15,7 @@ import com.oman.EmpPulse.user.api.UserResponse;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
 import com.oman.EmpPulse.user.dto.PasswordChangeRequest;
+import com.oman.EmpPulse.user.dto.PreferencesUpdateRequest;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.time.LocalDate;
@@ -212,6 +213,37 @@ public class UserService implements UserApi {
   }
 
   @Transactional
+  public UserPreferencesResponse updatePreferences(Long userId, PreferencesUpdateRequest req) {
+    User user = getUserById(userId);
+
+    if (req.getTheme() != null) {
+      user.setTheme(parseTheme(req.getTheme()));
+    }
+    if (req.getLanguage() != null) {
+      user.setLanguage(parseLanguage(req.getLanguage()));
+    }
+
+    userRepository.save(user);
+    return new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name());
+  }
+
+  private UserTheme parseTheme(String theme) {
+    try {
+      return UserTheme.valueOf(theme.toLowerCase());
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid theme");
+    }
+  }
+
+  private UserLanguage parseLanguage(String language) {
+    try {
+      return UserLanguage.valueOf(language.toLowerCase());
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid language");
+    }
+  }
+
+  @Transactional
   public void changeMyPassword(Long userId, PasswordChangeRequest req, String currentSessionId) {
     if (!StringUtils.hasText(req.getCurrentPassword())
         || !StringUtils.hasText(req.getNewPassword())
@@ -245,6 +277,19 @@ public class UserService implements UserApi {
     // TODO(feat/notification): once the notification module is merged, notify the user, e.g.
     // notificationApi.sendPasswordChangedNotification(
     //     new NotificationRecipient(user.getEmail(), user.getName()));
+  }
+
+  @Override
+  @Transactional
+  public void resetPassword(Long userId, String rawNewPassword) {
+    User user = getUserById(userId);
+    user.setPassHash(passwordEncoder.encode(rawNewPassword));
+
+    // Reset is unauthenticated, so invalidate every session; the user must log in again.
+    sessionRepository
+        .findByPrincipalName(userId.toString())
+        .keySet()
+        .forEach(sessionRepository::deleteById);
   }
 
   @Transactional

@@ -180,6 +180,34 @@ export interface PasswordChangePayload {
   confirmNewPassword: string
 }
 
+// PATCH /api/me/preferences body (PreferencesUpdateRequest). Both fields are
+// optional, so only the one that changed is sent. Values are the backend enums
+// (theme: light|dark|system, language: en|ukr) — utils/preferences maps the UI's
+// values to these before they reach here.
+export interface PreferencesUpdatePayload {
+  theme?: string
+  language?: string
+}
+
+// PATCH /api/me/preferences response (UserPreferencesResponse): the saved values.
+export interface PreferencesResponse {
+  theme: string
+  language: string
+}
+
+export const preferencesService = {
+  // PATCH /api/me/preferences — persists the signed-in user's theme/language to
+  // their profile so the choice follows them across sessions and devices.
+  update: async (payload: PreferencesUpdatePayload): Promise<PreferencesResponse> => {
+    const res = await apiRequest('/api/me/preferences', {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to save preferences.'
+    })
+    return (await res.json()) as PreferencesResponse
+  }
+}
+
 export interface UserCreatePayload {
   name: string
   surname: string
