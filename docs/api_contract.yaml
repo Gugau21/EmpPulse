@@ -93,7 +93,8 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/auth/password/change:
+  /api/auth/password/reset:
+    post:
       tags:
         - Auth
       summary: Reset password with token
@@ -131,7 +132,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/me/password:
+  /api/me/password/change:
     post:
       tags:
         - Users
@@ -278,6 +279,62 @@ paths:
       responses:
         '204':
           description: User deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/users/{userId}/bonus-vacation-days:
+    get:
+      tags:
+        - Users
+      summary: Get employee bonus vacation days (admin only)
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bonus vacation days
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PremiumVacationDay'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    patch:
+      tags:
+        - Users
+      summary: Update employee bonus vacation days (admin only)
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PremiumVacationDay'
+      responses:
+        '204':
+          description: Bonus vacation days updated
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -856,7 +913,7 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 
   /api/leave-requests/{leaveRequestId}/cancel:
-    post:
+    patch:
       tags:
         - LeaveRequests
       summary: Cancel a leave request (employee only)
@@ -884,11 +941,11 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/leave-requests/{leaveRequestId}/approve:
-    post:
+  /api/leave-requests/{leaveRequestId}/response:
+    patch:
       tags:
         - LeaveRequests
-      summary: Approve a leave request
+      summary: Approve or reject a leave request (admin only)
       parameters:
         - in: path
           name: leaveRequestId
@@ -896,14 +953,14 @@ paths:
           schema:
             type: integer
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/LeaveRequestAction'
       responses:
         '200':
-          description: Leave request approved
+          description: Leave request reviewed
           content:
             application/json:
               schema:
@@ -921,11 +978,11 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/leave-requests/{leaveRequestId}/reject:
+  /api/leave-requests/{leaveRequestId}/modifications:
     post:
       tags:
         - LeaveRequests
-      summary: Reject a leave request
+      summary: Request a modification to a leave request (employee only)
       parameters:
         - in: path
           name: leaveRequestId
@@ -933,14 +990,14 @@ paths:
           schema:
             type: integer
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LeaveRequestAction'
+              $ref: '#/components/schemas/LeaveRequestUpdate'
       responses:
-        '200':
-          description: Leave request rejected
+        '201':
+          description: Leave request modification created
           content:
             application/json:
               schema:
@@ -957,9 +1014,6 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  /api/exports/csv:
-    get:
 
 components:
   securitySchemes:
