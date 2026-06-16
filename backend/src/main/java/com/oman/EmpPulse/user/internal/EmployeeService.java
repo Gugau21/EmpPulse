@@ -8,6 +8,7 @@ import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import com.oman.EmpPulse.user.dto.EmployeeListItemResponse;
 import com.oman.EmpPulse.user.dto.EmployeeListResponse;
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -102,6 +103,12 @@ public class EmployeeService implements EmployeeApi {
   @Transactional(readOnly = true)
   public List<Long> findActiveEmployeeIds() {
     return employeeRepository.findByActiveTrue().stream().map(Employee::getId).toList();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<WeekSchedule> findWeekScheduleByEmployeeIds(Collection<Long> employeeIds) {
+    return employeeRepository.findWeekScheduleByEmployeeIds(employeeIds);
   }
 
   @Transactional(readOnly = true)

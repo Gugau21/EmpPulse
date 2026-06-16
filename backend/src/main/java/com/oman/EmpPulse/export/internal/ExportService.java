@@ -23,6 +23,9 @@ import com.oman.EmpPulse.loggedhours.internal.LoggedHours;
 import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
 import com.oman.EmpPulse.user.internal.BonusVacationDays;
 import com.oman.EmpPulse.user.api.BonusVacationDaysApi;
+import com.oman.EmpPulse.defaulthours.internal.ScheduleBlock;
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
+import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
 
 @Service
 public class ExportService {
@@ -36,6 +39,7 @@ public class ExportService {
     private final LeaveApi leaveApi;
     private final LoggedHoursApi loggedHoursApi;
     private final BonusVacationDaysApi bonusVacationDaysApi;
+    private final DefaultHoursApi defaultHoursApi;
 
     public ExportService(DepartmentApi departmentApi,
                          AdminApi adminApi,
@@ -45,7 +49,8 @@ public class ExportService {
                          UserApi userApi,
                          LeaveApi leaveApi,
                          LoggedHoursApi loggedHoursApi,
-                         BonusVacationDaysApi bonusVacationDaysApi) {
+                         BonusVacationDaysApi bonusVacationDaysApi,
+                         DefaultHoursApi defaultHoursApi) {
         this.departmentApi = departmentApi;
         this.adminApi = adminApi;
         this.csvExportService = csvExportService;
@@ -55,6 +60,7 @@ public class ExportService {
         this.leaveApi = leaveApi;
         this.loggedHoursApi = loggedHoursApi;
         this.bonusVacationDaysApi = bonusVacationDaysApi;
+        this.defaultHoursApi = defaultHoursApi;
     }
 
     public byte[] export(Authentication authentication) {
@@ -70,6 +76,9 @@ public class ExportService {
         users.add(userApi.findById(AuthUtils.getUserId(authentication)).orElseThrow());
         List<LoggedHours> loggedHours = loggedHoursApi.findAllByEmployeeIdIn(employeeIds).stream().toList();
         List<BonusVacationDays> bonusVacationDays = bonusVacationDaysApi.findByEmployeeIdIn(employeeIds).stream().toList();
+        Set<WeekSchedule> weekSchedules = departmentApi.findWeekScheduleByDepartmentIds(departments.stream().map(Department::getId).collect(Collectors.toSet())).stream().collect(Collectors.toSet());
+        weekSchedules.addAll(employeeApi.findWeekScheduleByEmployeeIds(employeeIds).stream().collect(Collectors.toSet()));
+        List<ScheduleBlock> scheduleBlocks = defaultHoursApi.findEmployeeScheduleBlocks(weekSchedules.stream().map(WeekSchedule::getId).collect(Collectors.toSet())).stream().toList();
         Map<String, byte[]> files = new HashMap<>();
         files.put("departments.csv", csvExportService.departmentsToCsv(departments));
         files.put("employees.csv", csvExportService.employeesToCsv(employees));
@@ -77,6 +86,8 @@ public class ExportService {
         files.put("leaves.csv", csvExportService.leavesToCsv(leaves));
         files.put("logged_hours.csv", csvExportService.loggedHoursToCsv(loggedHours));
         files.put("bonus_vacation_days.csv", csvExportService.bonusVacationDaysToCsv(bonusVacationDays));
+        files.put("week_schedules.csv", csvExportService.weekSchedulesToCsv(weekSchedules));
+        files.put("schedule_blocks.csv", csvExportService.scheduleBlocksToCsv(scheduleBlocks));
         return zipService.zip(files);
     }
 

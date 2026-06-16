@@ -7,12 +7,14 @@ import java.nio.charset.StandardCharsets;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Service;
+import com.oman.EmpPulse.defaulthours.internal.ScheduleBlock;
 import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.leave.internal.Leave;
 import com.oman.EmpPulse.loggedhours.internal.LoggedHours;
 import com.oman.EmpPulse.user.internal.BonusVacationDays;
 import com.oman.EmpPulse.user.internal.Employee;
 import com.oman.EmpPulse.user.internal.User;
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 
 @Service
 public class CsvExportService {
@@ -176,5 +178,53 @@ public class CsvExportService {
             throw new RuntimeException("Failed to generate CSV for bonus vacation days", e);
         }
     }
+
+    public byte[] scheduleBlocksToCsv(Iterable<ScheduleBlock> blocks) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+            CSVPrinter printer = new CSVPrinter(
+                new OutputStreamWriter(out, StandardCharsets.UTF_8),
+                CSVFormat.DEFAULT.builder()
+                    .setHeader("ID", "Set ID", "Day Of Week", "Start Time", "End Time")
+                    .build())) {
+
+            for (ScheduleBlock sb : blocks) {
+                printer.printRecord(
+                    sb.getId(),
+                    sb.getSetId(),
+                    sb.getDayOfWeek(),
+                    sb.getStartTime(),
+                    sb.getEndTime()
+                );
+            }
+
+            printer.flush();
+            return out.toByteArray();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate CSV for schedule blocks", e);
+        }
+    }
+
+
+    public byte[] weekSchedulesToCsv(Iterable<WeekSchedule> schedules) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+            CSVPrinter printer = new CSVPrinter(
+                new OutputStreamWriter(out, StandardCharsets.UTF_8),
+                CSVFormat.DEFAULT.builder()
+                    .setHeader("ID")
+                    .build())) {
+
+            for (WeekSchedule ws : schedules) {
+                printer.printRecord(ws.getId());
+            }
+
+            printer.flush();
+            return out.toByteArray();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate CSV for week schedules", e);
+        }
+    }
+
 
 }

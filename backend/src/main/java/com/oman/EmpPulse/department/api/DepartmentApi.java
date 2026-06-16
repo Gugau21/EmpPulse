@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.department.api;
 
+import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -100,4 +101,12 @@ public interface DepartmentApi {
    *     found
    */
   Collection<Department> findAllByIds(Collection<Long> ids);
+
+  /**
+   * Finds the department with the given IDs.
+   *
+   * @param id the department IDs to look up
+   * @return the department entity, or empty if not found
+   */
+  List<WeekSchedule> findWeekScheduleByDepartmentIds(Collection<Long> departmentIds);
 }
