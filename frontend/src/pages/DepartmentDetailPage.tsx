@@ -11,6 +11,8 @@ import { translations } from '../utils/translations'
 import EditIconLight from '../assets/edit_icon_light.png'
 import { useTheme } from '../hooks/useTheme'
 import { useWeekdayLabels, WEEKDAYS } from '../hooks/useWeekdayLabels'
+import { useDepartmentDefaultHours } from '../hooks/useDefaultHours'
+import { scheduleFromDays } from '../utils/defaultHours'
 
 const DepartmentDetailScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
@@ -27,6 +29,8 @@ const DepartmentDetailScreen: React.FC = () => {
   const detailQuery = useDepartmentDetail(validId)
   const department = detailQuery.data ?? null
   const loading = detailQuery.isLoading
+  const { data: defaultHoursData } = useDepartmentDefaultHours(validId)
+  const defaultHoursSchedule = scheduleFromDays(defaultHoursData ?? [])
   const onBack = () => navigate('/departments')
   if (loading && !department) {
     return (
@@ -102,14 +106,25 @@ const DepartmentDetailScreen: React.FC = () => {
 
         <div className="detail-column">
           <h3 className="column-section-title">{t.defaultWorkingHours}</h3>
-          {/* One row per weekday. Shifts are intentionally empty until the
-              default-working-hours API is wired up. */}
+          {/* One row per weekday; the day's interval shows when set. */}
           <div className="card-box schedule-matrix-card">
-            {WEEKDAYS.map(day => (
-              <div key={day} className="day-schedule-group">
-                <span className="day-label">{weekdayLabels[day] || day}</span>
-              </div>
-            ))}
+            {WEEKDAYS.map(day => {
+              const shift = defaultHoursSchedule[day]?.[0]
+              return (
+                <div key={day} className="day-schedule-group">
+                  <span className="day-label">{weekdayLabels[day] || day}</span>
+                  <div className="shifts-stack">
+                    {shift && (
+                      <div className="shift-pill-row">
+                        <span className="time-range-display">
+                          {shift.start} - {shift.end}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
           {isOwner && (
             <div className="detail-action-row">

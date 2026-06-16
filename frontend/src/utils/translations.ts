@@ -88,7 +88,13 @@ export const translations = {
       thursday: 'Thursday',
       friday: 'Friday',
       saturday: 'Saturday',
-      sunday: 'Sunday'
+      sunday: 'Sunday',
+      statusLabel: 'Status:',
+      working: 'Working',
+      until: 'until',
+      statusVacation: 'Vacation',
+      statusSick: 'Sick',
+      statusPersonal: 'Personal'
     },
     requestManagerPage: {
       title: 'Requests',
@@ -180,6 +186,7 @@ export const translations = {
       addUser: '+ add user',
       addWithoutHours: '+ add without default working hours',
       addWithHours: '+ add default working hours',
+      errInvalidWorkingHours: 'Each day with hours needs a start before its end.',
       addRequest: 'Add request',
       createRequest: 'Create request',
       errSelectEmployee: 'Select an employee.',
@@ -342,7 +349,13 @@ export const translations = {
       thursday: 'Четвер',
       friday: 'П’ятниця',
       saturday: 'Субота',
-      sunday: 'Неділя'
+      sunday: 'Неділя',
+      statusLabel: 'Статус:',
+      working: 'Працює',
+      until: 'до',
+      statusVacation: 'Відпустка',
+      statusSick: 'Лікарняний',
+      statusPersonal: 'Особистий'
     },
     requestManagerPage: {
       title: 'Запити',
@@ -435,6 +448,7 @@ export const translations = {
       addUser: '+ додати користувача',
       addWithoutHours: '+ додати без стандартних робочих годин',
       addWithHours: '+ додати стандартні робочі години',
+      errInvalidWorkingHours: 'Для кожного дня з годинами початок має бути раніше за кінець.',
       addRequest: 'Додати запит',
       createRequest: 'Створити запит',
       errSelectEmployee: 'Виберіть робітника.',

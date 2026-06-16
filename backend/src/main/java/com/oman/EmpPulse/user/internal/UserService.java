@@ -211,7 +211,7 @@ public class UserService implements UserApi {
   }
 
   @Transactional
-  public void createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
+  public Long createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
     boolean reqToCreateEmployee = (req.getEmployeeDepartmentId() != null);
     boolean reqToCreateAdmin =
         (req.getAdminDepartmentIds() != null) && !req.getAdminDepartmentIds().isEmpty();
@@ -263,6 +263,8 @@ public class UserService implements UserApi {
       adminRepository.save(admin);
       departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
     }
+
+    return user.getId();
   }
 
   private void requireUserFields(UserCreateRequest req) {

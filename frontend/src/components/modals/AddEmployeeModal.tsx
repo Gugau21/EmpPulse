@@ -50,9 +50,10 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
     setCreateError(null)
   }
 
-  // onCreated runs after a successful create. Defaults to closing the modal; the
-  // "with default working hours" button passes a callback that opens the hours editor.
-  const handleCreateUser = (onCreated: () => void = closeModal) => {
+  // onCreated runs after a successful create, receiving the new user's id. Defaults
+  // to closing the modal; the "with default working hours" button passes a callback
+  // that opens the hours editor for that id.
+  const handleCreateUser = (onCreated: (userId: number) => void = () => closeModal()) => {
     setCreateError(null)
     if (!newName.trim() || !newSurname.trim() || !newEmail.trim() || !newPassword) {
       setCreateError(t.errAllFieldsRequired)
@@ -96,9 +97,9 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         adminDepartmentIds: isAdminChecked && adminDeptIds.length > 0 ? adminDeptIds : undefined
       },
       {
-        onSuccess: () => {
+        onSuccess: createdUserId => {
           resetCreateUserForm()
-          onCreated()
+          onCreated(createdUserId)
         }
       }
     )
@@ -154,7 +155,18 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         {isEmployeeChecked && (
           <button
             className="btn-modal-action"
-            onClick={() => handleCreateUser(() => openModal('ADD_WORKING_HOURS'))}
+            onClick={() =>
+              handleCreateUser(userId =>
+                // Seed the editor's target with the just-created employee. The id is
+                // all the hours endpoint needs; name/email fill the Employee shape.
+                openModal('ADD_WORKING_HOURS', {
+                  id: String(userId),
+                  name: newName.trim(),
+                  surname: newSurname.trim(),
+                  email: newEmail.trim()
+                })
+              )
+            }
             disabled={createUser.isPending}
           >
             {t.addWithHours}
