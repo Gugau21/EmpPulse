@@ -220,13 +220,18 @@ export interface BonusVacationDayPayload {
 }
 
 export const userService = {
-  create: async (payload: UserCreatePayload): Promise<void> => {
-    await apiRequest('/api/users', {
+  // POST /api/users (ADMIN; owner may also create admins). Returns the new user's
+  // id (UserCreatedResponse) so the caller can immediately act on it — e.g. open
+  // the default-working-hours editor for a freshly created employee.
+  create: async (payload: UserCreatePayload): Promise<number> => {
+    const res = await apiRequest('/api/users', {
       method: 'POST',
       body: payload,
       errorFallback: 'Failed to create user.',
       errorOverrides: { 409: 'A user with this email already exists.' }
     })
+    const data = await res.json()
+    return data.id as number
   },
 
   delete: async (userId: number): Promise<void> => {
@@ -669,6 +674,101 @@ export const loggedHoursService = {
     await apiRequest(`/api/employees/${employeeId}/logged-hours/${loggedHoursId}`, {
       method: 'DELETE',
       errorFallback: 'Failed to delete logged hours.'
+    })
+  }
+}
+
+// One weekday's default working interval. `dayOfWeek` is 0-6 (the editor maps its
+// weekday index to this); times are "HH:mm". The backend stores at most one
+// interval per day, so the app models a day as a single optional interval.
+export interface DefaultHoursDay {
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+}
+
+// Wire shape of GET /api/{…}/default-hours (DefaultWeekHoursResponse): days, each
+// with 0..1 intervals whose times arrive as "HH:mm:ss". Only days that carry an
+// interval are present.
+interface DefaultWeekHoursResponseDto {
+  days: {
+    dayOfWeek: number
+    intervals: { startTime: string; endTime: string }[]
+  }[]
+}
+
+// Flattens the wire response (0..1 interval per day) into one DefaultHoursDay per
+// day that has an interval, dropping the seconds the server adds to LocalTime.
+function mapDefaultHours(dto: DefaultWeekHoursResponseDto): DefaultHoursDay[] {
+  return (dto.days ?? [])
+    .filter(d => d.intervals.length > 0)
+    .map(d => ({
+      dayOfWeek: d.dayOfWeek,
+      startTime: d.intervals[0].startTime.slice(0, 5),
+      endTime: d.intervals[0].endTime.slice(0, 5)
+    }))
+}
+
+// Builds the PUT body (DefaultWeekHoursRequest): one day entry per supplied
+// interval, each wrapped in a single-element intervals array.
+function toDefaultHoursBody(days: DefaultHoursDay[]) {
+  return {
+    days: days.map(d => ({
+      dayOfWeek: d.dayOfWeek,
+      intervals: [{ startTime: d.startTime, endTime: d.endTime }]
+    }))
+  }
+}
+
+// The 400 the server returns for an invalid interval (start not before end). The
+// editor validates this too, so it should only surface on an unexpected payload.
+const DEFAULT_HOURS_OVERRIDES = {
+  400: 'Enter a valid interval for each day: start must be before end.'
+}
+
+export const defaultHoursService = {
+  // GET /api/employees/{employeeId}/default-hours (admin overseeing the employee).
+  // Empty array when no default hours have been set.
+  getForEmployee: async (employeeId: number, signal?: AbortSignal): Promise<DefaultHoursDay[]> => {
+    const res = await apiRequest(`/api/employees/${employeeId}/default-hours`, {
+      signal,
+      errorFallback: 'Failed to load default working hours.'
+    })
+    return mapDefaultHours((await res.json()) as DefaultWeekHoursResponseDto)
+  },
+
+  // PUT /api/employees/{employeeId}/default-hours (admin only) — replaces the
+  // employee's whole weekly schedule with the supplied days.
+  setForEmployee: async (employeeId: number, days: DefaultHoursDay[]): Promise<void> => {
+    await apiRequest(`/api/employees/${employeeId}/default-hours`, {
+      method: 'PUT',
+      body: toDefaultHoursBody(days),
+      errorFallback: 'Failed to save default working hours.',
+      errorOverrides: DEFAULT_HOURS_OVERRIDES
+    })
+  },
+
+  // GET /api/departments/{departmentId}/default-hours (admin overseeing the dept).
+  // Empty array when no default hours have been set.
+  getForDepartment: async (
+    departmentId: number,
+    signal?: AbortSignal
+  ): Promise<DefaultHoursDay[]> => {
+    const res = await apiRequest(`/api/departments/${departmentId}/default-hours`, {
+      signal,
+      errorFallback: 'Failed to load default working hours.'
+    })
+    return mapDefaultHours((await res.json()) as DefaultWeekHoursResponseDto)
+  },
+
+  // PUT /api/departments/{departmentId}/default-hours (admin only) — replaces the
+  // department's whole weekly schedule; inherited by employees with none of their own.
+  setForDepartment: async (departmentId: number, days: DefaultHoursDay[]): Promise<void> => {
+    await apiRequest(`/api/departments/${departmentId}/default-hours`, {
+      method: 'PUT',
+      body: toDefaultHoursBody(days),
+      errorFallback: 'Failed to save default working hours.',
+      errorOverrides: DEFAULT_HOURS_OVERRIDES
     })
   }
 }

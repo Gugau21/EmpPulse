@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.user.internal;
 
+import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
 import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
@@ -40,6 +41,7 @@ public class UserService implements UserApi {
   private final BonusVacationDaysRepository bonusVacationDaysRepository;
   private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
   private final DepartmentApi departmentApi;
+  private final DefaultHoursApi defaultHoursApi;
   private final PasswordEncoder passwordEncoder;
   private final LeaveApi leaveApi;
 
@@ -50,6 +52,7 @@ public class UserService implements UserApi {
       BonusVacationDaysRepository bonusVacationDaysRepository,
       FindByIndexNameSessionRepository<? extends Session> sessionRepository,
       DepartmentApi departmentApi,
+      @Lazy DefaultHoursApi defaultHoursApi,
       PasswordEncoder passwordEncoder,
       @Lazy LeaveApi leaveApi) {
     this.userRepository = userRepository;
@@ -58,6 +61,7 @@ public class UserService implements UserApi {
     this.bonusVacationDaysRepository = bonusVacationDaysRepository;
     this.sessionRepository = sessionRepository;
     this.departmentApi = departmentApi;
+    this.defaultHoursApi = defaultHoursApi;
     this.passwordEncoder = passwordEncoder;
     this.leaveApi = leaveApi;
   }
@@ -244,7 +248,7 @@ public class UserService implements UserApi {
   }
 
   @Transactional
-  public void createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
+  public Long createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
     boolean reqToCreateEmployee = (req.getEmployeeDepartmentId() != null);
     boolean reqToCreateAdmin =
         (req.getAdminDepartmentIds() != null) && !req.getAdminDepartmentIds().isEmpty();
@@ -286,8 +290,8 @@ public class UserService implements UserApi {
           new Employee(
               user.getId(),
               req.getEmployeeDepartmentId(),
-              null,
-              req.getYearlyVacationBalance()); // WeekScheduleId to be added
+              defaultHoursApi.inheritDepartmentSchedule(req.getEmployeeDepartmentId()),
+              req.getYearlyVacationBalance());
       employeeRepository.save(employee);
     }
 
@@ -296,6 +300,8 @@ public class UserService implements UserApi {
       adminRepository.save(admin);
       departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
     }
+
+    return user.getId();
   }
 
   private void requireUserFields(UserCreateRequest req) {
@@ -501,8 +507,8 @@ public class UserService implements UserApi {
         new Employee(
             userId,
             req.getEmployeeDepartmentId(),
-            null,
-            req.getYearlyVacationBalance()); // WeekScheduleId to be added
+            defaultHoursApi.inheritDepartmentSchedule(req.getEmployeeDepartmentId()),
+            req.getYearlyVacationBalance());
     employeeRepository.save(employee);
   }
 
