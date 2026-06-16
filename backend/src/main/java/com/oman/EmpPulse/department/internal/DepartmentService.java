@@ -81,6 +81,29 @@ public class DepartmentService implements DepartmentApi {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public void requireAdminAccessToDepartment(Long adminId, Long departmentId) {
+    findDepartmentById(departmentId);
+    if (!adminApi.overseesDepartment(adminId, departmentId)) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this department");
+    }
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Long getWeekScheduleId(Long departmentId) {
+    return findDepartmentById(departmentId).getWeekScheduleId();
+  }
+
+  @Override
+  @Transactional
+  public void assignWeekSchedule(Long departmentId, Long weekScheduleId) {
+    Department department = findDepartmentById(departmentId);
+    department.setWeekScheduleId(weekScheduleId);
+    departmentRepository.save(department);
+  }
+
+  @Override
   @Transactional
   public void ensureDefaultDepartmentExists() {
     if (departmentRepository.existsByIsDefaultTrue()) {

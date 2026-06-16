@@ -68,12 +68,14 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/auth/password/forgot: TODO
+  /api/auth/password/forgot:
     post:
       tags:
         - Auth
       summary: Request a password reset email
-      description: Sends a password reset email if the address exists.
+      description: >-
+        Sends a password reset email to the given address. Returns an error if the address does not
+        belong to a registered user.
       security: []
       requestBody:
         required: true
@@ -86,11 +88,12 @@ paths:
           description: Reset email queued
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/auth/password/reset: TODO
-    post:
+  /api/auth/password/change:
       tags:
         - Auth
       summary: Reset password with token
@@ -149,7 +152,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/me/preferences: TODO
+  /api/me/preferences:
     patch:
       tags:
         - Preferences
@@ -426,7 +429,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/departments/{departmentId}/default-hours: TODO
+  /api/departments/{departmentId}/default-hours:
     get:
       tags:
         - DefaultHours
@@ -513,7 +516,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/default-hours: TODO
+  /api/employees/{employeeId}/default-hours:
     get:
       tags:
         - DefaultHours
@@ -573,7 +576,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/logged-hours: TODO
+  /api/employees/{employeeId}/logged-hours:
     get:
       tags:
         - LoggedHours
@@ -645,7 +648,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/employees/{employeeId}/logged-hours/{loggedHoursId}: TODO
+  /api/employees/{employeeId}/logged-hours/{loggedHoursId}:
     patch:
       tags:
         - LoggedHours

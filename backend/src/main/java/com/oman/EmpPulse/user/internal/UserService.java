@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.user.internal;
 
+import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
 import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
@@ -13,6 +14,8 @@ import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.api.UserResponse;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
+import com.oman.EmpPulse.user.dto.PasswordChangeRequest;
+import com.oman.EmpPulse.user.dto.PreferencesUpdateRequest;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.time.LocalDate;
@@ -40,6 +43,7 @@ public class UserService implements UserApi {
   private final BonusVacationDaysRepository bonusVacationDaysRepository;
   private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
   private final DepartmentApi departmentApi;
+  private final DefaultHoursApi defaultHoursApi;
   private final PasswordEncoder passwordEncoder;
   private final LeaveApi leaveApi;
 
@@ -50,6 +54,7 @@ public class UserService implements UserApi {
       BonusVacationDaysRepository bonusVacationDaysRepository,
       FindByIndexNameSessionRepository<? extends Session> sessionRepository,
       DepartmentApi departmentApi,
+      @Lazy DefaultHoursApi defaultHoursApi,
       PasswordEncoder passwordEncoder,
       @Lazy LeaveApi leaveApi) {
     this.userRepository = userRepository;
@@ -58,6 +63,7 @@ public class UserService implements UserApi {
     this.bonusVacationDaysRepository = bonusVacationDaysRepository;
     this.sessionRepository = sessionRepository;
     this.departmentApi = departmentApi;
+    this.defaultHoursApi = defaultHoursApi;
     this.passwordEncoder = passwordEncoder;
     this.leaveApi = leaveApi;
   }
@@ -220,7 +226,87 @@ public class UserService implements UserApi {
   }
 
   @Transactional
-  public void createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
+  public UserPreferencesResponse updatePreferences(Long userId, PreferencesUpdateRequest req) {
+    User user = getUserById(userId);
+
+    if (req.getTheme() != null) {
+      user.setTheme(parseTheme(req.getTheme()));
+    }
+    if (req.getLanguage() != null) {
+      user.setLanguage(parseLanguage(req.getLanguage()));
+    }
+
+    userRepository.save(user);
+    return new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name());
+  }
+
+  private UserTheme parseTheme(String theme) {
+    try {
+      return UserTheme.valueOf(theme.toLowerCase());
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid theme");
+    }
+  }
+
+  private UserLanguage parseLanguage(String language) {
+    try {
+      return UserLanguage.valueOf(language.toLowerCase());
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid language");
+    }
+  }
+
+  @Transactional
+  public void changeMyPassword(Long userId, PasswordChangeRequest req, String currentSessionId) {
+    if (!StringUtils.hasText(req.getCurrentPassword())
+        || !StringUtils.hasText(req.getNewPassword())
+        || !StringUtils.hasText(req.getConfirmNewPassword())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Current password, new password and confirmation are required");
+    }
+
+    User user = getUserById(userId);
+
+    if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPassHash())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+    }
+
+    if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match");
+    }
+
+    if (passwordEncoder.matches(req.getNewPassword(), user.getPassHash())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "New password must differ from the current password");
+    }
+
+    user.setPassHash(passwordEncoder.encode(req.getNewPassword()));
+
+    // Invalidate all other sessions for this user, keeping the caller's current session.
+    sessionRepository.findByPrincipalName(userId.toString()).keySet().stream()
+        .filter(sessionId -> !sessionId.equals(currentSessionId))
+        .forEach(sessionRepository::deleteById);
+
+    // TODO(feat/notification): once the notification module is merged, notify the user, e.g.
+    // notificationApi.sendPasswordChangedNotification(
+    //     new NotificationRecipient(user.getEmail(), user.getName()));
+  }
+
+  @Override
+  @Transactional
+  public void resetPassword(Long userId, String rawNewPassword) {
+    User user = getUserById(userId);
+    user.setPassHash(passwordEncoder.encode(rawNewPassword));
+
+    // Reset is unauthenticated, so invalidate every session; the user must log in again.
+    sessionRepository
+        .findByPrincipalName(userId.toString())
+        .keySet()
+        .forEach(sessionRepository::deleteById);
+  }
+
+  @Transactional
+  public Long createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
     boolean reqToCreateEmployee = (req.getEmployeeDepartmentId() != null);
     boolean reqToCreateAdmin =
         (req.getAdminDepartmentIds() != null) && !req.getAdminDepartmentIds().isEmpty();
@@ -262,8 +348,8 @@ public class UserService implements UserApi {
           new Employee(
               user.getId(),
               req.getEmployeeDepartmentId(),
-              null,
-              req.getYearlyVacationBalance()); // WeekScheduleId to be added
+              defaultHoursApi.inheritDepartmentSchedule(req.getEmployeeDepartmentId()),
+              req.getYearlyVacationBalance());
       employeeRepository.save(employee);
     }
 
@@ -272,6 +358,8 @@ public class UserService implements UserApi {
       adminRepository.save(admin);
       departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
     }
+
+    return user.getId();
   }
 
   private void requireUserFields(UserCreateRequest req) {
@@ -477,8 +565,8 @@ public class UserService implements UserApi {
         new Employee(
             userId,
             req.getEmployeeDepartmentId(),
-            null,
-            req.getYearlyVacationBalance()); // WeekScheduleId to be added
+            defaultHoursApi.inheritDepartmentSchedule(req.getEmployeeDepartmentId()),
+            req.getYearlyVacationBalance());
     employeeRepository.save(employee);
   }
 

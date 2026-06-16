@@ -34,3 +34,10 @@ export const loggedHoursKeys = {
   lists: () => [...loggedHoursKeys.all, 'list'] as const,
   list: (employeeId: number) => [...loggedHoursKeys.lists(), employeeId] as const
 }
+
+export const defaultHoursKeys = {
+  all: ['defaultHours'] as const,
+  employee: (employeeId: number) => [...defaultHoursKeys.all, 'employee', employeeId] as const,
+  department: (departmentId: number) =>
+    [...defaultHoursKeys.all, 'department', departmentId] as const
+}

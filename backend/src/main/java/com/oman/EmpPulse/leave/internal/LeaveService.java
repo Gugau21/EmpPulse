@@ -16,9 +16,11 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -93,6 +95,16 @@ public class LeaveService implements LeaveApi {
       total += countWeekdays(from, to);
     }
     return total;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Set<Long> findEmployeeIdsOnUnpaidApprovedLeave(
+      Collection<Long> employeeIds, LocalDate date) {
+    if (employeeIds == null || employeeIds.isEmpty()) {
+      return Set.of();
+    }
+    return new HashSet<>(leaveRepository.findEmployeeIdsOnUnpaidApprovedLeave(employeeIds, date));
   }
 
   private static int countWeekdays(LocalDate from, LocalDate to) {

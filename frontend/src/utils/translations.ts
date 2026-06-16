@@ -28,7 +28,9 @@ export const translations = {
       back: '🡄 Back',
       adminsTitle: 'Admins',
       noAdmins: 'No administrators assigned.',
-      editAdmins: 'edit admins'
+      editAdmins: 'edit admins',
+      defaultWorkingHours: 'Default working hours',
+      editWorkingHours: 'edit working hours'
     },
     departmentsPage: {
       title: 'Departments',
@@ -49,7 +51,24 @@ export const translations = {
       invalidEmail: 'Please enter a valid email address.',
       loginFailed: 'Login failed',
       loggingIn: 'Logging in…',
-      loginBtn: 'log in'
+      loginBtn: 'log in',
+      forgotPassword: 'forgot password'
+    },
+    forgotPasswordPage: {
+      title: 'Forgot your password',
+      instruction: 'Enter your email to receive a code for reseting password',
+      emailLabel: 'Email',
+      continueBtn: 'continue'
+    },
+    checkEmailPage: {
+      title: 'Check your email',
+      instruction: 'The link to reset your password was sent to your email'
+    },
+    resetPasswordPage: {
+      title: 'Reset your password',
+      newPasswordLabel: 'Enter your new password',
+      repeatPasswordLabel: 'Repeat your new password',
+      resetBtn: 'reset password'
     },
     myRequestsPage: {
       title: 'My requests',
@@ -86,7 +105,13 @@ export const translations = {
       thursday: 'Thursday',
       friday: 'Friday',
       saturday: 'Saturday',
-      sunday: 'Sunday'
+      sunday: 'Sunday',
+      statusLabel: 'Status:',
+      working: 'Working',
+      until: 'until',
+      statusVacation: 'Vacation',
+      statusSick: 'Sick',
+      statusPersonal: 'Personal'
     },
     requestManagerPage: {
       title: 'Requests',
@@ -150,6 +175,7 @@ export const translations = {
       editDefaultWorkingHours: 'Edit default',
       addDefaultWorkingHours: 'Add default',
       workingHoursSuffix: 'working hours',
+      editDepartmentWorkingHours: 'Edit department default working hours',
       monday: 'Monday',
       tuesday: 'Tuesday',
       wednesday: 'Wednesday',
@@ -158,7 +184,8 @@ export const translations = {
       saturday: 'Saturday',
       sunday: 'Sunday',
       saveChanges: 'Save changes',
-      addEmployeeBtnWorkingHours: '+ add employee',
+      editWithHours: '+ edit default working hours',
+      editDepartmentWithHours: '+ edit department default working hours',
       addDepartment: 'Add department',
       editDepartment: 'Edit department',
       nameOfDepartment: 'Name of department',
@@ -173,8 +200,10 @@ export const translations = {
         'Please select a department for the employee role before creating the user.',
       errSelectAdminDept:
         'Please select at least one department for the administrator role before creating the user.',
+      addUser: '+ add user',
       addWithoutHours: '+ add without default working hours',
       addWithHours: '+ add default working hours',
+      errInvalidWorkingHours: 'Each day with hours needs a start before its end.',
       addRequest: 'Add request',
       createRequest: 'Create request',
       errSelectEmployee: 'Select an employee.',
@@ -196,12 +225,17 @@ export const translations = {
       oldPassword: 'Old password',
       newPassword: 'New password',
       repeatNewPassword: 'Repeat new password',
+      errAllPwdRequired: 'Current, new and repeated passwords are all required.',
+      errPwdMismatch: 'The new passwords do not match.',
+      errPwdSameAsOld: 'The new password must differ from the current one.',
+      passwordChanged: 'Password changed',
+      passwordChangedMsg:
+        'Your password was changed successfully. Any other sessions have been signed out.',
       confirmDeleteEmp: 'Do you really want to delete employee?',
       confirmDeleteLeave: 'Do you really want to delete a leave?',
       confirmCancelLeave: 'Do you really want to cancel a leave?',
       confirmDeleteDept: 'Do you really want to delete a department?',
       confirmLogout: 'Do you really want to log out?',
-      confirmChangePwd: 'Do you really want to change password?',
       yes: 'YES',
       no: 'NO',
       editAdminsTitle: 'Edit administrators',
@@ -277,7 +311,9 @@ export const translations = {
       back: '🡄 Назад',
       adminsTitle: 'Адміністратори',
       noAdmins: 'Немає призначених адміністраторів.',
-      editAdmins: 'редагувати адміністраторів'
+      editAdmins: 'редагувати адміністраторів',
+      defaultWorkingHours: 'Стандартні робочі години',
+      editWorkingHours: 'редагувати робочі години'
     },
     departmentsPage: {
       title: 'Відділи',
@@ -298,7 +334,24 @@ export const translations = {
       invalidEmail: 'Будь ласка, введіть дійсну електронну адресу.',
       loginFailed: 'Помилка входу',
       loggingIn: 'Вхід…',
-      loginBtn: 'увійти'
+      loginBtn: 'увійти',
+      forgotPassword: 'забули пароль?'
+    },
+    forgotPasswordPage: {
+      title: 'Забули пароль?',
+      instruction: 'Введіть свою електронну пошту, щоб отримати код для відновлення доступу',
+      emailLabel: 'Електронна пошта',
+      continueBtn: 'продовжити'
+    },
+    checkEmailPage: {
+      title: 'Перевірте електронну пошту',
+      instruction: 'Посилання для створення нового пароля було відправлене на вказану пошту'
+    },
+    resetPasswordPage: {
+      title: 'Скидання пароля',
+      newPasswordLabel: 'Введіть новий пароль',
+      repeatPasswordLabel: 'Повторіть новий пароль',
+      resetBtn: 'скинути пароль'
     },
     myRequestsPage: {
       title: 'Мої запити',
@@ -335,7 +388,13 @@ export const translations = {
       thursday: 'Четвер',
       friday: 'П’ятниця',
       saturday: 'Субота',
-      sunday: 'Неділя'
+      sunday: 'Неділя',
+      statusLabel: 'Статус:',
+      working: 'Працює',
+      until: 'до',
+      statusVacation: 'Відпустка',
+      statusSick: 'Лікарняний',
+      statusPersonal: 'Особистий'
     },
     requestManagerPage: {
       title: 'Запити',
@@ -399,6 +458,7 @@ export const translations = {
       editDefaultWorkingHours: 'Редагувати стандартні',
       addDefaultWorkingHours: 'Додати стандартні',
       workingHoursSuffix: 'робочі години',
+      editDepartmentWorkingHours: 'Редагувати стандартні робочі години відділу',
       monday: 'Понеділок',
       tuesday: 'Вівторок',
       wednesday: 'Середа',
@@ -407,7 +467,8 @@ export const translations = {
       saturday: 'Субота',
       sunday: 'Неділя',
       saveChanges: 'Зберегти зміни',
-      addEmployeeBtnWorkingHours: '+ додати робітника',
+      editWithHours: '+ редагувати стандартні робочі години',
+      editDepartmentWithHours: '+ редагувати стандартні робочі години відділу',
       addDepartment: 'Додати відділ',
       editDepartment: 'Редагувати відділ',
       nameOfDepartment: 'Назва відділу',
@@ -423,8 +484,10 @@ export const translations = {
         'Будь ласка, виберіть відділ для ролі робітника перед створенням користувача.',
       errSelectAdminDept:
         'Будь ласка, виберіть хоча б один відділ для ролі адміністратора перед створенням користувача.',
+      addUser: '+ додати користувача',
       addWithoutHours: '+ додати без стандартних робочих годин',
       addWithHours: '+ додати стандартні робочі години',
+      errInvalidWorkingHours: 'Для кожного дня з годинами початок має бути раніше за кінець.',
       addRequest: 'Додати запит',
       createRequest: 'Створити запит',
       errSelectEmployee: 'Виберіть робітника.',
@@ -446,12 +509,16 @@ export const translations = {
       oldPassword: 'Старий пароль',
       newPassword: 'Новий пароль',
       repeatNewPassword: 'Повторіть новий пароль',
+      errAllPwdRequired: 'Потрібно вказати поточний, новий і повторений паролі.',
+      errPwdMismatch: 'Нові паролі не збігаються.',
+      errPwdSameAsOld: 'Новий пароль має відрізнятися від поточного.',
+      passwordChanged: 'Пароль змінено',
+      passwordChangedMsg: 'Ваш пароль успішно змінено. Інші сеанси було завершено.',
       confirmDeleteEmp: 'Ви дійсно хочете видалити робітника?',
       confirmDeleteLeave: 'Ви дійсно хочете видалити відпустку?',
       confirmCancelLeave: 'Ви дійсно хочете скасувати запит?',
       confirmDeleteDept: 'Ви дійсно хочете видалити відділ?',
       confirmLogout: 'Ви дійсно хочете вийти?',
-      confirmChangePwd: 'Ви дійсно хочете змінити пароль?',
       yes: 'ТАК',
       no: 'НІ',
       editAdminsTitle: 'Редагувати адміністраторів',

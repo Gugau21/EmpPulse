@@ -41,6 +41,22 @@ CREATE UNIQUE INDEX uq_app_user_is_owner ON app_user (is_owner) WHERE (is_owner 
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- Password reset tokens
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE password_reset_token (
+  id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id     INTEGER     NOT NULL REFERENCES app_user (id) ON DELETE CASCADE,
+  token_hash  text        NOT NULL UNIQUE,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  expires_at  timestamptz NOT NULL,
+  used_at     timestamptz
+);
+
+CREATE INDEX idx_password_reset_token_user ON password_reset_token (user_id);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Departments
 -- ─────────────────────────────────────────────────────────────────────────────
 
@@ -146,7 +162,7 @@ CREATE TABLE logged_hours (
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Default hours  (weekly schedule entries, grouped by set_id)
--- day_of_week: 0 = Sunday … 6 = Saturday
+-- day_of_week: 0 = Monday … 6 = Sunday
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE schedule_block (
@@ -156,7 +172,6 @@ CREATE TABLE schedule_block (
   day_of_week smallint NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
   start_time  time     NOT NULL,
   end_time    time     NOT NULL,
-  paid        boolean  NOT NULL,
 
   CONSTRAINT schedule_block_times_valid CHECK (end_time > start_time),
   UNIQUE (set_id, day_of_week)

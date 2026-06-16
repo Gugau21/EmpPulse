@@ -124,4 +124,19 @@ public interface LeaveRepository extends JpaRepository<Leave, Long> {
       @Param("employeeId") Long employeeId,
       @Param("yearStart") LocalDate yearStart,
       @Param("yearEnd") LocalDate yearEnd);
+
+  /** Finds employees from the given set who have an approved unpaid leave covering {@code date}. */
+  @Query(
+      value =
+          """
+          select employee_id from leave
+          where employee_id in (:employeeIds)
+            and status = 'approved'
+            and paid = false
+            and start_date <= :date
+            and end_date >= :date
+          """,
+      nativeQuery = true)
+  List<Long> findEmployeeIdsOnUnpaidApprovedLeave(
+      @Param("employeeIds") Collection<Long> employeeIds, @Param("date") LocalDate date);
 }

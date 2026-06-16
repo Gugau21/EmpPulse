@@ -10,12 +10,9 @@ import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
 import EditIconLight from '../assets/edit_icon_light.png'
 import { useTheme } from '../hooks/useTheme'
-
-// NOTE: The default working-hours feature is not wired to the API yet, so the
-// working-hours table and its button are commented out below (kept for later).
-// const allDaysOrdered: ('Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday')[] = [
-//   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
-// ];
+import { useWeekdayLabels, WEEKDAYS } from '../hooks/useWeekdayLabels'
+import { useDepartmentDefaultHours } from '../hooks/useDefaultHours'
+import { scheduleFromDays } from '../utils/defaultHours'
 
 const DepartmentDetailScreen: React.FC = () => {
   const { openModal } = useOutletContext<OutletContext>()
@@ -24,6 +21,7 @@ const DepartmentDetailScreen: React.FC = () => {
   const { isOwner } = useAuth()
   const { language } = useLanguage()
   const t = translations[language].departmentDetail
+  const weekdayLabels = useWeekdayLabels()
   const { theme } = useTheme()
   // Guard against NaN from invalid route params
   const parsedId = deptId ? Number(deptId) : null
@@ -31,6 +29,8 @@ const DepartmentDetailScreen: React.FC = () => {
   const detailQuery = useDepartmentDetail(validId)
   const department = detailQuery.data ?? null
   const loading = detailQuery.isLoading
+  const { data: defaultHoursData } = useDepartmentDefaultHours(validId)
+  const defaultHoursSchedule = scheduleFromDays(defaultHoursData ?? [])
   const onBack = () => navigate('/departments')
   if (loading && !department) {
     return (
@@ -104,43 +104,39 @@ const DepartmentDetailScreen: React.FC = () => {
           )}
         </div>
 
-        {/*
         <div className="detail-column">
-          <h3 className="column-section-title">Default working hours</h3>
+          <h3 className="column-section-title">{t.defaultWorkingHours}</h3>
+          {/* One row per weekday; the day's interval shows when set. */}
           <div className="card-box schedule-matrix-card">
-            {allDaysOrdered.map((day) => {
-              const shifts = getShiftsForDay(day);
-              if (shifts.length === 0) return null;
-
+            {WEEKDAYS.map(day => {
+              const shift = defaultHoursSchedule[day]?.[0]
               return (
                 <div key={day} className="day-schedule-group">
-                  <span className="day-label">{day}</span>
+                  <span className="day-label">{weekdayLabels[day] || day}</span>
                   <div className="shifts-stack">
-                    {shifts.map((shift, sIdx) => (
-                      <div key={sIdx} className="shift-pill-row">
-                        <span className="shift-index">{sIdx + 1})</span>
-                        <div className="time-range-display">
-                          <span>{shift.start}</span>
-                          <span className="muted-separator">—</span>
-                          <span>{shift.end}</span>
-                        </div>
+                    {shift && (
+                      <div className="shift-pill-row">
+                        <span className="time-range-display">
+                          {shift.start} - {shift.end}
+                        </span>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
-          <div className="detail-action-row">
-            <button
-              className="primary-btn"
-              onClick={() => openModal('EDIT_WORKING_HOURS', department)}
-            >
-              edit working hours
-            </button>
-          </div>
+          {isOwner && (
+            <div className="detail-action-row">
+              <button
+                className="primary-btn"
+                onClick={() => openModal('EDIT_DEPARTMENT_WORKING_HOURS', department)}
+              >
+                {t.editWorkingHours}
+              </button>
+            </div>
+          )}
         </div>
-        */}
       </div>
     </div>
   )

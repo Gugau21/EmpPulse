@@ -16,14 +16,20 @@ import {
 // requests left after applying them. Requests are matched by leave type and by
 // status; the two filters combine (AND), and an empty selection in either
 // dimension shows everything for it. An optional sort then reorders the result.
-export function useRequestStatusFilter(requests: LeaveRequest[]) {
+export function useRequestStatusFilter(
+  requests: LeaveRequest[],
+  options?: { defaultStatusFilter?: string[] }
+) {
   const [search, setSearch] = useState('')
   const { language } = useLanguage()
   const t = translations[language].requestFilters
   const [typeFilter, setTypeFilter] = useState<string[]>([])
-  const [statusFilter, setStatusFilter] = useState<string[]>([])
-  // Default to ordering by leave start date; the user can clear or switch it.
-  const [sortKey, setSortKey] = useState<LeaveSortKey | null>('startDate')
+  // Optionally pre-select a status (the Request manager defaults to PENDING so the
+  // requests awaiting action show first); the user can clear or change it.
+  const [statusFilter, setStatusFilter] = useState<string[]>(options?.defaultStatusFilter ?? [])
+  // Default to ordering by last edit (most recently touched first); the user can
+  // clear or switch it.
+  const [sortKey, setSortKey] = useState<LeaveSortKey | null>('lastEdit')
 
   // Map the static options to our dynamic translations
   const translatedTypeFilters = LEAVE_TYPE_FILTERS.map(opt => ({

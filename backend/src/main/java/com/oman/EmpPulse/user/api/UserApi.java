@@ -29,6 +29,19 @@ public interface UserApi {
   UserResponse loadProfile(Long userId);
 
   /**
+   * Sets a new password for the given user and invalidates all of their active sessions.
+   *
+   * <p>Used by the forgot-password flow ({@code POST /api/auth/password/reset}) once a reset token
+   * has been validated. Unlike the logged-in change ({@code POST /api/me/password/change}), this
+   * does not require the current password and clears <em>every</em> session, so the user must log
+   * in again.
+   *
+   * @param userId the user whose password is being reset
+   * @param rawNewPassword the new password in plaintext
+   */
+  void resetPassword(Long userId, String rawNewPassword);
+
+  /**
    * Ensures an owner account exists with the given email and password, creating it if needed.
    *
    * <p>Called during bootstrap to seed the application with an initial owner. If an owner with this

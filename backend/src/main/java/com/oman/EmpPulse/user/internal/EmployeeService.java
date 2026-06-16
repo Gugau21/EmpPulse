@@ -64,6 +64,46 @@ public class EmployeeService implements EmployeeApi {
         .collect(Collectors.toMap(Employee::getId, this::toEmployeeSummaryResponse));
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public EmployeeSummaryResponse requireAdminAccessToEmployee(Long adminId, Long employeeId) {
+    EmployeeSummaryResponse employee =
+        findSummaryById(employeeId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+    if (!adminApi.overseesDepartment(adminId, employee.getDepartmentId())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this employee");
+    }
+    return employee;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Long getWeekScheduleId(Long employeeId) {
+    return employeeRepository
+        .findById(employeeId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"))
+        .getWeekScheduleId();
+  }
+
+  @Override
+  @Transactional
+  public void assignWeekSchedule(Long employeeId, Long weekScheduleId) {
+    Employee employee =
+        employeeRepository
+            .findById(employeeId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
+    employee.setWeekScheduleId(weekScheduleId);
+    employeeRepository.save(employee);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<Long> findActiveEmployeeIds() {
+    return employeeRepository.findByActiveTrue().stream().map(Employee::getId).toList();
+  }
+
   @Transactional(readOnly = true)
   public EmployeeListResponse getEmployeesForAdmin(Long id) {
     List<Long> deptIds = adminApi.departmentIdsForAdminUser(id);
