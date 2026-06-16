@@ -111,7 +111,9 @@ export const translations = {
       until: 'until',
       statusVacation: 'Vacation',
       statusSick: 'Sick',
-      statusPersonal: 'Personal'
+      statusPersonal: 'Personal',
+      downloadData: 'Download data',
+      downloadDataLoading: 'Downloading data…',
     },
     requestManagerPage: {
       title: 'Requests',
@@ -394,7 +396,9 @@ export const translations = {
       until: 'до',
       statusVacation: 'Відпустка',
       statusSick: 'Лікарняний',
-      statusPersonal: 'Особистий'
+      statusPersonal: 'Особистий',
+      downloadData: 'Завантажити дані',
+      downloadDataLoading: 'Завантаження даних…'
     },
     requestManagerPage: {
       title: 'Запити',

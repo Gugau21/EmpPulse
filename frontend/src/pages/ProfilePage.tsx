@@ -402,7 +402,7 @@ const ProfilePage: React.FC = () => {
             onClick={() => exportData.mutate()}
             disabled={exportData.isPending}
           >
-            {exportData.isPending ? 'Preparing download…' : 'Download data export'}
+            {exportData.isPending ? t.downloadDataLoading : t.downloadData}
           </button>
           {exportData.isError && (
             <p className="form-error">

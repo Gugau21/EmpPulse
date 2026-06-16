@@ -18,7 +18,10 @@ import com.oman.EmpPulse.user.api.UserApi;
 import com.oman.EmpPulse.user.internal.BonusVacationDays;
 import com.oman.EmpPulse.user.internal.Employee;
 import com.oman.EmpPulse.user.internal.User;
+import java.time.Duration;
+import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +110,9 @@ public class ExportService {
                 weekSchedules.stream().map(WeekSchedule::getId).collect(Collectors.toSet()))
             .stream()
             .toList();
+    List<CsvExportService.MonthlyWorkHours> monthlyWorkHoursReport =
+        buildMonthlyWorkHoursReport(loggedHours, users);
+
     Map<String, byte[]> files = new HashMap<>();
     files.put("departments.csv", csvExportService.departmentsToCsv(departments));
     files.put("employees.csv", csvExportService.employeesToCsv(employees));
@@ -114,11 +120,46 @@ public class ExportService {
     files.put("leaves.csv", csvExportService.leavesToCsv(leaves));
     files.put("logged_hours.csv", csvExportService.loggedHoursToCsv(loggedHours));
     files.put(
+        "monthly_work_hours.csv", csvExportService.monthlyWorkHoursToCsv(monthlyWorkHoursReport));
+    files.put(
         "bonus_vacation_days.csv", csvExportService.bonusVacationDaysToCsv(bonusVacationDays));
     files.put("week_schedules.csv", csvExportService.weekSchedulesToCsv(weekSchedules));
     files.put("schedule_blocks.csv", csvExportService.scheduleBlocksToCsv(scheduleBlocks));
     return zipService.zip(files);
   }
+
+  private List<CsvExportService.MonthlyWorkHours> buildMonthlyWorkHoursReport(
+      List<LoggedHours> loggedHours, Set<User> users) {
+    Map<Long, User> userById = users.stream().collect(Collectors.toMap(User::getId, user -> user));
+
+    return loggedHours.stream()
+        .collect(
+            Collectors.groupingBy(
+                lh -> new MonthEmployeeKey(lh.getEmployeeId(), YearMonth.from(lh.getDate())),
+                Collectors.summingDouble(
+                    lh -> Duration.between(lh.getStartTime(), lh.getEndTime()).toMinutes() / 60.0)))
+        .entrySet()
+        .stream()
+        .map(
+            entry -> {
+              MonthEmployeeKey key = entry.getKey();
+              User user = userById.get(key.employeeId());
+              return new CsvExportService.MonthlyWorkHours(
+                  key.employeeId(),
+                  user != null ? user.getName() : "",
+                  user != null ? user.getSurname() : "",
+                  key.yearMonth().getYear(),
+                  key.yearMonth().getMonthValue(),
+                  entry.getValue());
+            })
+        .sorted(
+            Comparator.comparing(CsvExportService.MonthlyWorkHours::employeeId)
+                .thenComparing(CsvExportService.MonthlyWorkHours::year)
+                .thenComparing(CsvExportService.MonthlyWorkHours::month))
+        .toList();
+  }
+
+  private record MonthEmployeeKey(Long employeeId, YearMonth yearMonth) {}
 
   private boolean isOwner(Authentication authentication) {
     return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("OWNER"));

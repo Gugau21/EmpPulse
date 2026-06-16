@@ -12,12 +12,20 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CsvExportService {
+  public static record MonthlyWorkHours(
+      Long employeeId,
+      String employeeName,
+      String employeeSurname,
+      int year,
+      int month,
+      double totalHours) {}
 
   public byte[] departmentsToCsv(Iterable<Department> departments) {
     try (ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -161,6 +169,40 @@ public class CsvExportService {
 
     } catch (IOException e) {
       throw new RuntimeException("Failed to generate CSV for logged hours", e);
+    }
+  }
+
+  public byte[] monthlyWorkHoursToCsv(Iterable<MonthlyWorkHours> reportRows) {
+    try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+        CSVPrinter printer =
+            new CSVPrinter(
+                new OutputStreamWriter(out, StandardCharsets.UTF_8),
+                CSVFormat.DEFAULT
+                    .builder()
+                    .setHeader(
+                        "Employee ID",
+                        "Employee Name",
+                        "Employee Surname",
+                        "Year",
+                        "Month",
+                        "Total Hours")
+                    .build())) {
+
+      for (MonthlyWorkHours row : reportRows) {
+        printer.printRecord(
+            row.employeeId(),
+            row.employeeName(),
+            row.employeeSurname(),
+            row.year(),
+            row.month(),
+            String.format(Locale.ROOT, "%.2f", row.totalHours()));
+      }
+
+      printer.flush();
+      return out.toByteArray();
+
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to generate CSV for monthly work hours", e);
     }
   }
 
