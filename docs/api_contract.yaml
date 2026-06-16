@@ -93,8 +93,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/auth/password/change: TODO
-    post:
+  /api/auth/password/change:
       tags:
         - Auth
       summary: Reset password with token

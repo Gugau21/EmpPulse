@@ -279,6 +279,19 @@ public class UserService implements UserApi {
     //     new NotificationRecipient(user.getEmail(), user.getName()));
   }
 
+  @Override
+  @Transactional
+  public void resetPassword(Long userId, String rawNewPassword) {
+    User user = getUserById(userId);
+    user.setPassHash(passwordEncoder.encode(rawNewPassword));
+
+    // Reset is unauthenticated, so invalidate every session; the user must log in again.
+    sessionRepository
+        .findByPrincipalName(userId.toString())
+        .keySet()
+        .forEach(sessionRepository::deleteById);
+  }
+
   @Transactional
   public Long createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
     boolean reqToCreateEmployee = (req.getEmployeeDepartmentId() != null);

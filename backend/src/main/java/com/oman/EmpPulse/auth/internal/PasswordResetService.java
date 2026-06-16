@@ -17,15 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Issues and validates single-use, time-limited password reset tokens. The raw token only ever
- * leaves the application inside the emailed reset link; the database stores nothing but its SHA-256
- * hash, so a leaked table cannot be used to reset passwords.
- *
- * <p>{@link #requestReset(String)} backs the {@code /api/auth/password/forgot} endpoint: it issues
- * a token and emails the reset link, keeping the raw token confined to this service. {@link
- * #validateAndConsume(String)} backs the future {@code /api/auth/password/reset} endpoint.
- */
 @Service
 public class PasswordResetService {
 
@@ -101,6 +92,25 @@ public class PasswordResetService {
               token.setUsedAt(OffsetDateTime.now());
               return token.getUserId();
             });
+  }
+
+  /**
+   * Consumes a reset token and sets the user's new password, invalidating all of their sessions.
+   * The caller is responsible for confirming the new-password fields match before calling this.
+   *
+   * @param rawToken the token taken from the reset link
+   * @param newPassword the new password in plaintext
+   * @return {@code true} if the token was valid and the password was changed, {@code false} if the
+   *     token was invalid, expired, or already used
+   */
+  @Transactional
+  public boolean reset(String rawToken, String newPassword) {
+    Optional<Long> userId = validateAndConsume(rawToken);
+    if (userId.isEmpty()) {
+      return false;
+    }
+    userApi.resetPassword(userId.get(), newPassword);
+    return true;
   }
 
   private String generateRawToken() {
