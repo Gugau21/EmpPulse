@@ -1,6 +1,7 @@
 package com.oman.EmpPulse.user.api;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -62,4 +63,11 @@ public interface EmployeeApi {
    * @param weekScheduleId the week schedule ID to assign
    */
   void assignWeekSchedule(Long employeeId, Long weekScheduleId);
+
+  /**
+   * Returns the IDs of all active employees (those assigned to a department).
+   *
+   * @return list of active employee IDs
+   */
+  List<Long> findActiveEmployeeIds();
 }

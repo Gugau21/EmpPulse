@@ -1,7 +1,9 @@
 package com.oman.EmpPulse.leave.api;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 public interface LeaveApi {
 
@@ -28,4 +30,14 @@ public interface LeaveApi {
    * @return the number of used vacation working days in that year
    */
   int countUsedVacationDays(Long employeeId, int year);
+
+  /**
+   * Returns the subset of {@code employeeIds} who have an approved unpaid leave covering {@code
+   * date}.
+   *
+   * @param employeeIds the employees to check
+   * @param date the calendar day to test
+   * @return employee IDs on unpaid approved leave that day
+   */
+  Set<Long> findEmployeeIdsOnUnpaidApprovedLeave(Collection<Long> employeeIds, LocalDate date);
 }

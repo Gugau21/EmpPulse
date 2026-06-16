@@ -93,6 +93,12 @@ public class EmployeeService implements EmployeeApi {
     employeeRepository.save(employee);
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public List<Long> findActiveEmployeeIds() {
+    return employeeRepository.findByActiveTrue().stream().map(Employee::getId).toList();
+  }
+
   @Transactional(readOnly = true)
   public EmployeeListResponse getEmployeesForAdmin(Long id) {
     List<Long> deptIds = adminApi.departmentIdsForAdminUser(id);

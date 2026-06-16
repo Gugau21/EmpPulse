@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.defaulthours.internal;
 
+import com.oman.EmpPulse.defaulthours.api.DefaultDayIntervalResponse;
 import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursDayRequest;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursDayResponse;
@@ -12,6 +13,7 @@ import com.oman.EmpPulse.user.api.EmployeeApi;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.LongConsumer;
 import org.springframework.http.HttpStatus;
@@ -93,6 +95,30 @@ public class DefaultHoursService implements DefaultHoursApi {
               newSetId, block.getDayOfWeek(), block.getStartTime(), block.getEndTime()));
     }
     return newSetId;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Optional<DefaultDayIntervalResponse> findEmployeeIntervalForDay(
+      Long employeeId, int dayOfWeek) {
+    Long setId = employeeApi.getWeekScheduleId(employeeId);
+    if (setId == null) {
+      Long departmentId =
+          employeeApi
+              .findSummaryById(employeeId)
+              .map(summary -> summary.getDepartmentId())
+              .orElse(null);
+      if (departmentId == null) {
+        return Optional.empty();
+      }
+      setId = departmentApi.getWeekScheduleId(departmentId);
+    }
+    if (setId == null) {
+      return Optional.empty();
+    }
+    return scheduleBlockRepository
+        .findBySetIdAndDayOfWeek(setId, dayOfWeek)
+        .map(block -> new DefaultDayIntervalResponse(block.getStartTime(), block.getEndTime()));
   }
 
   /**

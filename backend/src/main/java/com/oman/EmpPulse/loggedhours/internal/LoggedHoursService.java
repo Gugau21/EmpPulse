@@ -194,6 +194,19 @@ public class LoggedHoursService implements LoggedHoursApi {
     }
   }
 
+  /**
+   * Creates a logged-hours entry for the scheduler when none exist for the employee on {@code
+   * date}. Skips silently when the day already has any logged hours.
+   */
+  @Transactional
+  void createAutoLogIfAbsent(
+      Long employeeId, Long adminId, LocalDate date, LocalTime start, LocalTime end) {
+    if (!loggedHoursRepository.findAllByEmployeeIdAndDate(employeeId, date).isEmpty()) {
+      return;
+    }
+    loggedHoursRepository.save(new LoggedHours(employeeId, adminId, date, start, end));
+  }
+
   LoggedHoursResponse toLoggedHoursResponse(LoggedHours loggedHours) {
     return new LoggedHoursResponse(
         loggedHours.getId(),

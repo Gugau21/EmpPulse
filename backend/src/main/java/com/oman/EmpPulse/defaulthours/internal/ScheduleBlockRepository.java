@@ -1,6 +1,7 @@
 package com.oman.EmpPulse.defaulthours.internal;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -9,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 public interface ScheduleBlockRepository extends JpaRepository<ScheduleBlock, Long> {
 
   List<ScheduleBlock> findAllBySetIdOrderByDayOfWeekAsc(Long setId);
+
+  Optional<ScheduleBlock> findBySetIdAndDayOfWeek(Long setId, int dayOfWeek);
 
   /**
    * Deletes every block of a schedule as a single bulk DELETE that runs immediately. This must not
