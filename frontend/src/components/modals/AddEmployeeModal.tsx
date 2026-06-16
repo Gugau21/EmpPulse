@@ -50,7 +50,10 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
     setCreateError(null)
   }
 
-  const handleCreateUser = () => {
+  // onCreated runs after a successful create, receiving the new user's id. Defaults
+  // to closing the modal; the "with default working hours" button passes a callback
+  // that opens the hours editor for that id.
+  const handleCreateUser = (onCreated: (userId: number) => void = () => closeModal()) => {
     setCreateError(null)
     if (!newName.trim() || !newSurname.trim() || !newEmail.trim() || !newPassword) {
       setCreateError(t.errAllFieldsRequired)
@@ -94,9 +97,9 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
         adminDepartmentIds: isAdminChecked && adminDeptIds.length > 0 ? adminDeptIds : undefined
       },
       {
-        onSuccess: () => {
+        onSuccess: createdUserId => {
           resetCreateUserForm()
-          closeModal()
+          onCreated(createdUserId)
         }
       }
     )
@@ -139,21 +142,36 @@ const AddEmployeeModal: React.FC<Props> = ({ closeModal, departments, openModal 
       )}
 
       <div className="modal-actions">
+        {/* Default working hours only apply to employees. For an admin-only user the
+            concept is meaningless, so we show a single plain "Add user" button; once
+            the employee role is selected we offer both create-with/without-hours options. */}
         <button
           className="btn-modal-action"
-          onClick={handleCreateUser}
+          onClick={() => handleCreateUser()}
           disabled={createUser.isPending}
         >
-          {t.addWithoutHours}
+          {isEmployeeChecked ? t.addWithoutHours : t.addUser}
         </button>
-        <button
-          className="btn-modal-action"
-          onClick={() => {
-            openModal('ADD_WORKING_HOURS')
-          }}
-        >
-          {t.addWithHours}
-        </button>
+        {isEmployeeChecked && (
+          <button
+            className="btn-modal-action"
+            onClick={() =>
+              handleCreateUser(userId =>
+                // Seed the editor's target with the just-created employee. The id is
+                // all the hours endpoint needs; name/email fill the Employee shape.
+                openModal('ADD_WORKING_HOURS', {
+                  id: String(userId),
+                  name: newName.trim(),
+                  surname: newSurname.trim(),
+                  email: newEmail.trim()
+                })
+              )
+            }
+            disabled={createUser.isPending}
+          >
+            {t.addWithHours}
+          </button>
+        )}
       </div>
     </div>
   )

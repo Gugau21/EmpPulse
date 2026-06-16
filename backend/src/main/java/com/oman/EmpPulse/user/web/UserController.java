@@ -4,8 +4,10 @@ import com.oman.EmpPulse.shared.security.AuthUtils;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
+import com.oman.EmpPulse.user.dto.UserCreatedResponse;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import com.oman.EmpPulse.user.internal.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -29,9 +31,10 @@ public class UserController {
   @PostMapping("/api/users")
   public ResponseEntity<?> createUser(
       @RequestBody UserCreateRequest req, Authentication authentication) {
-    userService.createUser(
-        req, AuthUtils.getUserId(authentication), AuthUtils.isOwner(authentication));
-    return ResponseEntity.noContent().build();
+    Long userId =
+        userService.createUser(
+            req, AuthUtils.getUserId(authentication), AuthUtils.isOwner(authentication));
+    return ResponseEntity.status(HttpStatus.CREATED).body(new UserCreatedResponse(userId));
   }
 
   @PreAuthorize("hasAuthority('ADMIN')")

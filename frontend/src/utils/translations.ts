@@ -28,7 +28,9 @@ export const translations = {
       back: '🡄 Back',
       adminsTitle: 'Admins',
       noAdmins: 'No administrators assigned.',
-      editAdmins: 'edit admins'
+      editAdmins: 'edit admins',
+      defaultWorkingHours: 'Default working hours',
+      editWorkingHours: 'edit working hours'
     },
     departmentsPage: {
       title: 'Departments',
@@ -86,7 +88,13 @@ export const translations = {
       thursday: 'Thursday',
       friday: 'Friday',
       saturday: 'Saturday',
-      sunday: 'Sunday'
+      sunday: 'Sunday',
+      statusLabel: 'Status:',
+      working: 'Working',
+      until: 'until',
+      statusVacation: 'Vacation',
+      statusSick: 'Sick',
+      statusPersonal: 'Personal'
     },
     requestManagerPage: {
       title: 'Requests',
@@ -150,6 +158,7 @@ export const translations = {
       editDefaultWorkingHours: 'Edit default',
       addDefaultWorkingHours: 'Add default',
       workingHoursSuffix: 'working hours',
+      editDepartmentWorkingHours: 'Edit department default working hours',
       monday: 'Monday',
       tuesday: 'Tuesday',
       wednesday: 'Wednesday',
@@ -158,7 +167,8 @@ export const translations = {
       saturday: 'Saturday',
       sunday: 'Sunday',
       saveChanges: 'Save changes',
-      addEmployeeBtnWorkingHours: '+ add employee',
+      editWithHours: '+ edit default working hours',
+      editDepartmentWithHours: '+ edit department default working hours',
       addDepartment: 'Add department',
       editDepartment: 'Edit department',
       nameOfDepartment: 'Name of department',
@@ -173,8 +183,10 @@ export const translations = {
         'Please select a department for the employee role before creating the user.',
       errSelectAdminDept:
         'Please select at least one department for the administrator role before creating the user.',
+      addUser: '+ add user',
       addWithoutHours: '+ add without default working hours',
       addWithHours: '+ add default working hours',
+      errInvalidWorkingHours: 'Each day with hours needs a start before its end.',
       addRequest: 'Add request',
       createRequest: 'Create request',
       errSelectEmployee: 'Select an employee.',
@@ -277,7 +289,9 @@ export const translations = {
       back: '🡄 Назад',
       adminsTitle: 'Адміністратори',
       noAdmins: 'Немає призначених адміністраторів.',
-      editAdmins: 'редагувати адміністраторів'
+      editAdmins: 'редагувати адміністраторів',
+      defaultWorkingHours: 'Стандартні робочі години',
+      editWorkingHours: 'редагувати робочі години'
     },
     departmentsPage: {
       title: 'Відділи',
@@ -335,7 +349,13 @@ export const translations = {
       thursday: 'Четвер',
       friday: 'П’ятниця',
       saturday: 'Субота',
-      sunday: 'Неділя'
+      sunday: 'Неділя',
+      statusLabel: 'Статус:',
+      working: 'Працює',
+      until: 'до',
+      statusVacation: 'Відпустка',
+      statusSick: 'Лікарняний',
+      statusPersonal: 'Особистий'
     },
     requestManagerPage: {
       title: 'Запити',
@@ -399,6 +419,7 @@ export const translations = {
       editDefaultWorkingHours: 'Редагувати стандартні',
       addDefaultWorkingHours: 'Додати стандартні',
       workingHoursSuffix: 'робочі години',
+      editDepartmentWorkingHours: 'Редагувати стандартні робочі години відділу',
       monday: 'Понеділок',
       tuesday: 'Вівторок',
       wednesday: 'Середа',
@@ -407,7 +428,8 @@ export const translations = {
       saturday: 'Субота',
       sunday: 'Неділя',
       saveChanges: 'Зберегти зміни',
-      addEmployeeBtnWorkingHours: '+ додати робітника',
+      editWithHours: '+ редагувати стандартні робочі години',
+      editDepartmentWithHours: '+ редагувати стандартні робочі години відділу',
       addDepartment: 'Додати відділ',
       editDepartment: 'Редагувати відділ',
       nameOfDepartment: 'Назва відділу',
@@ -423,8 +445,10 @@ export const translations = {
         'Будь ласка, виберіть відділ для ролі робітника перед створенням користувача.',
       errSelectAdminDept:
         'Будь ласка, виберіть хоча б один відділ для ролі адміністратора перед створенням користувача.',
+      addUser: '+ додати користувача',
       addWithoutHours: '+ додати без стандартних робочих годин',
       addWithHours: '+ додати стандартні робочі години',
+      errInvalidWorkingHours: 'Для кожного дня з годинами початок має бути раніше за кінець.',
       addRequest: 'Додати запит',
       createRequest: 'Створити запит',
       errSelectEmployee: 'Виберіть робітника.',

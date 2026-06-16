@@ -146,7 +146,7 @@ CREATE TABLE logged_hours (
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Default hours  (weekly schedule entries, grouped by set_id)
--- day_of_week: 0 = Sunday … 6 = Saturday
+-- day_of_week: 0 = Monday … 6 = Sunday
 -- ─────────────────────────────────────────────────────────────────────────────
 
 CREATE TABLE schedule_block (
@@ -156,7 +156,6 @@ CREATE TABLE schedule_block (
   day_of_week smallint NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
   start_time  time     NOT NULL,
   end_time    time     NOT NULL,
-  paid        boolean  NOT NULL,
 
   CONSTRAINT schedule_block_times_valid CHECK (end_time > start_time),
   UNIQUE (set_id, day_of_week)

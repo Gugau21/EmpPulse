@@ -41,6 +41,37 @@ public interface DepartmentApi {
   void setAdminDepartments(Long adminId, Collection<Long> departmentIds);
 
   /**
+   * Verifies that the given admin may act on the department. Access is granted only when the admin
+   * oversees the department.
+   *
+   * @param adminId the user ID of the admin requesting access
+   * @param departmentId the department being accessed
+   * @throws org.springframework.web.server.ResponseStatusException 404 if the department does not
+   *     exist, 403 if the admin does not oversee the department
+   */
+  void requireAdminAccessToDepartment(Long adminId, Long departmentId);
+
+  /**
+   * Returns the ID of the week schedule currently linked to the department, or null if none is set.
+   *
+   * @param departmentId the department ID
+   * @return the linked week schedule ID, or null if the department has no schedule
+   * @throws org.springframework.web.server.ResponseStatusException 404 if the department does not
+   *     exist
+   */
+  Long getWeekScheduleId(Long departmentId);
+
+  /**
+   * Links the given week schedule to the department.
+   *
+   * @param departmentId the department ID
+   * @param weekScheduleId the week schedule ID to assign
+   * @throws org.springframework.web.server.ResponseStatusException 404 if the department does not
+   *     exist
+   */
+  void assignWeekSchedule(Long departmentId, Long weekScheduleId);
+
+  /**
    * Ensures a Default Department exists within the system. This department cannot be deleted from
    * the system.
    *

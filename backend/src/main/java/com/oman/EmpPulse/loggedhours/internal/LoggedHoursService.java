@@ -5,9 +5,7 @@ import com.oman.EmpPulse.loggedhours.dto.LoggedHoursCreateRequest;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursListResponse;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursResponse;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursUpdateRequest;
-import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
-import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -21,13 +19,10 @@ public class LoggedHoursService implements LoggedHoursApi {
 
   private final LoggedHoursRepository loggedHoursRepository;
   private final EmployeeApi employeeApi;
-  private final AdminApi adminApi;
 
-  public LoggedHoursService(
-      LoggedHoursRepository loggedHoursRepository, EmployeeApi employeeApi, AdminApi adminApi) {
+  public LoggedHoursService(LoggedHoursRepository loggedHoursRepository, EmployeeApi employeeApi) {
     this.loggedHoursRepository = loggedHoursRepository;
     this.employeeApi = employeeApi;
-    this.adminApi = adminApi;
   }
 
   @Override
@@ -84,7 +79,7 @@ public class LoggedHoursService implements LoggedHoursApi {
     ensureRequiredFieldsPresent(req.getDate(), req.getStartTime(), req.getEndTime());
     validateTimeRange(req.getStartTime(), req.getEndTime());
     validateNotFuture(req.getDate());
-    requireAdminAccessToEmployee(callerAdminId, employeeId);
+    employeeApi.requireAdminAccessToEmployee(callerAdminId, employeeId);
 
     MergedInterval merged =
         mergeIntervalsForDay(employeeId, req.getDate(), req.getStartTime(), req.getEndTime(), null);
@@ -107,7 +102,7 @@ public class LoggedHoursService implements LoggedHoursApi {
   @Transactional(readOnly = true)
   public LoggedHoursListResponse listLoggedHours(Long employeeId, Long callerId, boolean isAdmin) {
     if (isAdmin) {
-      requireAdminAccessToEmployee(callerId, employeeId);
+      employeeApi.requireAdminAccessToEmployee(callerId, employeeId);
     } else if (!callerId.equals(employeeId)) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this employee");
     }
@@ -131,7 +126,7 @@ public class LoggedHoursService implements LoggedHoursApi {
   @Transactional
   public LoggedHoursResponse updateLoggedHours(
       Long employeeId, Long loggedHoursId, LoggedHoursUpdateRequest req, Long callerId) {
-    requireAdminAccessToEmployee(callerId, employeeId);
+    employeeApi.requireAdminAccessToEmployee(callerId, employeeId);
     ensureRequiredFieldsPresent(req.getDate(), req.getStartTime(), req.getEndTime());
     validateTimeRange(req.getStartTime(), req.getEndTime());
     validateNotFuture(req.getDate());
@@ -159,7 +154,7 @@ public class LoggedHoursService implements LoggedHoursApi {
    */
   @Transactional
   public void deleteLoggedHours(Long employeeId, Long loggedHoursId, Long callerId) {
-    requireAdminAccessToEmployee(callerId, employeeId);
+    employeeApi.requireAdminAccessToEmployee(callerId, employeeId);
     LoggedHours loggedHours = findLoggedHoursForEmployeeOrThrow(loggedHoursId, employeeId);
     loggedHoursRepository.delete(loggedHours);
   }
@@ -176,20 +171,6 @@ public class LoggedHoursService implements LoggedHoursApi {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Logged hours entry not found");
     }
     return loggedHours;
-  }
-
-  private EmployeeSummaryResponse findEmployeeOrThrow(Long employeeId) {
-    return employeeApi
-        .findSummaryById(employeeId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Employee not found"));
-  }
-
-  private EmployeeSummaryResponse requireAdminAccessToEmployee(Long adminId, Long employeeId) {
-    EmployeeSummaryResponse employee = findEmployeeOrThrow(employeeId);
-    if (!adminApi.overseesDepartment(adminId, employee.getDepartmentId())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No access to this employee");
-    }
-    return employee;
   }
 
   private void ensureRequiredFieldsPresent(LocalDate date, LocalTime startTime, LocalTime endTime) {
@@ -211,6 +192,19 @@ public class LoggedHoursService implements LoggedHoursApi {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Cannot log hours for a future date");
     }
+  }
+
+  /**
+   * Creates a logged-hours entry for the scheduler when none exist for the employee on {@code
+   * date}. Skips silently when the day already has any logged hours.
+   */
+  @Transactional
+  void createAutoLogIfAbsent(
+      Long employeeId, Long adminId, LocalDate date, LocalTime start, LocalTime end) {
+    if (!loggedHoursRepository.findAllByEmployeeIdAndDate(employeeId, date).isEmpty()) {
+      return;
+    }
+    loggedHoursRepository.save(new LoggedHours(employeeId, adminId, date, start, end));
   }
 
   LoggedHoursResponse toLoggedHoursResponse(LoggedHours loggedHours) {

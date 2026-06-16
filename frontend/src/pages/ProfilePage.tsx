@@ -2,11 +2,12 @@ import React, { useState } from 'react'
 import { Navigate, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import type { Employee } from '../types'
 import type { OutletContext } from '../components/AppLayout'
-import { MOCK_DEFAULT_WORKING_HOURS } from '../utils/mockData'
 import { useAuth } from '../context/useAuth'
 import { useUserDetail } from '../hooks/useUserDetail'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useLoggedHours } from '../hooks/useLoggedHours'
+import { useEmployeeDefaultHours } from '../hooks/useDefaultHours'
+import { scheduleFromDays } from '../utils/defaultHours'
 import { landingPath } from '../utils/guards'
 import { describeActiveLeave } from '../utils/activeLeave'
 import { isoToDisplayDate } from '../utils/date'
@@ -14,7 +15,7 @@ import { buildLoggedHoursDays, formatDuration, formatInterval } from '../utils/l
 import blackTriangleIcon from '../assets/black_triangle.png'
 import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
-import { useWeekdayLabels } from '../hooks/useWeekdayLabels'
+import { useWeekdayLabels, WEEKDAYS } from '../hooks/useWeekdayLabels'
 import whiteTriangleIcon from '../assets/white_triangle.png'
 import { useTheme } from '../hooks/useTheme'
 
@@ -68,6 +69,11 @@ const ProfilePage: React.FC = () => {
   const { data: loggedHoursData, error: loggedHoursError } = useLoggedHours(profileEmployeeId)
   const loggedHoursDays = buildLoggedHoursDays(loggedHoursData ?? [])
 
+  // Default working hours are admin-only to read, so only fetch when an admin is
+  // viewing an employee's profile (not on one's own). Empty until set.
+  const { data: defaultHoursData } = useEmployeeDefaultHours(isMyProfile ? null : employeeId)
+  const defaultHoursSchedule = scheduleFromDays(defaultHoursData ?? [])
+
   // Route back based on user role: employees go to /my-requests, others to /employees
   const onBack = () => {
     const backPath = landingPath(currentUser)
@@ -98,6 +104,12 @@ const ProfilePage: React.FC = () => {
   const adminDepartmentIds = targetUser?.adminProfile?.departmentIds ?? []
   // Current leave from the profile's active leave (null = working, no badge).
   const { status, untilDate } = describeActiveLeave(employeeProfile?.activeLeave)
+  // Translated label for the status badge; the raw status still drives the CSS class.
+  const statusLabels: Record<NonNullable<typeof status>, string> = {
+    Vacation: t.statusVacation,
+    Sick: t.statusSick,
+    Personal: t.statusPersonal
+  }
 
   // Resolve admin department IDs to real names. The list is gated to owners/admins
   // and an admin only receives their own departments, so a name may be missing
@@ -186,14 +198,20 @@ const ProfilePage: React.FC = () => {
             {!isOwnerPersonal && employeeProfile && (
               <div className="banner-side-info">
                 <div className="banner-stacked-detail">
-                  <label>Status:</label>
+                  <label>{t.statusLabel}</label>
                   {status ? (
                     <span className="banner-status">
-                      <span className={`badge badge-${status.toLowerCase()}`}>{status}</span>
-                      {untilDate && <span className="until-text">until {untilDate}</span>}
+                      <span className={`badge badge-${status.toLowerCase()}`}>
+                        {statusLabels[status]}
+                      </span>
+                      {untilDate && (
+                        <span className="until-text">
+                          {t.until} {untilDate}
+                        </span>
+                      )}
                     </span>
                   ) : (
-                    <span>Working</span>
+                    <span>{t.working}</span>
                   )}
                 </div>
               </div>
@@ -227,14 +245,14 @@ const ProfilePage: React.FC = () => {
               {/* Granting bonus days is an admin action: only shown when viewing
                 someone else's profile (the employees list is gated to owners/
                 admins), so an employee never sees it on their own profile. */}
-            {!isMyProfile && (
-              <button
-                className="primary-btn full-width"
-                onClick={() => openModal('ADD_BONUS_DAYS', employee as Employee)}
-              >
-                add bonus days
-              </button>
-            )}
+              {!isMyProfile && (
+                <button
+                  className="primary-btn full-width"
+                  onClick={() => openModal('ADD_BONUS_DAYS', employee as Employee)}
+                >
+                  add bonus days
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -264,32 +282,23 @@ const ProfilePage: React.FC = () => {
 
           {workingHoursExpanded && (
             <>
+              {/* One column per weekday; the day's interval shows when set. */}
               <div className="card-box working-hours-grid">
-                {MOCK_DEFAULT_WORKING_HOURS.map((column, ci) => (
-                  <div className="shifts-stack" key={ci}>
-                    {column.map((day, di) => {
-                      // Map the hardcoded English day to our translation
-                      const displayDay = weekdayLabels[day.label] || day.label
-
-                      return (
-                        <React.Fragment key={day.label}>
-                          <div className={`day-label ${di > 0 ? 'day-label-margin' : ''}`}>
-                            {displayDay}
-                          </div>
-                          {day.shifts.map((shift, si) => (
-                            <div className="shift-pill-row" key={si}>
-                              <span className="shift-index">{si + 1})</span>
-                              <div className="time-range-display">
-                                <span>{shift.start}</span>{' '}
-                                <span className="muted-separator">—</span> <span>{shift.end}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </React.Fragment>
-                      )
-                    })}
-                  </div>
-                ))}
+                {WEEKDAYS.map(day => {
+                  const shift = defaultHoursSchedule[day]?.[0]
+                  return (
+                    <div className="shifts-stack" key={day}>
+                      <div className="day-label">{weekdayLabels[day] || day}</div>
+                      {shift && (
+                        <div className="shift-pill-row">
+                          <span className="time-range-display">
+                            {shift.start} - {shift.end}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
 
               {!isMyProfile && (
@@ -334,32 +343,32 @@ const ProfilePage: React.FC = () => {
                   <span>{t.durationCol}</span>
                 </div>
 
-              {/* One box per day that has logged hours; days with nothing logged
+                {/* One box per day that has logged hours; days with nothing logged
                   are not shown. On multi-interval days only the first row carries
                   the date and the day's total duration. */}
-              {loggedHoursDays.map(day => (
-                <div className="card-box table-box" key={day.date}>
-                  {day.intervals.map((interval, idx) => (
-                    <LoggedHoursRow
-                      key={interval.id}
-                      isMyProfile={isMyProfile}
-                      onEdit={() =>
-                        openModal(
-                          'EDIT_LOGGED_HOURS',
-                          employee as Employee,
-                          undefined,
-                          undefined,
-                          interval
-                        )
-                      }
-                    >
-                      <span>{idx === 0 ? isoToDisplayDate(day.date) : ''}</span>
-                      <span>{formatInterval(interval.startTime, interval.endTime)}</span>
-                      <span>{idx === 0 ? formatDuration(day.durationMinutes) : ''}</span>
-                    </LoggedHoursRow>
-                  ))}
-                </div>
-              ))}
+                {loggedHoursDays.map(day => (
+                  <div className="card-box table-box" key={day.date}>
+                    {day.intervals.map((interval, idx) => (
+                      <LoggedHoursRow
+                        key={interval.id}
+                        isMyProfile={isMyProfile}
+                        onEdit={() =>
+                          openModal(
+                            'EDIT_LOGGED_HOURS',
+                            employee as Employee,
+                            undefined,
+                            undefined,
+                            interval
+                          )
+                        }
+                      >
+                        <span>{idx === 0 ? isoToDisplayDate(day.date) : ''}</span>
+                        <span>{formatInterval(interval.startTime, interval.endTime)}</span>
+                        <span>{idx === 0 ? formatDuration(day.durationMinutes) : ''}</span>
+                      </LoggedHoursRow>
+                    ))}
+                  </div>
+                ))}
               </div>
 
               {!isMyProfile && (
