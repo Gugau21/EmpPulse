@@ -29,7 +29,6 @@ const ConfirmModal: React.FC<Props> = ({
         {activeModal === 'CANCEL_LEAVE' && t.confirmCancelLeave}
         {activeModal === 'DELETE_DEPARTMENT' && t.confirmDeleteDept}
         {activeModal === 'LOGOUT' && t.confirmLogout}
-        {activeModal === 'CHANGE_PASSWORD' && t.confirmChangePwd}
       </h3>
       {confirmError && <p className="form-error">{confirmError}</p>}
       <div className="modal-buttons">

@@ -14,6 +14,7 @@ import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.api.UserResponse;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
+import com.oman.EmpPulse.user.dto.PasswordChangeRequest;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.time.LocalDate;
@@ -208,6 +209,42 @@ public class UserService implements UserApi {
         .findByPrincipalName(userId.toString())
         .keySet()
         .forEach(sessionRepository::deleteById);
+  }
+
+  @Transactional
+  public void changeMyPassword(Long userId, PasswordChangeRequest req, String currentSessionId) {
+    if (!StringUtils.hasText(req.getCurrentPassword())
+        || !StringUtils.hasText(req.getNewPassword())
+        || !StringUtils.hasText(req.getConfirmNewPassword())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Current password, new password and confirmation are required");
+    }
+
+    User user = getUserById(userId);
+
+    if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPassHash())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+    }
+
+    if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match");
+    }
+
+    if (passwordEncoder.matches(req.getNewPassword(), user.getPassHash())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "New password must differ from the current password");
+    }
+
+    user.setPassHash(passwordEncoder.encode(req.getNewPassword()));
+
+    // Invalidate all other sessions for this user, keeping the caller's current session.
+    sessionRepository.findByPrincipalName(userId.toString()).keySet().stream()
+        .filter(sessionId -> !sessionId.equals(currentSessionId))
+        .forEach(sessionRepository::deleteById);
+
+    // TODO(feat/notification): once the notification module is merged, notify the user, e.g.
+    // notificationApi.sendPasswordChangedNotification(
+    //     new NotificationRecipient(user.getEmail(), user.getName()));
   }
 
   @Transactional

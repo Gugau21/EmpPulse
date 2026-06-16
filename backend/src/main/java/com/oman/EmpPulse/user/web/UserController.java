@@ -3,10 +3,12 @@ package com.oman.EmpPulse.user.web;
 import com.oman.EmpPulse.shared.security.AuthUtils;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
+import com.oman.EmpPulse.user.dto.PasswordChangeRequest;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserCreatedResponse;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import com.oman.EmpPulse.user.internal.UserService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,6 +27,13 @@ public class UserController {
   @GetMapping("/api/me")
   public ResponseEntity<?> getMe(Authentication authentication) {
     return ResponseEntity.ok(userService.loadProfile(AuthUtils.getUserId(authentication)));
+  }
+
+  @PostMapping("/api/me/password/change")
+  public ResponseEntity<?> changePassword(
+      @RequestBody PasswordChangeRequest req, Authentication authentication, HttpSession session) {
+    userService.changeMyPassword(AuthUtils.getUserId(authentication), req, session.getId());
+    return ResponseEntity.noContent().build();
   }
 
   @PreAuthorize("hasAuthority('ADMIN')")
