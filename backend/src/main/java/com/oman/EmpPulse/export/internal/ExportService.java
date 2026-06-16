@@ -21,6 +21,8 @@ import com.oman.EmpPulse.user.api.UserApi;
 import com.oman.EmpPulse.user.api.Admin;
 import com.oman.EmpPulse.loggedhours.internal.LoggedHours;
 import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
+import com.oman.EmpPulse.user.internal.BonusVacationDays;
+import com.oman.EmpPulse.user.api.BonusVacationDaysApi;
 
 @Service
 public class ExportService {
@@ -33,6 +35,7 @@ public class ExportService {
     private final UserApi userApi;
     private final LeaveApi leaveApi;
     private final LoggedHoursApi loggedHoursApi;
+    private final BonusVacationDaysApi bonusVacationDaysApi;
 
     public ExportService(DepartmentApi departmentApi,
                          AdminApi adminApi,
@@ -41,7 +44,8 @@ public class ExportService {
                          EmployeeApi employeeApi,
                          UserApi userApi,
                          LeaveApi leaveApi,
-                         LoggedHoursApi loggedHoursApi) {
+                         LoggedHoursApi loggedHoursApi,
+                         BonusVacationDaysApi bonusVacationDaysApi) {
         this.departmentApi = departmentApi;
         this.adminApi = adminApi;
         this.csvExportService = csvExportService;
@@ -50,6 +54,7 @@ public class ExportService {
         this.userApi = userApi;
         this.leaveApi = leaveApi;
         this.loggedHoursApi = loggedHoursApi;
+        this.bonusVacationDaysApi = bonusVacationDaysApi;
     }
 
     public byte[] export(Authentication authentication) {
@@ -57,18 +62,21 @@ public class ExportService {
             ? new ArrayList<Department>(departmentApi.findAll())
             : new ArrayList<Department>(departmentApi.findAllByIds(adminApi.departmentIdsForAdminUser(AuthUtils.getUserId(authentication))));
         List<Employee> employees = employeeApi.findAllByDepartmentIdIn(departments.stream().map(Department::getId).collect(Collectors.toSet())).stream().toList();
-        List<Leave> leaves = leaveApi.findAllByEmployeeIdIn(employees.stream().map(Employee::getId).collect(Collectors.toSet())).stream().toList();
+        Set<Long> employeeIds = employees.stream().map(Employee::getId).collect(Collectors.toSet());
+        List<Leave> leaves = leaveApi.findAllByEmployeeIdIn(employeeIds).stream().toList();
         List<Admin> admins = adminApi.findAllByDepartmentIdIn(departments.stream().map(Department::getId).collect(Collectors.toList())).stream().toList();
-        Set<User> users = userApi.findByIdIn(employees.stream().map(Employee::getId).collect(Collectors.toSet())).stream().collect(Collectors.toSet());
+        Set<User> users = userApi.findByIdIn(employeeIds).stream().collect(Collectors.toSet());
         users.addAll(userApi.findByIdIn(admins.stream().map(Admin::getId).collect(Collectors.toSet())));
         users.add(userApi.findById(AuthUtils.getUserId(authentication)).orElseThrow());
-        List<LoggedHours> loggedHours = loggedHoursApi.findAllByEmployeeIdIn(employees.stream().map(Employee::getId).collect(Collectors.toSet())).stream().toList();
+        List<LoggedHours> loggedHours = loggedHoursApi.findAllByEmployeeIdIn(employeeIds).stream().toList();
+        List<BonusVacationDays> bonusVacationDays = bonusVacationDaysApi.findByEmployeeIdIn(employeeIds).stream().toList();
         Map<String, byte[]> files = new HashMap<>();
         files.put("departments.csv", csvExportService.departmentsToCsv(departments));
         files.put("employees.csv", csvExportService.employeesToCsv(employees));
         files.put("users.csv", csvExportService.usersToCsv(users));
         files.put("leaves.csv", csvExportService.leavesToCsv(leaves));
         files.put("logged_hours.csv", csvExportService.loggedHoursToCsv(loggedHours));
+        files.put("bonus_vacation_days.csv", csvExportService.bonusVacationDaysToCsv(bonusVacationDays));
         return zipService.zip(files);
     }
 

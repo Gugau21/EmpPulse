@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.leave.internal.Leave;
 import com.oman.EmpPulse.loggedhours.internal.LoggedHours;
+import com.oman.EmpPulse.user.internal.BonusVacationDays;
 import com.oman.EmpPulse.user.internal.Employee;
 import com.oman.EmpPulse.user.internal.User;
 
@@ -125,30 +126,55 @@ public class CsvExportService {
     }
 
     public byte[] loggedHoursToCsv(Iterable<LoggedHours> hoursList) {
-    try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-         CSVPrinter printer = new CSVPrinter(
-             new OutputStreamWriter(out, StandardCharsets.UTF_8),
-             CSVFormat.DEFAULT.builder()
-                 .setHeader("ID", "Employee ID", "Admin ID", "Date", "Start Time", "End Time")
-                 .build())) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+            CSVPrinter printer = new CSVPrinter(
+                new OutputStreamWriter(out, StandardCharsets.UTF_8),
+                CSVFormat.DEFAULT.builder()
+                    .setHeader("ID", "Employee ID", "Admin ID", "Date", "Start Time", "End Time")
+                    .build())) {
 
-        for (LoggedHours lh : hoursList) {
-            printer.printRecord(
-                lh.getId(),
-                lh.getEmployeeId(),
-                lh.getAdminId(),
-                lh.getDate(),
-                lh.getStartTime(),
-                lh.getEndTime()
-            );
+            for (LoggedHours lh : hoursList) {
+                printer.printRecord(
+                    lh.getId(),
+                    lh.getEmployeeId(),
+                    lh.getAdminId(),
+                    lh.getDate(),
+                    lh.getStartTime(),
+                    lh.getEndTime()
+                );
+            }
+
+            printer.flush();
+            return out.toByteArray();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate CSV for logged hours", e);
         }
-
-        printer.flush();
-        return out.toByteArray();
-
-    } catch (IOException e) {
-        throw new RuntimeException("Failed to generate CSV for logged hours", e);
     }
-}
+
+    public byte[] bonusVacationDaysToCsv(Iterable<BonusVacationDays> bonusDaysList) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+            CSVPrinter printer = new CSVPrinter(
+                new OutputStreamWriter(out, StandardCharsets.UTF_8),
+                CSVFormat.DEFAULT.builder()
+                    .setHeader("ID", "Employee ID", "Year", "Days")
+                    .build())) {
+
+            for (BonusVacationDays bvd : bonusDaysList) {
+                printer.printRecord(
+                    bvd.getId(),
+                    bvd.getEmployeeId(),
+                    bvd.getYear(),
+                    bvd.getDays()
+                );
+            }
+
+            printer.flush();
+            return out.toByteArray();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate CSV for bonus vacation days", e);
+        }
+    }
 
 }
