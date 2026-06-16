@@ -1,6 +1,9 @@
 package com.oman.EmpPulse.auth.internal;
 
+import com.oman.EmpPulse.notification.api.NotificationApi;
+import com.oman.EmpPulse.notification.api.NotificationRecipient;
 import com.oman.EmpPulse.user.api.UserApi;
+import com.oman.EmpPulse.user.api.UserResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,10 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
  * leaves the application inside the emailed reset link; the database stores nothing but its SHA-256
  * hash, so a leaked table cannot be used to reset passwords.
  *
- * <p>No controllers are wired yet: {@link #createResetLink(String)} produces the link that the
- * future {@code /api/auth/password/forgot} endpoint will pass to {@code
- * NotificationApi.sendPasswordResetEmail}, and {@link #validateAndConsume(String)} backs the future
- * {@code /api/auth/password/reset} endpoint.
+ * <p>{@link #requestReset(String)} backs the {@code /api/auth/password/forgot} endpoint: it issues
+ * a token and emails the reset link, keeping the raw token confined to this service. {@link
+ * #validateAndConsume(String)} backs the future {@code /api/auth/password/reset} endpoint.
  */
 @Service
 public class PasswordResetService {
@@ -31,6 +33,7 @@ public class PasswordResetService {
 
   private final PasswordResetTokenRepository tokenRepository;
   private final UserApi userApi;
+  private final NotificationApi notificationApi;
   private final String appBaseUrl;
   private final Duration tokenTtl;
   private final SecureRandom secureRandom = new SecureRandom();
@@ -38,23 +41,27 @@ public class PasswordResetService {
   public PasswordResetService(
       PasswordResetTokenRepository tokenRepository,
       UserApi userApi,
+      NotificationApi notificationApi,
       @Value("${app.base-url}") String appBaseUrl,
       @Value("${app.password-reset.token-ttl}") Duration tokenTtl) {
     this.tokenRepository = tokenRepository;
     this.userApi = userApi;
+    this.notificationApi = notificationApi;
     this.appBaseUrl = appBaseUrl;
     this.tokenTtl = tokenTtl;
   }
 
   /**
-   * Creates a fresh reset link for the user with the given email, invalidating any previous link.
+   * Issues a fresh reset link for the active user with the given email and emails it to them,
+   * invalidating any previous link. The raw token never leaves this service except inside the
+   * email.
    *
    * @param email the address that requested a reset
-   * @return the full reset URL, or empty if no active user has that email (so callers can respond
-   *     identically whether or not the account exists)
+   * @return {@code true} if an active user has that email and a reset email was queued, {@code
+   *     false} otherwise
    */
   @Transactional
-  public Optional<String> createResetLink(String email) {
+  public boolean requestReset(String email) {
     return userApi
         .findActiveByEmail(email)
         .map(
@@ -66,8 +73,14 @@ public class PasswordResetService {
                   new PasswordResetToken(
                       credential.id(), sha256Hex(rawToken), OffsetDateTime.now().plus(tokenTtl)));
 
-              return appBaseUrl + "/reset?token=" + rawToken;
-            });
+              String resetLink = appBaseUrl + "/reset?token=" + rawToken;
+              UserResponse profile = userApi.loadProfile(credential.id());
+              notificationApi.sendPasswordResetEmail(
+                  new NotificationRecipient(profile.getEmail(), profile.getName()), resetLink);
+
+              return true;
+            })
+        .orElse(false);
   }
 
   /**

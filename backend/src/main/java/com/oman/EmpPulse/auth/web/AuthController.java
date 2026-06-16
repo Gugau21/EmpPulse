@@ -1,7 +1,9 @@
 package com.oman.EmpPulse.auth.web;
 
 import com.oman.EmpPulse.auth.dto.LoginRequest;
+import com.oman.EmpPulse.auth.dto.PasswordForgotRequest;
 import com.oman.EmpPulse.auth.internal.AuthService;
+import com.oman.EmpPulse.auth.internal.PasswordResetService;
 import com.oman.EmpPulse.user.api.UserApi;
 import com.oman.EmpPulse.user.api.UserCredential;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,6 +18,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,14 +26,17 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
   private final AuthService authService;
+  private final PasswordResetService passwordResetService;
   private final UserApi userApi;
   private final SecurityContextRepository securityContextRepository;
 
   public AuthController(
       AuthService authService,
+      PasswordResetService passwordResetService,
       UserApi userApi,
       SecurityContextRepository securityContextRepository) {
     this.authService = authService;
+    this.passwordResetService = passwordResetService;
     this.userApi = userApi;
     this.securityContextRepository = securityContextRepository;
   }
@@ -60,6 +66,19 @@ public class AuthController {
     securityContextRepository.saveContext(context, request, response);
 
     return ResponseEntity.ok(userApi.loadProfile(credential.id()));
+  }
+
+  @PostMapping("/password/forgot")
+  public ResponseEntity<?> forgotPassword(@RequestBody PasswordForgotRequest request) {
+    if (!StringUtils.hasText(request.getEmail())) {
+      return ResponseEntity.badRequest()
+          .body(Map.of("code", "EMAIL_REQUIRED", "message", "Email is required"));
+    }
+    if (!passwordResetService.requestReset(request.getEmail())) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("code", "USER_NOT_FOUND", "message", "No account found for that email"));
+    }
+    return ResponseEntity.noContent().build();
   }
 
   @PostMapping("/logout")

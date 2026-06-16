@@ -68,12 +68,14 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/auth/password/forgot: TODO
+  /api/auth/password/forgot:
     post:
       tags:
         - Auth
       summary: Request a password reset email
-      description: Sends a password reset email if the address exists.
+      description: >-
+        Sends a password reset email to the given address. Returns an error if the address does not
+        belong to a registered user.
       security: []
       requestBody:
         required: true
@@ -86,6 +88,8 @@ paths:
           description: Reset email queued
         '400':
           $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
