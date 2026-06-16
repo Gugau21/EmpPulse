@@ -64,7 +64,7 @@ public class PasswordResetService {
                   new PasswordResetToken(
                       credential.id(), sha256Hex(rawToken), OffsetDateTime.now().plus(tokenTtl)));
 
-              String resetLink = appBaseUrl + "/reset?token=" + rawToken;
+              String resetLink = appBaseUrl + "/reset-password?token=" + rawToken;
               UserResponse profile = userApi.loadProfile(credential.id());
               notificationApi.sendPasswordResetEmail(
                   new NotificationRecipient(profile.getEmail(), profile.getName()), resetLink);

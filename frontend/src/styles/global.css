@@ -13,7 +13,6 @@
   --bg-hover: #dfdfdf;
   --btn-outline-primary: #5932ea;
   --btn-outline-primary2: transparent;
-
   --text-dark: #333;
   --text-muted: #666;
   --border-dashed: #a0a0a0;
@@ -782,7 +781,7 @@ select {
 
 .working-hours-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 24px;
 }
 
@@ -1373,7 +1372,7 @@ select {
   cursor: pointer;
 }
 
-.muted p{
+.muted p {
   color: var(--text-muted);
 }
 

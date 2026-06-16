@@ -1,10 +1,18 @@
 import { useLanguage } from './useLanguage'
 import { translations } from '../utils/translations'
 
-// Canonical English weekday keys (Mon–Fri), kept verbatim as object/state keys.
+// Canonical English weekday keys (Mon–Sun), kept verbatim as object/state keys.
 // DO NOT translate — pair with useWeekdayLabels() for display. Shared by the
 // working-hours editor and the profile's working-hours display.
-export const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+export const WEEKDAYS = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday'
+]
 
 // Maps the canonical English weekday keys (kept verbatim as object/state keys, see
 // AddDefaultWorkingHoursModal) to the active language's label. Shared by the

@@ -12,7 +12,7 @@ export function emptySchedule(): Schedule {
 }
 
 // Builds the editor schedule from the saved days. A day's `dayOfWeek` (0-6) indexes
-// into WEEKDAYS; days outside the editor's Mon–Fri range are ignored.
+// into WEEKDAYS; days outside the editor's Mon–Sun range are ignored.
 export function scheduleFromDays(days: DefaultHoursDay[]): Schedule {
   const schedule = emptySchedule()
   for (const day of days) {

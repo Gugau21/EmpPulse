@@ -58,7 +58,9 @@ export const translations = {
       title: 'Forgot your password',
       instruction: 'Enter your email to receive a code for reseting password',
       emailLabel: 'Email',
-      continueBtn: 'continue'
+      continueBtn: 'continue',
+      sending: 'Sending…',
+      requestFailed: 'Unable to send the reset link. Please try again.'
     },
     checkEmailPage: {
       title: 'Check your email',
@@ -68,7 +70,11 @@ export const translations = {
       title: 'Reset your password',
       newPasswordLabel: 'Enter your new password',
       repeatPasswordLabel: 'Repeat your new password',
-      resetBtn: 'reset password'
+      resetBtn: 'reset password',
+      resetting: 'Resetting…',
+      passwordMismatch: 'Passwords do not match.',
+      missingToken: 'This reset link is invalid or has expired. Please request a new one.',
+      resetFailed: 'Failed to reset password. Please try again.'
     },
     myRequestsPage: {
       title: 'My requests',
@@ -341,7 +347,9 @@ export const translations = {
       title: 'Забули пароль?',
       instruction: 'Введіть свою електронну пошту, щоб отримати код для відновлення доступу',
       emailLabel: 'Електронна пошта',
-      continueBtn: 'продовжити'
+      continueBtn: 'продовжити',
+      sending: 'Надсилання…',
+      requestFailed: 'Не вдалося надіслати посилання. Спробуйте ще раз.'
     },
     checkEmailPage: {
       title: 'Перевірте електронну пошту',
@@ -351,7 +359,11 @@ export const translations = {
       title: 'Скидання пароля',
       newPasswordLabel: 'Введіть новий пароль',
       repeatPasswordLabel: 'Повторіть новий пароль',
-      resetBtn: 'скинути пароль'
+      resetBtn: 'скинути пароль',
+      resetting: 'Скидання…',
+      passwordMismatch: 'Паролі не збігаються.',
+      missingToken: 'Це посилання недійсне або застаріле. Запросіть нове.',
+      resetFailed: 'Не вдалося скинути пароль. Спробуйте ще раз.'
     },
     myRequestsPage: {
       title: 'Мої запити',
