@@ -1,5 +1,12 @@
 import React from 'react'
-import type { ModalType, Employee, LeaveRequest, Department, OpenModal } from '../types'
+import type {
+  ModalType,
+  Employee,
+  LeaveRequest,
+  Department,
+  LoggedHours,
+  OpenModal
+} from '../types'
 import ConfirmModal from './modals/ConfirmModal'
 import AddEmployeeModal from './modals/AddEmployeeModal'
 import EditAdminsModal from './modals/EditAdminsModal'
@@ -11,6 +18,7 @@ import EditDepartmentModal from './modals/EditDepartmentModal'
 import AddDefaultWorkingHoursModal from './modals/AddDefaultWorkingHoursModal'
 import EditEmployeeModal from './modals/EditEmployeeModal'
 import EditHoursModal from './modals/EditHoursModal'
+import AddBonusVacationDaysModal from './modals/AddBonusVacationDaysModal'
 import EditLeaveModal from './modals/EditLeaveModal'
 import ViewLeaveModal from './modals/ViewLeaveModal'
 import ChangePasswordFormModal from './modals/ChangePasswordModal'
@@ -25,6 +33,7 @@ interface Props {
   confirmModal: () => void
   selectedEmployee: Employee | null
   selectedRequest: LeaveRequest | null
+  selectedLoggedHours: LoggedHours | null
   selectedDepartment: Department | null
   departments: Department[]
   confirmError?: string | null
@@ -36,8 +45,7 @@ const CONFIRM_MODALS: ModalType[] = [
   'DELETE_LEAVE',
   'CANCEL_LEAVE',
   'DELETE_DEPARTMENT',
-  'LOGOUT',
-  'CHANGE_PASSWORD'
+  'LOGOUT'
 ]
 
 const Modals: React.FC<Props> = ({
@@ -47,6 +55,7 @@ const Modals: React.FC<Props> = ({
   confirmModal,
   selectedEmployee,
   selectedRequest,
+  selectedLoggedHours,
   selectedDepartment,
   departments,
   confirmError,
@@ -138,10 +147,17 @@ const Modals: React.FC<Props> = ({
           <EditDepartmentModal closeModal={closeModal} selectedDepartment={selectedDepartment} />
         )}
 
-        {(activeModal === 'ADD_WORKING_HOURS' || activeModal === 'EDIT_WORKING_HOURS') && (
+        {(activeModal === 'ADD_WORKING_HOURS' ||
+          activeModal === 'EDIT_WORKING_HOURS' ||
+          activeModal === 'EDIT_DEPARTMENT_WORKING_HOURS') && (
           <AddDefaultWorkingHoursModal
             closeModal={closeModal}
-            isEditMode={activeModal === 'EDIT_WORKING_HOURS'}
+            isEditMode={activeModal !== 'ADD_WORKING_HOURS'}
+            isDepartment={activeModal === 'EDIT_DEPARTMENT_WORKING_HOURS'}
+            // Employee modes (add/edit) save against the selected employee; the add
+            // flow seeds selectedEmployee with the just-created employee's id.
+            employeeId={selectedEmployee ? Number(selectedEmployee.id) : null}
+            departmentId={selectedDepartment?.id ?? null}
           />
         )}
 
@@ -154,11 +170,31 @@ const Modals: React.FC<Props> = ({
         )}
 
         {activeModal === 'EDIT_LOGGED_HOURS' && (
-          <EditHoursModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
+          <EditHoursModal
+            closeModal={closeModal}
+            selectedEmployee={selectedEmployee}
+            selectedLoggedHours={selectedLoggedHours}
+          />
+        )}
+
+        {activeModal === 'ADD_BONUS_DAYS' && (
+          <AddBonusVacationDaysModal closeModal={closeModal} selectedEmployee={selectedEmployee} />
         )}
 
         {activeModal === 'CHANGE_PASSWORD_FORM' && (
           <ChangePasswordFormModal openModal={openModal} />
+        )}
+
+        {activeModal === 'CHANGE_PASSWORD_SUCCESS' && (
+          <div className="modal-form">
+            <h2>{t.passwordChanged}</h2>
+            <p>{t.passwordChangedMsg}</p>
+            <div className="modal-actions">
+              <button className="btn-modal-action" onClick={closeModal}>
+                {t.ok}
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

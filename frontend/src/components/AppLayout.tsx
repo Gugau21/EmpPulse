@@ -2,7 +2,14 @@ import React, { useState } from 'react'
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Modals from './Modals'
-import type { ModalType, Employee, LeaveRequest, Department, OpenModal } from '../types'
+import type {
+  ModalType,
+  Employee,
+  LeaveRequest,
+  Department,
+  LoggedHours,
+  OpenModal
+} from '../types'
 import { useAuth } from '../context/useAuth'
 import { useDepartmentsList } from '../hooks/useDepartmentsList'
 import { useDeleteDepartment } from '../hooks/useDepartmentMutations'
@@ -33,6 +40,8 @@ const AppLayout: React.FC = () => {
   const [previousModal, setPreviousModal] = useState<ModalType>(null)
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null)
   const [selectedRequest, setSelectedRequest] = useState<LeaveRequest | null>(null)
+  // The logged-hours interval the EDIT_LOGGED_HOURS modal edits (one row's record).
+  const [selectedLoggedHours, setSelectedLoggedHours] = useState<LoggedHours | null>(null)
   // Full department object passed into modals (e.g. EditAdmins seeds from .admins).
   const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null)
   // Error surfaced inside the confirm modal when a confirm action fails (delete
@@ -48,7 +57,7 @@ const AppLayout: React.FC = () => {
   const deleteLeaveRequest = useDeleteLeaveRequest()
   const cancelLeaveRequest = useCancelLeaveRequest()
 
-  const openModal: OpenModal = (modal, deptOrEmp, requestObj, returnTo) => {
+  const openModal: OpenModal = (modal, deptOrEmp, requestObj, returnTo, loggedHours) => {
     if (deptOrEmp) {
       // Departments carry an `admins` array; employees don't — discriminate on it.
       if ('admins' in deptOrEmp) {
@@ -58,6 +67,7 @@ const AppLayout: React.FC = () => {
       }
     }
     if (requestObj) setSelectedRequest(requestObj)
+    if (loggedHours) setSelectedLoggedHours(loggedHours)
     setPreviousModal(returnTo ?? null)
     setActiveModal(modal)
   }
@@ -154,6 +164,7 @@ const AppLayout: React.FC = () => {
         }}
         selectedEmployee={selectedEmployee}
         selectedRequest={selectedRequest}
+        selectedLoggedHours={selectedLoggedHours}
         selectedDepartment={selectedDepartment}
         departments={departments}
         confirmError={confirmError}

@@ -1,7 +1,9 @@
 package com.oman.EmpPulse.leave.api;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 public interface LeaveApi {
 
@@ -15,4 +17,27 @@ public interface LeaveApi {
    * @return a map from employee ID to their active leave snapshot
    */
   Map<Long, ActiveLeaveResponse> findActiveLeavesByEmployeeIds(Collection<Long> employeeIds);
+
+  /**
+   * Counts the working days (Monday–Friday) of the employee's active (pending or approved) Vacation
+   * leave requests that fall within the given calendar year.
+   *
+   * <p>A leave request crossing a year boundary contributes only the portion within the requested
+   * year. Weekends are excluded; the system has no holiday concept.
+   *
+   * @param employeeId the employee whose used vacation days to count
+   * @param year the calendar year to count within
+   * @return the number of used vacation working days in that year
+   */
+  int countUsedVacationDays(Long employeeId, int year);
+
+  /**
+   * Returns the subset of {@code employeeIds} who have an approved unpaid leave covering {@code
+   * date}.
+   *
+   * @param employeeIds the employees to check
+   * @param date the calendar day to test
+   * @return employee IDs on unpaid approved leave that day
+   */
+  Set<Long> findEmployeeIdsOnUnpaidApprovedLeave(Collection<Long> employeeIds, LocalDate date);
 }

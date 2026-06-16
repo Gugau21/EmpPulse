@@ -670,13 +670,13 @@ select {
 
 .vacation-widget {
   width: 240px;
-  height: 120px;
+  min-height: 120px;
   background-color: var(--bg-surface);
   border-radius: 16px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 16px;
   box-shadow: 0 4px 20px rgb(0 0 0 / 2%);
 }
 
@@ -782,12 +782,8 @@ select {
 
 .working-hours-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(5, 1fr);
   gap: 24px;
-}
-
-.day-label-margin {
-  margin-top: 16px;
 }
 
 /* ============================================================

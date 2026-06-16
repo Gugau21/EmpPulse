@@ -79,11 +79,24 @@ export interface MeUser {
     employeeId: number
     departmentId: number | null
     departmentName: string | null
+    // The base allowance set on the employee (before bonus/used adjustments).
     yearlyVacationBalance: number
+    // The actual days-left, computed server-side as
+    // yearlyVacationBalance + bonus days − used vacation days.
+    vacationBalance: number
     // The employee's current approved leave, or null when they are working.
     activeLeave: ActiveLeave | null
   } | null
   adminProfile: { id: number; departmentIds: number[] } | null
+}
+
+// A single logged working interval on the profile's "Logged hours" table. `date`
+// is ISO yyyy-mm-dd (grouped/sorted as a plain string); times are "HH:mm".
+export interface LoggedHours {
+  id: number
+  date: string
+  startTime: string
+  endTime: string
 }
 
 // --- App State Types ---
@@ -106,14 +119,15 @@ export type ModalType =
   | 'DELETE_LEAVE'
   | 'CANCEL_LEAVE'
   | 'LOGOUT'
-  | 'CHANGE_PASSWORD_CONFIRM'
   | 'CHANGE_PASSWORD_FORM'
-  | 'CHANGE_PASSWORD'
+  | 'CHANGE_PASSWORD_SUCCESS'
   | 'EDIT_DEPARTMENT'
   | 'ADD_WORKING_HOURS'
   | 'EDIT_WORKING_HOURS'
+  | 'EDIT_DEPARTMENT_WORKING_HOURS'
   | 'EDIT_EMPLOYEE'
   | 'EDIT_LOGGED_HOURS'
+  | 'ADD_BONUS_DAYS'
 
 // Payload a caller passes to openModal: a department (its detail/admins modals)
 // or an employee (its profile/edit modals). Discriminated via the `admins` field.
@@ -126,5 +140,7 @@ export type OpenModal = (
   modal: ModalType,
   payload?: ModalPayload,
   requestObj?: LeaveRequest,
-  returnTo?: ModalType
+  returnTo?: ModalType,
+  // The logged-hours interval an EDIT_LOGGED_HOURS modal should edit.
+  loggedHours?: LoggedHours
 ) => void

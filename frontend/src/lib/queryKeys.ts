@@ -25,5 +25,19 @@ export const leaveRequestKeys = {
 export const userKeys = {
   all: ['users'] as const,
   details: () => [...userKeys.all, 'detail'] as const,
-  detail: (id: number) => [...userKeys.details(), id] as const
+  detail: (id: number) => [...userKeys.details(), id] as const,
+  bonusVacationDays: (id: number) => [...userKeys.all, 'bonusVacationDays', id] as const
+}
+
+export const loggedHoursKeys = {
+  all: ['loggedHours'] as const,
+  lists: () => [...loggedHoursKeys.all, 'list'] as const,
+  list: (employeeId: number) => [...loggedHoursKeys.lists(), employeeId] as const
+}
+
+export const defaultHoursKeys = {
+  all: ['defaultHours'] as const,
+  employee: (employeeId: number) => [...defaultHoursKeys.all, 'employee', employeeId] as const,
+  department: (departmentId: number) =>
+    [...defaultHoursKeys.all, 'department', departmentId] as const
 }

@@ -3,6 +3,7 @@ package com.oman.EmpPulse.user.dto;
 import java.util.List;
 
 public class UserUpdateRequest {
+
   private String name;
   private String surname;
   private String email;
@@ -17,7 +18,6 @@ public class UserUpdateRequest {
 
   private boolean changeEmployeeDepartment;
   private Integer yearlyVacationBalance;
-  private List<BonusVacationDayRequest> bonusVacationDays;
   private List<Long> adminDepartmentIds;
 
   public String getName() {
@@ -74,14 +74,6 @@ public class UserUpdateRequest {
 
   public void setYearlyVacationBalance(Integer yearlyVacationBalance) {
     this.yearlyVacationBalance = yearlyVacationBalance;
-  }
-
-  public List<BonusVacationDayRequest> getBonusVacationDays() {
-    return bonusVacationDays;
-  }
-
-  public void setBonusVacationDays(List<BonusVacationDayRequest> bonusVacationDays) {
-    this.bonusVacationDays = bonusVacationDays;
   }
 
   public List<Long> getAdminDepartmentIds() {

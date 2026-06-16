@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.user.internal;
 
+import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
 import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
@@ -11,8 +12,13 @@ import com.oman.EmpPulse.user.api.UserApi;
 import com.oman.EmpPulse.user.api.UserCredential;
 import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.api.UserResponse;
+import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
+import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
+import com.oman.EmpPulse.user.dto.PasswordChangeRequest;
+import com.oman.EmpPulse.user.dto.PreferencesUpdateRequest;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,8 +39,10 @@ public class UserService implements UserApi {
   private final UserRepository userRepository;
   private final AdminRepository adminRepository;
   private final EmployeeRepository employeeRepository;
+  private final BonusVacationDaysRepository bonusVacationDaysRepository;
   private final FindByIndexNameSessionRepository<? extends Session> sessionRepository;
   private final DepartmentApi departmentApi;
+  private final DefaultHoursApi defaultHoursApi;
   private final PasswordEncoder passwordEncoder;
   private final LeaveApi leaveApi;
 
@@ -42,15 +50,19 @@ public class UserService implements UserApi {
       UserRepository userRepository,
       AdminRepository adminRepository,
       EmployeeRepository employeeRepository,
+      BonusVacationDaysRepository bonusVacationDaysRepository,
       FindByIndexNameSessionRepository<? extends Session> sessionRepository,
       DepartmentApi departmentApi,
+      @Lazy DefaultHoursApi defaultHoursApi,
       PasswordEncoder passwordEncoder,
       @Lazy LeaveApi leaveApi) {
     this.userRepository = userRepository;
     this.adminRepository = adminRepository;
     this.employeeRepository = employeeRepository;
+    this.bonusVacationDaysRepository = bonusVacationDaysRepository;
     this.sessionRepository = sessionRepository;
     this.departmentApi = departmentApi;
+    this.defaultHoursApi = defaultHoursApi;
     this.passwordEncoder = passwordEncoder;
     this.leaveApi = leaveApi;
   }
@@ -116,13 +128,7 @@ public class UserService implements UserApi {
   @Transactional(readOnly = true)
   public UserResponse getUserProfile(Long userId, Long callerId, boolean callerIsOwner) {
     if (!callerIsOwner) {
-      Optional<Employee> employeeOpt = employeeRepository.findById(userId);
-      Employee employee =
-          employeeOpt.orElseThrow(
-              () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
-      if (!employee.isActive()) {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-      }
+      Employee employee = requireActiveEmployee(userId);
       verifyAdminOverseesDepartment(callerId, employee.getDepartmentId());
     }
 
@@ -150,12 +156,23 @@ public class UserService implements UserApi {
         String deptName = departmentApi.findNameById(employee.getDepartmentId()).orElse(null);
         Map<Long, ActiveLeaveResponse> activeLeaves =
             leaveApi.findActiveLeavesByEmployeeIds(List.of(employee.getId()));
+
+        int year = LocalDate.now().getYear();
+        int bonus =
+            bonusVacationDaysRepository
+                .findByEmployeeIdAndYear(employee.getId(), year)
+                .map(BonusVacationDays::getDays)
+                .orElse(0);
+        int used = leaveApi.countUsedVacationDays(employee.getId(), year);
+        int vacationBalance = employee.getVacationBalance() + bonus - used;
+
         employeeProfile =
             new EmployeeProfileResponse(
                 employee.getId(),
                 employee.getDepartmentId(),
                 deptName,
                 employee.getVacationBalance(),
+                vacationBalance,
                 activeLeaves.get(employee.getId()));
       }
     }
@@ -196,7 +213,87 @@ public class UserService implements UserApi {
   }
 
   @Transactional
-  public void createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
+  public UserPreferencesResponse updatePreferences(Long userId, PreferencesUpdateRequest req) {
+    User user = getUserById(userId);
+
+    if (req.getTheme() != null) {
+      user.setTheme(parseTheme(req.getTheme()));
+    }
+    if (req.getLanguage() != null) {
+      user.setLanguage(parseLanguage(req.getLanguage()));
+    }
+
+    userRepository.save(user);
+    return new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name());
+  }
+
+  private UserTheme parseTheme(String theme) {
+    try {
+      return UserTheme.valueOf(theme.toLowerCase());
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid theme");
+    }
+  }
+
+  private UserLanguage parseLanguage(String language) {
+    try {
+      return UserLanguage.valueOf(language.toLowerCase());
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid language");
+    }
+  }
+
+  @Transactional
+  public void changeMyPassword(Long userId, PasswordChangeRequest req, String currentSessionId) {
+    if (!StringUtils.hasText(req.getCurrentPassword())
+        || !StringUtils.hasText(req.getNewPassword())
+        || !StringUtils.hasText(req.getConfirmNewPassword())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Current password, new password and confirmation are required");
+    }
+
+    User user = getUserById(userId);
+
+    if (!passwordEncoder.matches(req.getCurrentPassword(), user.getPassHash())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+    }
+
+    if (!req.getNewPassword().equals(req.getConfirmNewPassword())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Passwords do not match");
+    }
+
+    if (passwordEncoder.matches(req.getNewPassword(), user.getPassHash())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "New password must differ from the current password");
+    }
+
+    user.setPassHash(passwordEncoder.encode(req.getNewPassword()));
+
+    // Invalidate all other sessions for this user, keeping the caller's current session.
+    sessionRepository.findByPrincipalName(userId.toString()).keySet().stream()
+        .filter(sessionId -> !sessionId.equals(currentSessionId))
+        .forEach(sessionRepository::deleteById);
+
+    // TODO(feat/notification): once the notification module is merged, notify the user, e.g.
+    // notificationApi.sendPasswordChangedNotification(
+    //     new NotificationRecipient(user.getEmail(), user.getName()));
+  }
+
+  @Override
+  @Transactional
+  public void resetPassword(Long userId, String rawNewPassword) {
+    User user = getUserById(userId);
+    user.setPassHash(passwordEncoder.encode(rawNewPassword));
+
+    // Reset is unauthenticated, so invalidate every session; the user must log in again.
+    sessionRepository
+        .findByPrincipalName(userId.toString())
+        .keySet()
+        .forEach(sessionRepository::deleteById);
+  }
+
+  @Transactional
+  public Long createUser(UserCreateRequest req, Long callerUserId, boolean callerIsOwner) {
     boolean reqToCreateEmployee = (req.getEmployeeDepartmentId() != null);
     boolean reqToCreateAdmin =
         (req.getAdminDepartmentIds() != null) && !req.getAdminDepartmentIds().isEmpty();
@@ -238,8 +335,8 @@ public class UserService implements UserApi {
           new Employee(
               user.getId(),
               req.getEmployeeDepartmentId(),
-              null,
-              req.getYearlyVacationBalance()); // WeekScheduleId to be added
+              defaultHoursApi.inheritDepartmentSchedule(req.getEmployeeDepartmentId()),
+              req.getYearlyVacationBalance());
       employeeRepository.save(employee);
     }
 
@@ -248,6 +345,8 @@ public class UserService implements UserApi {
       adminRepository.save(admin);
       departmentApi.setAdminDepartments(admin.getId(), req.getAdminDepartmentIds());
     }
+
+    return user.getId();
   }
 
   private void requireUserFields(UserCreateRequest req) {
@@ -257,6 +356,72 @@ public class UserService implements UserApi {
         || !StringUtils.hasText(req.getPassword())) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Name, surname, email and password are required");
+    }
+  }
+
+  @Transactional(readOnly = true)
+  public BonusVacationDaysResponse getBonusVacationDaysForEmployee(Long userId, Long callerId) {
+    Employee employee = requireActiveEmployee(userId);
+    verifyAdminOverseesDepartment(callerId, employee.getDepartmentId());
+
+    int year = LocalDate.now().getYear();
+    int days =
+        bonusVacationDaysRepository
+            .findByEmployeeIdAndYear(employee.getId(), year)
+            .map(BonusVacationDays::getDays)
+            .orElse(0);
+
+    return new BonusVacationDaysResponse(year, days);
+  }
+
+  @Transactional
+  public void updateBonusVacationDays(Long userId, BonusVacationDayRequest req, Long callerUserId) {
+    Employee employee = requireActiveEmployee(userId);
+    verifyAdminOverseesDepartment(callerUserId, employee.getDepartmentId());
+
+    requireBonusVacationDayFields(req);
+    requireNonNegativeBonusVacationDays(req.getDays());
+
+    int year = req.getYear();
+    int days = req.getDays();
+    Optional<BonusVacationDays> existing =
+        bonusVacationDaysRepository.findByEmployeeIdAndYear(employee.getId(), year);
+
+    if (days == 0) {
+      existing.ifPresent(bonusVacationDaysRepository::delete);
+      return;
+    }
+
+    if (existing.isPresent()) {
+      BonusVacationDays bonusVacationDays = existing.get();
+      bonusVacationDays.setDays(days);
+      bonusVacationDaysRepository.save(bonusVacationDays);
+    } else {
+      bonusVacationDaysRepository.save(new BonusVacationDays(employee.getId(), year, days));
+    }
+  }
+
+  private Employee requireActiveEmployee(Long userId) {
+    Employee employee =
+        employeeRepository
+            .findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+    if (!employee.isActive()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+    }
+    return employee;
+  }
+
+  private void requireBonusVacationDayFields(BonusVacationDayRequest req) {
+    if (req.getYear() == null || req.getDays() == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Year and days are required");
+    }
+  }
+
+  private void requireNonNegativeBonusVacationDays(int days) {
+    if (days < 0) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Bonus vacation days must be greater or equal to 0");
     }
   }
 
@@ -387,8 +552,8 @@ public class UserService implements UserApi {
         new Employee(
             userId,
             req.getEmployeeDepartmentId(),
-            null,
-            req.getYearlyVacationBalance()); // WeekScheduleId to be added
+            defaultHoursApi.inheritDepartmentSchedule(req.getEmployeeDepartmentId()),
+            req.getYearlyVacationBalance());
     employeeRepository.save(employee);
   }
 

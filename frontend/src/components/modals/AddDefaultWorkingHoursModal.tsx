@@ -1,40 +1,79 @@
 import React, { useState } from 'react'
+import type { DefaultHoursDay } from '../../services/api'
 import { useLanguage } from '../../hooks/useLanguage'
 import { translations } from '../../utils/translations'
-import { useWeekdayLabels } from '../../hooks/useWeekdayLabels'
+import { useWeekdayLabels, WEEKDAYS } from '../../hooks/useWeekdayLabels'
+import { useEmployeeDefaultHours, useDepartmentDefaultHours } from '../../hooks/useDefaultHours'
+import {
+  useSetEmployeeDefaultHours,
+  useSetDepartmentDefaultHours
+} from '../../hooks/useDefaultHoursMutations'
+import {
+  daysFromSchedule,
+  emptySchedule,
+  isScheduleValid,
+  scheduleFromDays,
+  type Schedule
+} from '../../utils/defaultHours'
 
 interface Props {
   closeModal: () => void
   isEditMode?: boolean
+  // Editing a department's default hours (vs an employee's) — changes the wording
+  // and which endpoint the editor reads/writes.
+  isDepartment?: boolean
+  // The employee whose default hours to edit (employee mode). Set for both the
+  // add-new-employee and edit flows; null disables saving.
+  employeeId?: number | null
+  // The department whose default hours to edit (department mode).
+  departmentId?: number | null
 }
 
-// DO NOT translate these string keys, as the state object relies on them.
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-
-type Shift = { start: string; end: string }
-type Schedule = Record<string, Shift[]>
-
-const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }) => {
+const AddDefaultWorkingHoursModal: React.FC<Props> = ({
+  closeModal,
+  isEditMode,
+  isDepartment,
+  employeeId,
+  departmentId
+}) => {
   const { language } = useLanguage()
   const t = translations[language].modals
 
   // Display the day in the active language without breaking the hardcoded keys.
   const dayLabels = useWeekdayLabels()
 
-  const [schedule, setSchedule] = useState<Schedule>({
-    Monday: [{ start: '09:00', end: '17:00' }],
-    Tuesday: [{ start: '09:00', end: '17:00' }],
-    Wednesday: [{ start: '09:00', end: '17:00' }],
-    Thursday: [{ start: '09:00', end: '17:00' }],
-    Friday: [{ start: '09:00', end: '17:00' }],
-    Saturday: [],
-    Sunday: []
-  })
+  // Load the saved schedule for whichever target this editor is for. Both hooks are
+  // called (hooks can't be conditional); the off-mode one is held idle with a null id.
+  const employeeQuery = useEmployeeDefaultHours(isDepartment ? null : (employeeId ?? null))
+  const departmentQuery = useDepartmentDefaultHours(isDepartment ? (departmentId ?? null) : null)
+  const query = isDepartment ? departmentQuery : employeeQuery
+
+  const setEmployeeHours = useSetEmployeeDefaultHours()
+  const setDepartmentHours = useSetDepartmentDefaultHours()
+  const saving = setEmployeeHours.isPending || setDepartmentHours.isPending
+
+  // Start empty; replaced with the saved schedule once it loads (a freshly created
+  // employee may already carry hours inherited from their department).
+  const [schedule, setSchedule] = useState<Schedule>(emptySchedule)
+  const [error, setError] = useState<string | null>(null)
+
+  // Seed the editor from the fetched schedule by adjusting state during render (the
+  // React-recommended alternative to an effect). React Query keeps `data` stable
+  // between renders, so the guard reseeds only when the loaded schedule changes —
+  // not on every keystroke, leaving the user's edits intact.
+  const [seededFrom, setSeededFrom] = useState<DefaultHoursDay[] | null>(null)
+  const loaded = query.data
+  if (loaded && loaded !== seededFrom) {
+    setSeededFrom(loaded)
+    setSchedule(scheduleFromDays(loaded))
+  }
 
   const handleAddShift = (day: string) => {
     setSchedule(prev => ({
       ...prev,
-      [day]: [...prev[day], { start: '', end: '' }]
+      // One interval per day (the backend stores at most one); the "+" is hidden
+      // once a day has a shift, so this only ever adds the first.
+      [day]: prev[day].length > 0 ? prev[day] : [{ start: '', end: '' }]
     }))
   }
 
@@ -59,30 +98,65 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
     }))
   }
 
+  const handleSave = () => {
+    setError(null)
+    if (!isScheduleValid(schedule)) {
+      setError(t.errInvalidWorkingHours)
+      return
+    }
+    const days = daysFromSchedule(schedule)
+    const onSuccess = () => closeModal()
+    const onError = (err: Error) => setError(err.message)
+
+    if (isDepartment) {
+      if (departmentId == null) return
+      setDepartmentHours.mutate({ departmentId, days }, { onSuccess, onError })
+    } else {
+      if (employeeId == null) return
+      setEmployeeHours.mutate({ employeeId, days }, { onSuccess, onError })
+    }
+  }
+
   return (
     <div className="modal-form">
       <h2 style={{ lineHeight: '1.2' }}>
-        {isEditMode ? t.editDefaultWorkingHours : t.addDefaultWorkingHours}
-        <br />
-        {t.workingHoursSuffix}
+        {isDepartment ? (
+          t.editDepartmentWorkingHours
+        ) : (
+          <>
+            {isEditMode ? t.editDefaultWorkingHours : t.addDefaultWorkingHours}
+            <br />
+            {t.workingHoursSuffix}
+          </>
+        )}
       </h2>
+
+      {query.isError && <p className="form-error form-error-block">{query.error.message}</p>}
 
       <div
         style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '8px', marginBottom: '24px' }}
       >
-        {DAYS.map(day => (
+        {WEEKDAYS.map(day => (
           <div key={day} style={{ marginBottom: '16px' }}>
-            <h4 style={{ fontSize: '15px', fontWeight: 500, marginBottom: '8px' }}>
-              {dayLabels[day]}
-            </h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '15px', fontWeight: 500, margin: 0 }}>{dayLabels[day]}</h4>
+              {/* At most one interval per day, so the add button hides once a shift exists. */}
+              {schedule[day].length === 0 && (
+                <button
+                  className="btn-tiny-pill"
+                  onClick={() => handleAddShift(day)}
+                  style={{ backgroundColor: '#5932EA', fontSize: '14px', padding: '2px 12px' }}
+                >
+                  +
+                </button>
+              )}
+            </div>
 
             {schedule[day].map((shift, index) => (
               <div
                 key={index}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}
               >
-                <span style={{ fontWeight: 500, width: '16px' }}>{index + 1})</span>
-
                 <input
                   type="time"
                   value={shift.start}
@@ -113,22 +187,18 @@ const AddDefaultWorkingHoursModal: React.FC<Props> = ({ closeModal, isEditMode }
                 </button>
               </div>
             ))}
-
-            <div style={{ display: 'flex', justifyContent: 'center', width: '250px' }}>
-              <button
-                className="btn-tiny-pill"
-                onClick={() => handleAddShift(day)}
-                style={{ backgroundColor: '#5932EA', fontSize: '14px', padding: '2px 12px' }}
-              >
-                +
-              </button>
-            </div>
           </div>
         ))}
       </div>
 
-      <button className="primary-btn full-width" onClick={closeModal}>
-        {isEditMode ? t.saveChanges : t.addEmployeeBtnWorkingHours}
+      {error && <p className="form-error">{error}</p>}
+
+      <button
+        className="primary-btn full-width"
+        onClick={handleSave}
+        disabled={saving || query.isLoading}
+      >
+        {isDepartment ? t.editDepartmentWithHours : isEditMode ? t.editWithHours : t.addWithHours}
       </button>
     </div>
   )

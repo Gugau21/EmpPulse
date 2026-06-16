@@ -4,7 +4,8 @@ import type {
   Department,
   DepartmentAdmin,
   Employee,
-  LeaveRequest
+  LeaveRequest,
+  LoggedHours
 } from '../types'
 import { isoToDisplayDate } from '../utils/date'
 import { describeActiveLeave } from '../utils/activeLeave'
@@ -153,6 +154,57 @@ export const authService = {
     } catch {
       // Network failure — the caller clears the local session regardless.
     }
+  },
+
+  // POST /api/me/password/change — the signed-in user changes their own password.
+  // The server verifies the current password and that the new one differs, then
+  // invalidates the user's other sessions while keeping the caller's alive. The
+  // 400 override covers a wrong current password (the confirm-match and
+  // unchanged-password cases are caught client-side before the request is sent).
+  changePassword: async (payload: PasswordChangePayload): Promise<void> => {
+    await apiRequest('/api/me/password/change', {
+      method: 'POST',
+      body: payload,
+      errorFallback: 'Failed to change password.',
+      errorOverrides: { 400: 'Your current password is incorrect.' }
+    })
+  }
+}
+
+// POST /api/me/password/change body (PasswordChangeRequest in the API contract).
+// All three fields are required server-side; newPassword must match
+// confirmNewPassword and differ from currentPassword.
+export interface PasswordChangePayload {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
+}
+
+// PATCH /api/me/preferences body (PreferencesUpdateRequest). Both fields are
+// optional, so only the one that changed is sent. Values are the backend enums
+// (theme: light|dark|system, language: en|ukr) — utils/preferences maps the UI's
+// values to these before they reach here.
+export interface PreferencesUpdatePayload {
+  theme?: string
+  language?: string
+}
+
+// PATCH /api/me/preferences response (UserPreferencesResponse): the saved values.
+export interface PreferencesResponse {
+  theme: string
+  language: string
+}
+
+export const preferencesService = {
+  // PATCH /api/me/preferences — persists the signed-in user's theme/language to
+  // their profile so the choice follows them across sessions and devices.
+  update: async (payload: PreferencesUpdatePayload): Promise<PreferencesResponse> => {
+    const res = await apiRequest('/api/me/preferences', {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to save preferences.'
+    })
+    return (await res.json()) as PreferencesResponse
   }
 }
 
@@ -179,14 +231,35 @@ export interface UserUpdatePayload {
   adminDepartmentIds?: number[]
 }
 
+// GET /api/users/{userId}/bonus-vacation-days response (BonusVacationDaysResponse
+// in the API contract). `year` is the current year the server resolved the bonus
+// for; `days` is 0 when no bonus has been granted for that year.
+export interface BonusVacationDaysResponse {
+  year: number
+  days: number
+}
+
+// PATCH /api/users/{userId}/bonus-vacation-days body (BonusVacationDayRequest).
+// Both fields are required server-side; days must be >= 0. Setting days to 0
+// clears the bonus for that year.
+export interface BonusVacationDayPayload {
+  year: number
+  days: number
+}
+
 export const userService = {
-  create: async (payload: UserCreatePayload): Promise<void> => {
-    await apiRequest('/api/users', {
+  // POST /api/users (ADMIN; owner may also create admins). Returns the new user's
+  // id (UserCreatedResponse) so the caller can immediately act on it — e.g. open
+  // the default-working-hours editor for a freshly created employee.
+  create: async (payload: UserCreatePayload): Promise<number> => {
+    const res = await apiRequest('/api/users', {
       method: 'POST',
       body: payload,
       errorFallback: 'Failed to create user.',
       errorOverrides: { 409: 'A user with this email already exists.' }
     })
+    const data = await res.json()
+    return data.id as number
   },
 
   delete: async (userId: number): Promise<void> => {
@@ -214,6 +287,34 @@ export const userService = {
         403: 'You do not have permission to change these fields.',
         409: 'A user with this email already exists.'
       }
+    })
+  },
+
+  // GET /api/users/{userId}/bonus-vacation-days (ADMIN for employees in a
+  // department they oversee) — the bonus days granted for the current year.
+  getBonusVacationDays: async (
+    userId: number,
+    signal?: AbortSignal
+  ): Promise<BonusVacationDaysResponse> => {
+    const res = await apiRequest(`/api/users/${userId}/bonus-vacation-days`, {
+      signal,
+      errorFallback: 'Failed to load bonus vacation days.',
+      errorOverrides: { 403: 'You do not have access to this employee.' }
+    })
+    return (await res.json()) as BonusVacationDaysResponse
+  },
+
+  // PATCH /api/users/{userId}/bonus-vacation-days (ADMIN for employees in a
+  // department they oversee) — set the bonus days for the given year (0 clears it).
+  updateBonusVacationDays: async (
+    userId: number,
+    payload: BonusVacationDayPayload
+  ): Promise<void> => {
+    await apiRequest(`/api/users/${userId}/bonus-vacation-days`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to update bonus vacation days.',
+      errorOverrides: { 403: 'You do not have access to this employee.' }
     })
   }
 }
@@ -519,5 +620,183 @@ export const adminService = {
     const res = await apiRequest('/api/admins', { errorFallback: 'Failed to load admins.' })
     const data = await res.json()
     return (data.items ?? []) as DepartmentAdmin[]
+  }
+}
+
+// Raw item from GET /api/employees/{id}/logged-hours (LoggedHoursResponse). Times
+// arrive as "HH:mm:ss"; the UI drops the seconds. date stays ISO yyyy-mm-dd so
+// callers can group and sort by it as plain strings.
+interface LoggedHoursDto {
+  id: number
+  employeeId: number
+  adminId: number
+  date: string
+  startTime: string
+  endTime: string
+}
+
+// POST/PATCH body. Both endpoints take the same fields; dates are ISO yyyy-mm-dd
+// and times "HH:mm" (Spring's LocalTime parses the seconds-less ISO form).
+export interface LoggedHoursPayload {
+  date: string
+  startTime: string
+  endTime: string
+}
+
+function mapLoggedHours(dto: LoggedHoursDto): LoggedHours {
+  return {
+    id: dto.id,
+    date: dto.date,
+    startTime: dto.startTime.slice(0, 5),
+    endTime: dto.endTime.slice(0, 5)
+  }
+}
+
+export const loggedHoursService = {
+  // GET /api/employees/{employeeId}/logged-hours — every logged interval for the
+  // employee (the employee themselves, or an admin overseeing them). The server
+  // sorts date/startTime descending; the UI regroups the flat rows by day.
+  list: async (employeeId: number, signal?: AbortSignal): Promise<LoggedHours[]> => {
+    const res = await apiRequest(`/api/employees/${employeeId}/logged-hours`, {
+      signal,
+      errorFallback: 'Failed to load logged hours.'
+    })
+    const data = await res.json()
+    const items = (data.items ?? []) as LoggedHoursDto[]
+    return items.map(mapLoggedHours)
+  },
+
+  // POST /api/employees/{employeeId}/logged-hours (admin only) — logs a single-day
+  // interval. The server merges it with any overlapping/adjacent interval on the
+  // same day, so callers must refetch rather than assume the input was stored as-is.
+  create: async (employeeId: number, payload: LoggedHoursPayload): Promise<void> => {
+    await apiRequest(`/api/employees/${employeeId}/logged-hours`, {
+      method: 'POST',
+      body: payload,
+      errorFallback: 'Failed to log hours.',
+      errorOverrides: {
+        400: 'Enter a valid interval: start before end, and not in the future.'
+      }
+    })
+  },
+
+  // PATCH /api/employees/{employeeId}/logged-hours/{loggedHoursId} (admin only) —
+  // updates an interval's times (its day stays fixed); same merge behaviour as create.
+  update: async (
+    employeeId: number,
+    loggedHoursId: number,
+    payload: LoggedHoursPayload
+  ): Promise<void> => {
+    await apiRequest(`/api/employees/${employeeId}/logged-hours/${loggedHoursId}`, {
+      method: 'PATCH',
+      body: payload,
+      errorFallback: 'Failed to update logged hours.',
+      errorOverrides: {
+        400: 'Enter a valid interval: start before end, and not in the future.'
+      }
+    })
+  },
+
+  // DELETE /api/employees/{employeeId}/logged-hours/{loggedHoursId} (admin only).
+  delete: async (employeeId: number, loggedHoursId: number): Promise<void> => {
+    await apiRequest(`/api/employees/${employeeId}/logged-hours/${loggedHoursId}`, {
+      method: 'DELETE',
+      errorFallback: 'Failed to delete logged hours.'
+    })
+  }
+}
+
+// One weekday's default working interval. `dayOfWeek` is 0-6 (the editor maps its
+// weekday index to this); times are "HH:mm". The backend stores at most one
+// interval per day, so the app models a day as a single optional interval.
+export interface DefaultHoursDay {
+  dayOfWeek: number
+  startTime: string
+  endTime: string
+}
+
+// Wire shape of GET /api/{…}/default-hours (DefaultWeekHoursResponse): days, each
+// with 0..1 intervals whose times arrive as "HH:mm:ss". Only days that carry an
+// interval are present.
+interface DefaultWeekHoursResponseDto {
+  days: {
+    dayOfWeek: number
+    intervals: { startTime: string; endTime: string }[]
+  }[]
+}
+
+// Flattens the wire response (0..1 interval per day) into one DefaultHoursDay per
+// day that has an interval, dropping the seconds the server adds to LocalTime.
+function mapDefaultHours(dto: DefaultWeekHoursResponseDto): DefaultHoursDay[] {
+  return (dto.days ?? [])
+    .filter(d => d.intervals.length > 0)
+    .map(d => ({
+      dayOfWeek: d.dayOfWeek,
+      startTime: d.intervals[0].startTime.slice(0, 5),
+      endTime: d.intervals[0].endTime.slice(0, 5)
+    }))
+}
+
+// Builds the PUT body (DefaultWeekHoursRequest): one day entry per supplied
+// interval, each wrapped in a single-element intervals array.
+function toDefaultHoursBody(days: DefaultHoursDay[]) {
+  return {
+    days: days.map(d => ({
+      dayOfWeek: d.dayOfWeek,
+      intervals: [{ startTime: d.startTime, endTime: d.endTime }]
+    }))
+  }
+}
+
+// The 400 the server returns for an invalid interval (start not before end). The
+// editor validates this too, so it should only surface on an unexpected payload.
+const DEFAULT_HOURS_OVERRIDES = {
+  400: 'Enter a valid interval for each day: start must be before end.'
+}
+
+export const defaultHoursService = {
+  // GET /api/employees/{employeeId}/default-hours (admin overseeing the employee).
+  // Empty array when no default hours have been set.
+  getForEmployee: async (employeeId: number, signal?: AbortSignal): Promise<DefaultHoursDay[]> => {
+    const res = await apiRequest(`/api/employees/${employeeId}/default-hours`, {
+      signal,
+      errorFallback: 'Failed to load default working hours.'
+    })
+    return mapDefaultHours((await res.json()) as DefaultWeekHoursResponseDto)
+  },
+
+  // PUT /api/employees/{employeeId}/default-hours (admin only) — replaces the
+  // employee's whole weekly schedule with the supplied days.
+  setForEmployee: async (employeeId: number, days: DefaultHoursDay[]): Promise<void> => {
+    await apiRequest(`/api/employees/${employeeId}/default-hours`, {
+      method: 'PUT',
+      body: toDefaultHoursBody(days),
+      errorFallback: 'Failed to save default working hours.',
+      errorOverrides: DEFAULT_HOURS_OVERRIDES
+    })
+  },
+
+  // GET /api/departments/{departmentId}/default-hours (admin overseeing the dept).
+  // Empty array when no default hours have been set.
+  getForDepartment: async (
+    departmentId: number,
+    signal?: AbortSignal
+  ): Promise<DefaultHoursDay[]> => {
+    const res = await apiRequest(`/api/departments/${departmentId}/default-hours`, {
+      signal,
+      errorFallback: 'Failed to load default working hours.'
+    })
+    return mapDefaultHours((await res.json()) as DefaultWeekHoursResponseDto)
+  },
+
+  // PUT /api/departments/{departmentId}/default-hours (admin only) — replaces the
+  // department's whole weekly schedule; inherited by employees with none of their own.
+  setForDepartment: async (departmentId: number, days: DefaultHoursDay[]): Promise<void> => {
+    await apiRequest(`/api/departments/${departmentId}/default-hours`, {
+      method: 'PUT',
+      body: toDefaultHoursBody(days),
+      errorFallback: 'Failed to save default working hours.',
+      errorOverrides: DEFAULT_HOURS_OVERRIDES
+    })
   }
 }
