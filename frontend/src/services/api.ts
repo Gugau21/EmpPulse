@@ -154,7 +154,30 @@ export const authService = {
     } catch {
       // Network failure — the caller clears the local session regardless.
     }
+  },
+
+  // POST /api/me/password/change — the signed-in user changes their own password.
+  // The server verifies the current password and that the new one differs, then
+  // invalidates the user's other sessions while keeping the caller's alive. The
+  // 400 override covers a wrong current password (the confirm-match and
+  // unchanged-password cases are caught client-side before the request is sent).
+  changePassword: async (payload: PasswordChangePayload): Promise<void> => {
+    await apiRequest('/api/me/password/change', {
+      method: 'POST',
+      body: payload,
+      errorFallback: 'Failed to change password.',
+      errorOverrides: { 400: 'Your current password is incorrect.' }
+    })
   }
+}
+
+// POST /api/me/password/change body (PasswordChangeRequest in the API contract).
+// All three fields are required server-side; newPassword must match
+// confirmNewPassword and differ from currentPassword.
+export interface PasswordChangePayload {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
 }
 
 export interface UserCreatePayload {

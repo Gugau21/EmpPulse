@@ -227,14 +227,14 @@ const ProfilePage: React.FC = () => {
               {/* Granting bonus days is an admin action: only shown when viewing
                 someone else's profile (the employees list is gated to owners/
                 admins), so an employee never sees it on their own profile. */}
-            {!isMyProfile && (
-              <button
-                className="primary-btn full-width"
-                onClick={() => openModal('ADD_BONUS_DAYS', employee as Employee)}
-              >
-                add bonus days
-              </button>
-            )}
+              {!isMyProfile && (
+                <button
+                  className="primary-btn full-width"
+                  onClick={() => openModal('ADD_BONUS_DAYS', employee as Employee)}
+                >
+                  add bonus days
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -334,32 +334,32 @@ const ProfilePage: React.FC = () => {
                   <span>{t.durationCol}</span>
                 </div>
 
-              {/* One box per day that has logged hours; days with nothing logged
+                {/* One box per day that has logged hours; days with nothing logged
                   are not shown. On multi-interval days only the first row carries
                   the date and the day's total duration. */}
-              {loggedHoursDays.map(day => (
-                <div className="card-box table-box" key={day.date}>
-                  {day.intervals.map((interval, idx) => (
-                    <LoggedHoursRow
-                      key={interval.id}
-                      isMyProfile={isMyProfile}
-                      onEdit={() =>
-                        openModal(
-                          'EDIT_LOGGED_HOURS',
-                          employee as Employee,
-                          undefined,
-                          undefined,
-                          interval
-                        )
-                      }
-                    >
-                      <span>{idx === 0 ? isoToDisplayDate(day.date) : ''}</span>
-                      <span>{formatInterval(interval.startTime, interval.endTime)}</span>
-                      <span>{idx === 0 ? formatDuration(day.durationMinutes) : ''}</span>
-                    </LoggedHoursRow>
-                  ))}
-                </div>
-              ))}
+                {loggedHoursDays.map(day => (
+                  <div className="card-box table-box" key={day.date}>
+                    {day.intervals.map((interval, idx) => (
+                      <LoggedHoursRow
+                        key={interval.id}
+                        isMyProfile={isMyProfile}
+                        onEdit={() =>
+                          openModal(
+                            'EDIT_LOGGED_HOURS',
+                            employee as Employee,
+                            undefined,
+                            undefined,
+                            interval
+                          )
+                        }
+                      >
+                        <span>{idx === 0 ? isoToDisplayDate(day.date) : ''}</span>
+                        <span>{formatInterval(interval.startTime, interval.endTime)}</span>
+                        <span>{idx === 0 ? formatDuration(day.durationMinutes) : ''}</span>
+                      </LoggedHoursRow>
+                    ))}
+                  </div>
+                ))}
               </div>
 
               {!isMyProfile && (
