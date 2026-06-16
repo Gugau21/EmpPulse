@@ -15,6 +15,7 @@ import com.oman.EmpPulse.user.api.UserResponse;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
 import com.oman.EmpPulse.user.dto.PasswordChangeRequest;
+import com.oman.EmpPulse.user.dto.PreferencesUpdateRequest;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
 import java.time.LocalDate;
@@ -209,6 +210,37 @@ public class UserService implements UserApi {
         .findByPrincipalName(userId.toString())
         .keySet()
         .forEach(sessionRepository::deleteById);
+  }
+
+  @Transactional
+  public UserPreferencesResponse updatePreferences(Long userId, PreferencesUpdateRequest req) {
+    User user = getUserById(userId);
+
+    if (req.getTheme() != null) {
+      user.setTheme(parseTheme(req.getTheme()));
+    }
+    if (req.getLanguage() != null) {
+      user.setLanguage(parseLanguage(req.getLanguage()));
+    }
+
+    userRepository.save(user);
+    return new UserPreferencesResponse(user.getTheme().name(), user.getLanguage().name());
+  }
+
+  private UserTheme parseTheme(String theme) {
+    try {
+      return UserTheme.valueOf(theme.toLowerCase());
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid theme");
+    }
+  }
+
+  private UserLanguage parseLanguage(String language) {
+    try {
+      return UserLanguage.valueOf(language.toLowerCase());
+    } catch (IllegalArgumentException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid language");
+    }
   }
 
   @Transactional

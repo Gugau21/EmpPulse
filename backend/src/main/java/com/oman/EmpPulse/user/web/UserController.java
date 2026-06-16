@@ -1,9 +1,11 @@
 package com.oman.EmpPulse.user.web;
 
 import com.oman.EmpPulse.shared.security.AuthUtils;
+import com.oman.EmpPulse.user.api.UserPreferencesResponse;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.BonusVacationDaysResponse;
 import com.oman.EmpPulse.user.dto.PasswordChangeRequest;
+import com.oman.EmpPulse.user.dto.PreferencesUpdateRequest;
 import com.oman.EmpPulse.user.dto.UserCreateRequest;
 import com.oman.EmpPulse.user.dto.UserCreatedResponse;
 import com.oman.EmpPulse.user.dto.UserUpdateRequest;
@@ -34,6 +36,13 @@ public class UserController {
       @RequestBody PasswordChangeRequest req, Authentication authentication, HttpSession session) {
     userService.changeMyPassword(AuthUtils.getUserId(authentication), req, session.getId());
     return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("/api/me/preferences")
+  public ResponseEntity<UserPreferencesResponse> updatePreferences(
+      @RequestBody PreferencesUpdateRequest req, Authentication authentication) {
+    return ResponseEntity.ok(
+        userService.updatePreferences(AuthUtils.getUserId(authentication), req));
   }
 
   @PreAuthorize("hasAuthority('ADMIN')")

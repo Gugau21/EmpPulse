@@ -153,7 +153,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /api/me/preferences: TODO
+  /api/me/preferences:
     patch:
       tags:
         - Preferences
