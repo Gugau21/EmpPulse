@@ -1,18 +1,23 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../hooks/useLanguage'
+import { useAuthForm } from '../hooks/useAuthForm'
 import { translations } from '../utils/translations'
+import { authService } from '../services/api'
 
 const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate()
   const { language } = useLanguage()
   const t = translations[language].forgotPasswordPage
   const [email, setEmail] = useState('')
+  const { error, loading, handleSubmit } = useAuthForm(t.requestFailed)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = handleSubmit(async () => {
+    await authService.forgotPassword(email)
+    // The server has queued the reset email; send the user to the confirmation
+    // page (we don't reveal anything more about the account here).
     navigate('/check-email')
-  }
+  })
 
   return (
     <div className="auth-layout">
@@ -20,14 +25,16 @@ const ForgotPasswordPage: React.FC = () => {
         <h2 className="auth-heading">{t.title}</h2>
         <p className="auth-subtitle">{t.instruction}</p>
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        {error && <div className="auth-error-msg">{error}</div>}
+
+        <form onSubmit={onSubmit} className="auth-form">
           <label className="auth-input-label">
             {t.emailLabel}
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
           </label>
 
-          <button type="submit" className="primary-btn auth-submit-btn">
-            {t.continueBtn}
+          <button type="submit" className="primary-btn auth-submit-btn" disabled={loading}>
+            {loading ? t.sending : t.continueBtn}
           </button>
         </form>
       </div>

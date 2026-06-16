@@ -9,9 +9,13 @@ import com.oman.EmpPulse.leave.dto.LeaveResponse;
 import com.oman.EmpPulse.leave.dto.LeaveResponseRequest;
 import com.oman.EmpPulse.leave.dto.LeaveUpdateRequest;
 import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
+import com.oman.EmpPulse.notification.api.LeaveNotificationDetails;
+import com.oman.EmpPulse.notification.api.NotificationApi;
+import com.oman.EmpPulse.notification.api.NotificationRecipient;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
+import com.oman.EmpPulse.user.api.UserApi;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -34,16 +38,22 @@ public class LeaveService implements LeaveApi {
   private final EmployeeApi employeeApi;
   private final AdminApi adminApi;
   private final LoggedHoursApi loggedHoursApi;
+  private final UserApi userApi;
+  private final NotificationApi notificationApi;
 
   public LeaveService(
       LeaveRepository leaveRepository,
       EmployeeApi employeeApi,
       AdminApi adminApi,
-      LoggedHoursApi loggedHoursApi) {
+      LoggedHoursApi loggedHoursApi,
+      UserApi userApi,
+      NotificationApi notificationApi) {
     this.leaveRepository = leaveRepository;
     this.employeeApi = employeeApi;
     this.adminApi = adminApi;
     this.loggedHoursApi = loggedHoursApi;
+    this.userApi = userApi;
+    this.notificationApi = notificationApi;
   }
 
   @Override
@@ -177,6 +187,16 @@ public class LeaveService implements LeaveApi {
                 adminReviewerId,
                 req.getAdminComment()));
     clearLoggedHoursIfUnpaidApproved(leave);
+
+    if (onBehalf) {
+      userApi
+          .findContactById(employee.getId())
+          .ifPresent(
+              c ->
+                  notificationApi.sendLeaveCreatedOnBehalf(
+                      new NotificationRecipient(c.email(), c.name()), detailsOf(leave)));
+    }
+
     return toLeaveResponse(leave, employee);
   }
 
@@ -291,6 +311,16 @@ public class LeaveService implements LeaveApi {
     applyLeaveUpdate(leave, fields, req.getAdminComment(), adminOversees, callerId);
     Leave saved = leaveRepository.saveAndFlush(leave);
     clearLoggedHoursIfUnpaidApproved(saved);
+
+    if (adminOversees && !ownRequest) {
+      userApi
+          .findContactById(saved.getEmployeeId())
+          .ifPresent(
+              c ->
+                  notificationApi.sendLeaveModifiedByAdmin(
+                      new NotificationRecipient(c.email(), c.name()), detailsOf(saved)));
+    }
+
     return toLeaveResponse(saved, employee);
   }
 
@@ -336,6 +366,7 @@ public class LeaveService implements LeaveApi {
     }
     Leave saved = leaveRepository.saveAndFlush(leave);
     clearLoggedHoursIfUnpaidApproved(saved);
+    notifyLeaveDecision(employee.getId(), saved, req.getStatus() == LeaveStatus.approved);
     return toLeaveResponse(saved, employee);
   }
 
@@ -372,6 +403,7 @@ public class LeaveService implements LeaveApi {
       }
       Leave savedOriginal = leaveRepository.saveAndFlush(original);
       clearLoggedHoursIfUnpaidApproved(savedOriginal);
+      notifyLeaveDecision(employee.getId(), savedOriginal, true);
       LeaveResponse response = toLeaveResponse(savedOriginal, employee);
       leaveRepository.delete(modification);
       return response;
@@ -383,7 +415,9 @@ public class LeaveService implements LeaveApi {
       modification.setAdminComment(req.getAdminComment());
     }
     modification.setModificationId(null);
-    return toLeaveResponse(leaveRepository.saveAndFlush(modification), employee);
+    Leave savedModification = leaveRepository.saveAndFlush(modification);
+    notifyLeaveDecision(employee.getId(), savedModification, false);
+    return toLeaveResponse(savedModification, employee);
   }
 
   /**
@@ -395,6 +429,21 @@ public class LeaveService implements LeaveApi {
       loggedHoursApi.deleteByEmployeeAndDateRange(
           leave.getEmployeeId(), leave.getStartDate(), leave.getEndDate());
     }
+  }
+
+  private LeaveNotificationDetails detailsOf(Leave leave) {
+    return new LeaveNotificationDetails(
+        leave.getType().name(), leave.getStartDate(), leave.getEndDate(), leave.isPaid());
+  }
+
+  /** Emails the employee that their leave request was approved or rejected. */
+  private void notifyLeaveDecision(Long employeeId, Leave leave, boolean approved) {
+    userApi
+        .findContactById(employeeId)
+        .ifPresent(
+            c ->
+                notificationApi.sendLeaveDecision(
+                    new NotificationRecipient(c.email(), c.name()), detailsOf(leave), approved));
   }
 
   /**
