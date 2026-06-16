@@ -15,9 +15,21 @@ import { useLanguage } from '../hooks/useLanguage'
 import { translations } from '../utils/translations'
 import { useTheme } from '../hooks/useTheme'
 
+// Alphabetical ordering by surname then first name, applied independently to the
+// admins and the employees within each department so both lists read A–Z.
+function compareByName(
+  a: { name?: string; surname?: string },
+  b: { name?: string; surname?: string }
+): number {
+  return (
+    (a.surname ?? '').localeCompare(b.surname ?? '') || (a.name ?? '').localeCompare(b.name ?? '')
+  )
+}
+
 // Employees grouped by their department NAME (admins are sourced separately from
 // the departments list). Employees with no department are not shown — this page
-// only lists department members.
+// only lists department members. Callers pass an already-sorted list, so each
+// group preserves that alphabetical order.
 function groupByDepartment(employees: Employee[]): Map<string, Employee[]> {
   const groups = new Map<string, Employee[]>()
   for (const emp of employees) {
@@ -66,7 +78,7 @@ const EmployeesPage: React.FC = () => {
   const matchesPerson = (surname: string) => !query || surname.toLowerCase().includes(query)
 
   const employeesByDept = groupByDepartment(
-    employees.filter(emp => matchesPerson(emp.surname ?? ''))
+    employees.filter(emp => matchesPerson(emp.surname ?? '')).sort(compareByName)
   )
 
   const toggle = (deptId: number) => setCollapsed(prev => ({ ...prev, [deptId]: !prev[deptId] }))
@@ -152,7 +164,9 @@ const EmployeesPage: React.FC = () => {
         const expanded = !collapsed[dept.id]
         // A user who is both an admin and an employee of this department appears
         // in both lists by design.
-        const admins = dept.admins.filter(a => matchesPerson(a.user.surname ?? ''))
+        const admins = dept.admins
+          .filter(a => matchesPerson(a.user.surname ?? ''))
+          .sort((a, b) => compareByName(a.user, b.user))
         const deptEmployees = employeesByDept.get(dept.name) ?? []
         return (
           <div className="accordion-section" key={dept.id}>

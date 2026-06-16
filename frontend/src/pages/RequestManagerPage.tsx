@@ -18,7 +18,11 @@ const RequestManagerPage: React.FC = () => {
   // The server already scopes this to what the caller manages: an admin gets
   // their overseen departments' requests (plus their own); the owner gets all.
   const managedRequestsQuery = useLeaveRequests()
-  const { visibleRequests, filterNode } = useRequestStatusFilter(managedRequestsQuery.data ?? [])
+  // Default the status filter to pending so the requests awaiting a decision are
+  // what the manager sees first.
+  const { visibleRequests, filterNode } = useRequestStatusFilter(managedRequestsQuery.data ?? [], {
+    defaultStatusFilter: ['PENDING']
+  })
 
   return (
     <AccordionScreen
