@@ -139,7 +139,7 @@ EmpPulse follows a monolithic Spring Boot architecture with a React-based fronte
 \section{Detailed Module Design}
 \label{sec:modules}
 
-Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow$ \texttt{Service} $\rightarrow$ \texttt{Repository}, with dedicated \texttt{Validator} and \texttt{DTO} classes.
+The backend is organized package-by-feature under \texttt{com.oman.EmpPulse}. Each module is split into three sub-packages: \texttt{web} (Spring MVC \texttt{@RestController} classes), \texttt{internal} (services, JPA entities, and \texttt{Repository} interfaces), and \texttt{dto} (request/response payloads). Cross-module communication does not reach into another module's \texttt{internal} package; instead each module publishes a small \texttt{api} package containing an interface (e.g. \texttt{UserApi}, \texttt{LeaveApi}, \texttt{NotificationApi}) plus the DTOs it shares. The service classes implement these \texttt{*Api} interfaces. Request flow is therefore \texttt{Controller} $\rightarrow$ \texttt{Service (\textit{*Api} impl)} $\rightarrow$ \texttt{Repository}. Validation is performed inline inside the services (there are no standalone \texttt{Validator} classes); the method signatures listed below are taken directly from the source.
 
 \subsection{Module Overview Diagram}
 
@@ -157,22 +157,23 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{AuthController} -- Endpoints: login, logout, forgot-password, reset-password.
-    \item \texttt{AuthService} -- Validates credentials, creates/invalidates HTTP sessions, generates password reset tokens.
-    \item \texttt{PasswordResetTokenRepository} -- Stores time-limited reset tokens (15-minute expiry).
+    \item \texttt{auth.web.AuthController} -- Endpoints under \texttt{/api/auth}: \texttt{login}, \texttt{logout}, \texttt{forgotPassword}, \texttt{resetPassword}.
+    \item \texttt{auth.internal.AuthService} -- \texttt{authenticate(email, password)} verifies credentials against the User module via \texttt{UserApi} and the configured \texttt{PasswordEncoder}.
+    \item \texttt{auth.internal.PasswordResetService} -- \texttt{requestReset(email)}, \texttt{validateAndConsume(rawToken)}, \texttt{reset(rawToken, newPassword)}.
+    \item \texttt{auth.internal.PasswordResetToken} / \texttt{PasswordResetTokenRepository} -- Persist time-limited reset tokens (15-minute expiry).
 \end{itemize}
 
-\textbf{Data owned:} Session store (server-side, Spring default), password reset tokens.
+\textbf{Data owned:} \texttt{Password\_reset\_token} table. The session itself is the Spring Security context persisted server-side; \texttt{AuthController.login} builds a \texttt{UsernamePasswordAuthenticationToken} and saves it via the \texttt{SecurityContextRepository}, which issues the \texttt{JSESSIONID} cookie.
 
-\textbf{Public operations:}
+\textbf{Public operations (controller endpoints):}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{login(email, password)} -- Authenticates and returns JSESSIONID cookie.
-    \item \texttt{logout()} -- Invalidates current session.
-    \item \texttt{forgotPassword(email)} -- Generates reset token and sends email.
-    \item \texttt{resetPassword(token, newPassword)} -- Validates token, updates password hash.
+    \item \texttt{login(LoginRequest)} -- Authenticates; on success establishes the security context and returns the caller's profile, otherwise \texttt{401} with code \texttt{INVALID\_CREDENTIALS}.
+    \item \texttt{logout()} -- Invalidates the current session.
+    \item \texttt{forgotPassword(PasswordForgotRequest)} -- Delegates to \texttt{PasswordResetService.requestReset}; always returns \texttt{200}.
+    \item \texttt{resetPassword(PasswordResetRequest)} -- Delegates to \texttt{PasswordResetService.reset}.
 \end{itemize}
 
-\textbf{Dependencies:} User Management Module (credential lookup), Notification Module (emails).
+\textbf{Dependencies:} User Management Module (\texttt{UserApi} for credential lookup and password reset), Notification Module (\texttt{NotificationApi} for reset emails).
 
 \textbf{Business rules:}
 \begin{itemize}[leftmargin=1.5em]
@@ -190,30 +191,26 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{UserController} -- Endpoints for profile, user CRUD.
-    \item \texttt{UserService} -- Orchestrates User + Employee/Admin creation atomically.
-    \item \texttt{EmployeeService} -- Employee-specific logic (vacation balance, activation/deactivation).
-    \item \texttt{AdminService} -- Admin-specific logic (department oversight assignments).
-    \item \texttt{BonusVacationDaysService} -- Manages bonus vacation days per employee per year.
-    \item \texttt{UserRepository}, \texttt{EmployeeRepository}, \texttt{AdminRepository}, \texttt{BonusVacationDaysRepository}.
-    \item \texttt{UserValidator} -- Email uniqueness, required-field checks, role constraints.
+    \item \texttt{user.web.UserController} -- Profile and user CRUD endpoints (\texttt{/api/me}, \texttt{/api/users}).
+    \item \texttt{user.web.AdminController} -- \texttt{GET /api/admins} (\texttt{listAdmins}).
+    \item \texttt{user.web.EmployeeController} -- \texttt{GET /api/employees} (\texttt{listEmployees}).
+    \item \texttt{user.internal.UserService} (\texttt{implements UserApi}) -- Orchestrates User + Employee/Admin creation, profile loading, password and preference changes.
+    \item \texttt{user.internal.EmployeeService} (\texttt{implements EmployeeApi}) -- Employee lookups, admin-access checks, week-schedule assignment.
+    \item \texttt{user.internal.AdminService} (\texttt{implements AdminApi}) -- Admin lookups, department-oversight queries, owner resolution.
+    \item \texttt{UserRepository}, \texttt{EmployeeRepository}, \texttt{AdminRepository}, \texttt{BonusVacationDaysRepository}; entities \texttt{User}, \texttt{Employee}, \texttt{Admin}, \texttt{BonusVacationDays}.
 \end{itemize}
 
 \textbf{Data owned/modified:} \texttt{User}, \texttt{Employee}, \texttt{Admin}, \texttt{Bonus\_vacation\_days} tables.
 
 \textbf{Public operations:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{getMyProfile()} -- Returns current user data.
-    \item \texttt{changePassword(currentPass, newPass)} -- Validates and updates.
-    \item \texttt{updatePreferences(theme, language)} -- Persists UI preferences.
-    \item \texttt{createUser(dto)} -- Creates User + Employee/Admin atomically.
-    \item \texttt{getUser(userId)} -- Returns user details (visibility-scoped).
-    \item \texttt{updateUser(userId, dto)} -- Partial update with role-based field access.
-    \item \texttt{deactivateEmployee(employeeId)} -- Detaches from department, deletes pending leaves.
-    \item \texttt{deactivateAdmin(adminId)} -- Detaches from all departments.
+    \item \textit{UserController:} \texttt{getMe}, \texttt{changePassword}, \texttt{updatePreferences}, \texttt{createUser}, \texttt{getUserProfile}, \texttt{updateUser}, \texttt{deleteUser}, \texttt{getBonusVacationDays}, \texttt{updateBonusVacationDays}.
+    \item \textit{UserService:} \texttt{createUser(req, callerUserId, callerIsOwner)}, \texttt{getUserProfile(userId, callerId, callerIsOwner)}, \texttt{updateUser(...)}, \texttt{softDeleteUser(userId)}, \texttt{changeMyPassword(userId, req, currentSessionId)}, \texttt{updatePreferences(userId, req)}, \texttt{resetPassword(userId, rawNewPassword)}, \texttt{updateBonusVacationDays(userId, req, callerUserId)}; plus \texttt{UserApi} methods \texttt{findActiveByEmail}, \texttt{loadProfile}, \texttt{findContactById}, \texttt{ensureOwnerExists}.
+    \item \textit{EmployeeService:} \texttt{getEmployeesForAdmin(id)}, \texttt{requireAdminAccessToEmployee(adminId, employeeId)}, \texttt{findActiveEmployeeIds()}, \texttt{hasEmployeesInDepartment(departmentId)}, \texttt{getWeekScheduleId} / \texttt{assignWeekSchedule}.
+    \item \textit{AdminService:} \texttt{getAllAdmins()}, \texttt{getOwnerAdmin()}, \texttt{departmentIdsForAdminUser(adminId)}, \texttt{overseesDepartment(adminId, departmentId)}.
 \end{itemize}
 
-\textbf{Dependencies:} Department Module, Notification Module, Leave Request Module (for cascading deactivation).
+\textbf{Dependencies:} Department Module, Notification Module, Leave Request Module (cascading deactivation). Soft-deletion (\texttt{softDeleteUser}) detaches the user and removes dependent data rather than hard-deleting.
 
 \textbf{Business rules:}
 \begin{itemize}[leftmargin=1.5em]
@@ -233,20 +230,17 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{DepartmentController} -- Department CRUD endpoints.
-    \item \texttt{DepartmentService} -- Business logic for department operations.
-    \item \texttt{DepartmentRepository}, \texttt{AdminDepartmentRepository}.
-    \item \texttt{DepartmentValidator} -- Unique name validation, deletion preconditions.
+    \item \texttt{department.web.DepartmentController} -- Department CRUD endpoints under \texttt{/api/departments}.
+    \item \texttt{department.internal.DepartmentService} (\texttt{implements DepartmentApi}) -- Business logic for department operations and admin--department associations.
+    \item \texttt{DepartmentRepository}; entity \texttt{Department} (admin links handled inside \texttt{DepartmentService.setAdminDepartments}).
 \end{itemize}
 
-\textbf{Data owned/modified:} \texttt{Department}, \texttt{Admin\_Department} tables.
+\textbf{Data owned/modified:} \texttt{Department} table and the admin--department association it manages.
 
 \textbf{Public operations:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{listDepartments()} -- Returns departments visible to current user.
-    \item \texttt{createDepartment(name)} -- Owner only.
-    \item \texttt{updateDepartment(id, dto)} -- Name (Owner), admin/employee assignments.
-    \item \texttt{deleteDepartment(id)} -- Owner only, requires no employees and no admins.
+    \item \textit{DepartmentController:} \texttt{listDepartments}, \texttt{createDepartment}, \texttt{getDepartment}, \texttt{updateDepartment}, \texttt{deleteDepartment}.
+    \item \textit{DepartmentService:} \texttt{getDepartmentsForAdmin(adminId)}, \texttt{getDepartment(departmentId)}, \texttt{createDepartment(req)}, \texttt{updateDepartment(departmentId, req)}, \texttt{deleteDepartment(departmentId)}, \texttt{setAdminDepartments(adminId, departmentIds)}, \texttt{requireAdminAccessToDepartment(adminId, departmentId)}, \texttt{overseesDepartment}/\texttt{isAdminOfDepartment}, \texttt{ensureDefaultDepartmentExists()}, \texttt{getWeekScheduleId} / \texttt{assignWeekSchedule}.
 \end{itemize}
 
 \textbf{Business rules:}
@@ -265,25 +259,20 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{LeaveController} -- Leave request CRUD and status-change endpoints.
-    \item \texttt{LeaveService} -- Core business logic for leave operations.
-    \item \texttt{LeaveRepository}.
-    \item \texttt{LeaveValidator} -- Date range validation, overlap detection, required-field checks.
-    \item \texttt{VacationBalanceService} -- Calculates and updates vacation balances.
+    \item \texttt{leave.web.LeaveController} -- Leave request CRUD, response, modification, and cancel endpoints under \texttt{/api/leave-requests}.
+    \item \texttt{leave.internal.LeaveService} (\texttt{implements LeaveApi}) -- Core business logic for leave operations, including inline date-range/overlap validation and vacation-balance computation (\texttt{countUsedVacationDays}). There are no separate \texttt{LeaveValidator} or \texttt{VacationBalanceService} classes.
+    \item \texttt{LeaveRepository}; entity \texttt{Leave} with \texttt{LeaveType} and \texttt{LeaveStatus} enums.
 \end{itemize}
 
-\textbf{Data owned/modified:} \texttt{Leave} table; reads \texttt{Employee}, \texttt{Bonus\_vacation\_days}.
+\textbf{Data owned/modified:} \texttt{Leave} table; reads \texttt{Employee} and \texttt{Bonus\_vacation\_days} for balance calculation.
 
 \textbf{Public operations:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{listLeaveRequests(filters)} -- Filtered by status, type, department.
-    \item \texttt{createLeaveRequest(dto)} -- Employee self-request or Admin on-behalf.
-    \item \texttt{updateLeaveRequest(id, dto)} -- Field edits and modification requests.
-    \item \texttt{deleteLeaveRequest(id)} -- Hard delete of Pending requests (Employee only).
-    \item \texttt{cancelLeaveRequest(id)} -- Employee cancels own Accepted request.
-    \item \texttt{approveLeaveRequest(id, comment)} -- Admin approves.
-    \item \texttt{rejectLeaveRequest(id, comment)} -- Admin rejects.
+    \item \textit{LeaveController:} \texttt{listLeaveRequests}, \texttt{getLeaveRequest}, \texttt{createLeaveRequest}, \texttt{updateLeaveRequest}, \texttt{respondToLeaveRequest} (\texttt{PATCH .../response}, carries approve/reject), \texttt{createModification} (\texttt{POST .../modifications}), \texttt{cancelLeaveRequest} (\texttt{PATCH .../cancel}), \texttt{deleteLeaveRequest}.
+    \item \textit{LeaveService:} \texttt{createLeaveRequest(req, callerId, isAdmin)}, \texttt{listLeaveRequests(callerId, isAdmin)}, \texttt{getLeaveRequest(id, callerId)}, \texttt{updateLeaveRequest(...)}, \texttt{respondToLeaveRequest(...)}, \texttt{createModification(...)}, \texttt{cancelLeaveRequest(id, callerId)}, \texttt{deleteLeaveRequest(id, callerId)}; plus \texttt{LeaveApi} methods \texttt{findActiveLeavesByEmployeeIds}, \texttt{countUsedVacationDays(employeeId, year)}, \texttt{findEmployeeIdsOnUnpaidApprovedLeave}.
 \end{itemize}
+
+\textit{Note: approval and rejection share a single \texttt{respondToLeaveRequest} operation rather than separate \texttt{approve}/\texttt{reject} endpoints.}
 
 \textbf{Business rules:}
 \begin{itemize}[leftmargin=1.5em]
@@ -309,20 +298,17 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{LoggedHoursController} -- CRUD endpoints scoped under \texttt{/employees/\{id\}/logged-hours}.
-    \item \texttt{LoggedHoursService} -- Business logic and merge orchestration.
-    \item \texttt{LoggedHoursRepository}.
-    \item \texttt{MergeService} -- Detects and merges overlapping/adjacent logged hour entries.
+    \item \texttt{loggedhours.web.LoggedHoursController} -- CRUD endpoints under \texttt{/api/employees/\{employeeId\}/logged-hours}.
+    \item \texttt{loggedhours.internal.LoggedHoursService} (\texttt{implements LoggedHoursApi}) -- Business logic, inline validation (\texttt{ensureRequiredFieldsPresent}, \texttt{validateTimeRange}, \texttt{validateNotFuture}) and overlap/adjacency merge logic; no separate \texttt{MergeService} class.
+    \item \texttt{LoggedHoursRepository}; entity \texttt{LoggedHours}.
 \end{itemize}
 
 \textbf{Data owned/modified:} \texttt{Logged\_Hours} table.
 
 \textbf{Public operations:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{listLoggedHours(employeeId, filters)} -- Date-sorted list.
-    \item \texttt{createLoggedHours(employeeId, dto)} -- Admin only; triggers merge.
-    \item \texttt{updateLoggedHours(employeeId, logId, dto)} -- Admin only; triggers merge.
-    \item \texttt{deleteLoggedHours(employeeId, logId)} -- Admin only.
+    \item \textit{LoggedHoursController:} \texttt{listLoggedHours}, \texttt{createLoggedHours}, \texttt{editLoggedHours}, \texttt{deleteLoggedHours}.
+    \item \textit{LoggedHoursService:} \texttt{listLoggedHours(employeeId, callerId, isAdmin)}, \texttt{createLoggedHours(...)} (triggers merge), \texttt{updateLoggedHours(...)} (triggers merge), \texttt{deleteLoggedHours(employeeId, loggedHoursId, callerId)}; plus \texttt{LoggedHoursApi} methods \texttt{deleteByEmployeeAndDateRange} and \texttt{createAutoLogIfAbsent} (used by the scheduler).
 \end{itemize}
 
 \textbf{Business rules:}
@@ -340,12 +326,19 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{DefaultHoursController} -- GET/PUT endpoints for department and employee default hours.
-    \item \texttt{DefaultHoursService} -- Resolves effective default hours (Employee-level overrides Department-level).
-    \item \texttt{DefaultHoursSetRepository}, \texttt{DefaultHoursRepository}.
+    \item \texttt{defaulthours.web.DefaultHoursController} -- GET/PUT \texttt{/api/employees/\{employeeId\}/default-hours}.
+    \item \texttt{defaulthours.web.DepartmentDefaultHoursController} -- GET/PUT \texttt{/api/departments/\{departmentId\}/default-hours}.
+    \item \texttt{defaulthours.internal.DefaultHoursService} (\texttt{implements DefaultHoursApi}) -- Resolves effective default hours (Employee-level overrides Department-level).
+    \item \texttt{WeekScheduleRepository}, \texttt{ScheduleBlockRepository}; entities \texttt{WeekSchedule} and \texttt{ScheduleBlock}.
 \end{itemize}
 
-\textbf{Data owned/modified:} \texttt{Default\_hours\_set}, \texttt{Default\_hours} tables.
+\textbf{Data owned/modified:} \texttt{Week\_schedule} and \texttt{Schedule\_block} tables (a \texttt{WeekSchedule} groups the per-day \texttt{ScheduleBlock} intervals).
+
+\textbf{Public operations:}
+\begin{itemize}[leftmargin=1.5em]
+    \item \textit{Controllers:} \texttt{getDefaultHours} / \texttt{setDefaultHours} for both employee and department scopes.
+    \item \textit{DefaultHoursService:} \texttt{getEmployeeDefaultHours(employeeId, callerAdminId)}, \texttt{setEmployeeDefaultHours(...)}, \texttt{getDepartmentDefaultHours(departmentId, callerAdminId)}, \texttt{setDepartmentDefaultHours(...)}, \texttt{inheritDepartmentSchedule(departmentId)}, \texttt{findEmployeeIntervalForDay(...)} (consumed by the scheduler).
+\end{itemize}
 
 \textbf{Business rules:}
 \begin{itemize}[leftmargin=1.5em]
@@ -363,15 +356,17 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{AutoLogScheduler} -- Spring \texttt{@Scheduled} job running at 00:00 daily.
+    \item \texttt{loggedhours.internal.AutoLogScheduler} -- A Spring \texttt{@Scheduled} component (it resides in the Logged Hours module). Entry point \texttt{scheduledAutoLog()} is bound to a configurable cron expression and zone (\texttt{emppulse.autolog.cron} / \texttt{emppulse.autolog.zone}) and delegates to \texttt{autoLogForToday()}.
 \end{itemize}
+
+\textbf{Operation:} \texttt{autoLogForToday()} iterates active employees (\texttt{EmployeeApi.findActiveEmployeeIds}), resolves each employee's interval for the day (\texttt{DefaultHoursApi.findEmployeeIntervalForDay}), skips employees on approved unpaid leave (\texttt{LeaveApi.findEmployeeIdsOnUnpaidApprovedLeave}), and calls \texttt{LoggedHoursApi.createAutoLogIfAbsent} for each interval.
 
 \textbf{Business rules:}
 \begin{itemize}[leftmargin=1.5em]
-    \item Creates one \texttt{Logged\_Hours} entry per configured interval for the next day.
-    \item If the day is N/A (no intervals), nothing is created.
+    \item Creates one \texttt{Logged\_Hours} entry per configured interval.
+    \item If the day has no configured intervals, nothing is created.
     \item Does not create entries for Employees with approved unpaid leave on that day.
-    \item The \texttt{admin\_id} is set to the System Admin entity.
+    \item Existing entries are not duplicated (the \texttt{createAutoLogIfAbsent} guard).
 \end{itemize}
 
 % ── 3.8 Export Module ──
@@ -379,7 +374,9 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Responsibility:} Generates downloadable CSV data archives.
 
-\textbf{Internal components:}
+\textbf{Implementation status:} \textit{Not yet implemented.} No \texttt{export} package, controller, or service currently exists in the backend, and no \texttt{/api/exports} endpoint is registered. The module is retained here as planned scope; the design below describes the intended structure.
+
+\textbf{Planned components:}
 \begin{itemize}[leftmargin=1.5em]
     \item \texttt{ExportController} -- \texttt{GET /api/exports/csv} endpoint.
     \item \texttt{ExportService} -- Queries and formats data into CSV, archives into ZIP.
@@ -400,19 +397,22 @@ Each module follows a standard layered pattern: \texttt{Controller} $\rightarrow
 
 \textbf{Internal components:}
 \begin{itemize}[leftmargin=1.5em]
-    \item \texttt{NotificationService} -- Determines which email to send and constructs content.
-    \item \texttt{EmailSender} -- Spring \texttt{JavaMailSender} wrapper.
+    \item \texttt{notification.internal.NotificationService} (\texttt{implements NotificationApi}) -- Entry point other modules call; wraps each send in \texttt{sendSafely(...)} so an SMTP failure does not abort the primary operation.
+    \item \texttt{notification.internal.EmailMessageFactory} -- Builds the \texttt{EmailMessage(subject, body)} for each trigger (using \texttt{app.base-url} for links).
+    \item \texttt{notification.internal.EmailSender} -- \texttt{send(to, subject, body)} wrapper over Spring \texttt{JavaMailSender}.
 \end{itemize}
 
-\textbf{Email triggers:}
+\textbf{Public operations (\texttt{NotificationApi}):} \texttt{sendAccountCredentials}, \texttt{sendPasswordResetEmail}, \texttt{sendPasswordChangedNotification}, \texttt{sendEmailChangedNotification}, \texttt{sendLeaveCreatedOnBehalf}, \texttt{sendLeaveDecision}, \texttt{sendLeaveModifiedByAdmin}.
+
+\textbf{Email triggers (mapped to operations):}
 \begin{itemize}[leftmargin=1.5em]
-    \item Account credentials sent to newly registered user.
-    \item Password reset link.
-    \item Password change confirmation.
-    \item Leave request created on behalf of Employee.
-    \item Leave request approved/rejected.
-    \item Leave request modified by Admin.
-    \item User credentials updated by Owner (new password/email).
+    \item Account credentials for a newly created user -- \texttt{sendAccountCredentials}.
+    \item Password reset link -- \texttt{sendPasswordResetEmail}.
+    \item Password change confirmation -- \texttt{sendPasswordChangedNotification}.
+    \item Email/credentials changed by Owner -- \texttt{sendEmailChangedNotification}.
+    \item Leave request created on behalf of Employee -- \texttt{sendLeaveCreatedOnBehalf}.
+    \item Leave request approved/rejected -- \texttt{sendLeaveDecision}.
+    \item Leave request modified by Admin -- \texttt{sendLeaveModifiedByAdmin}.
 \end{itemize}
 
 % ══════════════════════════════════════════════════════════════
