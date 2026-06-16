@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useLanguage } from '../hooks/useLanguage'
+import { useAuthForm } from '../hooks/useAuthForm'
 import { translations } from '../utils/translations'
 import { authService } from '../services/api'
 
@@ -13,36 +14,21 @@ const ResetPasswordPage: React.FC = () => {
   const token = searchParams.get('token') ?? ''
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { error, loading, handleSubmit } = useAuthForm(t.resetFailed)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    if (!token) {
-      setError(t.missingToken)
-      return
-    }
-    if (password !== repeatPassword) {
-      setError(t.passwordMismatch)
-      return
-    }
-    setLoading(true)
-    try {
-      await authService.resetPassword({
-        token,
-        newPassword: password,
-        confirmNewPassword: repeatPassword
-      })
-      // The password is changed and every session was invalidated server-side;
-      // send the user to log in with the new credentials.
-      navigate('/login')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.resetFailed)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const onSubmit = handleSubmit(async () => {
+    // Client-side guards: throwing surfaces the message via the hook's catch.
+    if (!token) throw new Error(t.missingToken)
+    if (password !== repeatPassword) throw new Error(t.passwordMismatch)
+    await authService.resetPassword({
+      token,
+      newPassword: password,
+      confirmNewPassword: repeatPassword
+    })
+    // The password is changed and every session was invalidated server-side;
+    // send the user to log in with the new credentials.
+    navigate('/login')
+  })
 
   return (
     <div className="auth-layout">
@@ -51,7 +37,7 @@ const ResetPasswordPage: React.FC = () => {
 
         {error && <div className="auth-error-msg">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={onSubmit} className="auth-form">
           <label className="auth-input-label">
             {t.newPasswordLabel}
             <input

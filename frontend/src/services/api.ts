@@ -191,7 +191,9 @@ export const authService = {
       method: 'POST',
       body: payload,
       errorFallback: 'Failed to reset password.',
-      errorOverrides: { 400: 'This reset link is invalid or has expired. Please request a new one.' }
+      errorOverrides: {
+        400: 'This reset link is invalid or has expired. Please request a new one.'
+      }
     })
   }
 }

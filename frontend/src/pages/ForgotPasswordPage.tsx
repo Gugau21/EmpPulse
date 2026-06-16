@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from '../hooks/useLanguage'
+import { useAuthForm } from '../hooks/useAuthForm'
 import { translations } from '../utils/translations'
 import { authService } from '../services/api'
 
@@ -9,24 +10,14 @@ const ForgotPasswordPage: React.FC = () => {
   const { language } = useLanguage()
   const t = translations[language].forgotPasswordPage
   const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { error, loading, handleSubmit } = useAuthForm(t.requestFailed)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setLoading(true)
-    try {
-      await authService.forgotPassword(email)
-      // The server has queued the reset email; send the user to the confirmation
-      // page (we don't reveal anything more about the account here).
-      navigate('/check-email')
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : t.requestFailed)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const onSubmit = handleSubmit(async () => {
+    await authService.forgotPassword(email)
+    // The server has queued the reset email; send the user to the confirmation
+    // page (we don't reveal anything more about the account here).
+    navigate('/check-email')
+  })
 
   return (
     <div className="auth-layout">
@@ -36,15 +27,10 @@ const ForgotPasswordPage: React.FC = () => {
 
         {error && <div className="auth-error-msg">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="auth-form">
+        <form onSubmit={onSubmit} className="auth-form">
           <label className="auth-input-label">
             {t.emailLabel}
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
           </label>
 
           <button type="submit" className="primary-btn auth-submit-btn" disabled={loading}>
