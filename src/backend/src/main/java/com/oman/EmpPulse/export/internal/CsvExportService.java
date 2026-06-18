@@ -1,13 +1,13 @@
 package com.oman.EmpPulse.export.internal;
 
-import com.oman.EmpPulse.defaulthours.internal.ScheduleBlock;
-import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
+import com.oman.EmpPulse.defaulthours.api.ScheduleBlock;
+import com.oman.EmpPulse.defaulthours.api.WeekSchedule;
 import com.oman.EmpPulse.department.api.Department;
-import com.oman.EmpPulse.leave.internal.Leave;
-import com.oman.EmpPulse.loggedhours.internal.LoggedHours;
-import com.oman.EmpPulse.user.internal.BonusVacationDays;
-import com.oman.EmpPulse.user.internal.Employee;
-import com.oman.EmpPulse.user.internal.User;
+import com.oman.EmpPulse.leave.api.Leave;
+import com.oman.EmpPulse.loggedhours.api.LoggedHours;
+import com.oman.EmpPulse.user.api.Employee;
+import com.oman.EmpPulse.user.api.User;
+import com.oman.EmpPulse.user.api.BonusVacationDays;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;

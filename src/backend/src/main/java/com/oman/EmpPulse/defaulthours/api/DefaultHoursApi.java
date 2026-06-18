@@ -1,6 +1,5 @@
 package com.oman.EmpPulse.defaulthours.api;
 
-import com.oman.EmpPulse.defaulthours.internal.ScheduleBlock;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;

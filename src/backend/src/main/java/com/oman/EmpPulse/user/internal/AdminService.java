@@ -4,6 +4,7 @@ import com.oman.EmpPulse.department.api.Department;
 import com.oman.EmpPulse.user.api.Admin;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.AdminSummaryResponse;
+import com.oman.EmpPulse.user.api.User;
 import com.oman.EmpPulse.user.api.UserSummaryResponse;
 import com.oman.EmpPulse.user.dto.AdminListResponse;
 import java.util.Collection;

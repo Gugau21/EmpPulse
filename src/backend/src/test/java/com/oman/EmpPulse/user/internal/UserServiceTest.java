@@ -15,6 +15,8 @@ import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
 import com.oman.EmpPulse.department.api.DepartmentApi;
 import com.oman.EmpPulse.leave.api.LeaveApi;
 import com.oman.EmpPulse.notification.api.NotificationApi;
+import com.oman.EmpPulse.user.api.Employee;
+import com.oman.EmpPulse.user.api.User;
 import com.oman.EmpPulse.user.dto.BonusVacationDayRequest;
 import com.oman.EmpPulse.user.dto.PasswordChangeRequest;
 import com.oman.EmpPulse.user.dto.PreferencesUpdateRequest;

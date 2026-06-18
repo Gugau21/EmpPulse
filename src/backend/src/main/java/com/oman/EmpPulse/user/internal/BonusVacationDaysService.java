@@ -3,6 +3,7 @@ package com.oman.EmpPulse.user.internal;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import com.oman.EmpPulse.user.api.BonusVacationDays;
 
 @Service
 public class BonusVacationDaysService implements com.oman.EmpPulse.user.api.BonusVacationDaysApi {

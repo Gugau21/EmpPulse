@@ -1,5 +1,6 @@
 package com.oman.EmpPulse.loggedhours.internal;
 
+import com.oman.EmpPulse.loggedhours.api.LoggedHours;
 import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursCreateRequest;
 import com.oman.EmpPulse.loggedhours.dto.LoggedHoursListResponse;

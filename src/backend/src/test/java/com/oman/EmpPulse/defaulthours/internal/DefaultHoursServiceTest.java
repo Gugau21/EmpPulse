@@ -7,6 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.oman.EmpPulse.defaulthours.api.DefaultDayIntervalResponse;
+import com.oman.EmpPulse.defaulthours.api.ScheduleBlock;
+import com.oman.EmpPulse.defaulthours.api.WeekSchedule;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursDayRequest;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursRequest;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursResponse;

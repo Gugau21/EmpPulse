@@ -1,7 +1,7 @@
 package com.oman.EmpPulse.leave.dto;
 
-import com.oman.EmpPulse.leave.internal.LeaveStatus;
-import com.oman.EmpPulse.leave.internal.LeaveType;
+import com.oman.EmpPulse.leave.api.LeaveStatus;
+import com.oman.EmpPulse.leave.api.LeaveType;
 import com.oman.EmpPulse.user.api.EmployeeSummaryResponse;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;

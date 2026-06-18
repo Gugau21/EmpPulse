@@ -1,4 +1,4 @@
-package com.oman.EmpPulse.leave.internal;
+package com.oman.EmpPulse.leave.api;
 
 public enum LeaveStatus {
   pending,

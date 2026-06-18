@@ -1,7 +1,7 @@
 package com.oman.EmpPulse.leave.dto;
 
-import com.oman.EmpPulse.leave.internal.LeaveType;
 import java.time.LocalDate;
+import com.oman.EmpPulse.leave.api.LeaveType;
 
 public class LeaveCreateRequest {
   private Long employeeId;

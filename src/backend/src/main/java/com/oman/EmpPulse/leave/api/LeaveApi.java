@@ -1,6 +1,5 @@
 package com.oman.EmpPulse.leave.api;
 
-import com.oman.EmpPulse.leave.internal.Leave;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;

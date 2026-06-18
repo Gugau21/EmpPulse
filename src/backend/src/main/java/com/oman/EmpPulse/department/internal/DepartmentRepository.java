@@ -1,6 +1,6 @@
 package com.oman.EmpPulse.department.internal;
 
-import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
+import com.oman.EmpPulse.defaulthours.api.WeekSchedule;
 import com.oman.EmpPulse.department.api.Department;
 import java.util.Collection;
 import java.util.List;

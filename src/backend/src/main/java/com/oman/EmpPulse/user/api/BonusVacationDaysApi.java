@@ -1,6 +1,5 @@
 package com.oman.EmpPulse.user.api;
 
-import com.oman.EmpPulse.user.internal.BonusVacationDays;
 import java.util.Collection;
 import java.util.List;
 

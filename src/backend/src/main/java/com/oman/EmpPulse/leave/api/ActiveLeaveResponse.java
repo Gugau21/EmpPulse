@@ -1,6 +1,5 @@
 package com.oman.EmpPulse.leave.api;
 
-import com.oman.EmpPulse.leave.internal.LeaveType;
 import java.time.LocalDate;
 
 public class ActiveLeaveResponse {

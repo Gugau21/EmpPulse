@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.oman.EmpPulse.defaulthours.api.DefaultDayIntervalResponse;
 import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
 import com.oman.EmpPulse.leave.api.LeaveApi;
+import com.oman.EmpPulse.loggedhours.api.LoggedHours;
 import com.oman.EmpPulse.user.api.AdminApi;
 import com.oman.EmpPulse.user.api.EmployeeApi;
 import java.time.LocalDate;

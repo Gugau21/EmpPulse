@@ -2,6 +2,8 @@ package com.oman.EmpPulse.defaulthours.internal;
 
 import com.oman.EmpPulse.defaulthours.api.DefaultDayIntervalResponse;
 import com.oman.EmpPulse.defaulthours.api.DefaultHoursApi;
+import com.oman.EmpPulse.defaulthours.api.ScheduleBlock;
+import com.oman.EmpPulse.defaulthours.api.WeekSchedule;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursDayRequest;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursDayResponse;
 import com.oman.EmpPulse.defaulthours.dto.DefaultWeekHoursRequest;

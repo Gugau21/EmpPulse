@@ -1,4 +1,4 @@
-package com.oman.EmpPulse.leave.internal;
+package com.oman.EmpPulse.leave.api;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;

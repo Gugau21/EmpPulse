@@ -1,11 +1,12 @@
 package com.oman.EmpPulse.user.internal;
 
-import com.oman.EmpPulse.defaulthours.internal.WeekSchedule;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import com.oman.EmpPulse.defaulthours.api.WeekSchedule;
+import com.oman.EmpPulse.user.api.Employee;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
   boolean existsByDepartmentId(Long departmentId);

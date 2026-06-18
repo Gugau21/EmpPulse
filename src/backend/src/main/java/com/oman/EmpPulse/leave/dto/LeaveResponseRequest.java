@@ -1,6 +1,6 @@
 package com.oman.EmpPulse.leave.dto;
 
-import com.oman.EmpPulse.leave.internal.LeaveStatus;
+import com.oman.EmpPulse.leave.api.LeaveStatus;
 
 public class LeaveResponseRequest {
   private LeaveStatus status;

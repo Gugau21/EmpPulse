@@ -5,15 +5,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
+import com.oman.EmpPulse.leave.api.Leave;
+import com.oman.EmpPulse.leave.api.LeaveStatus;
+import com.oman.EmpPulse.leave.api.LeaveType;
 import com.oman.EmpPulse.leave.dto.LeaveModificationRequest;
 import com.oman.EmpPulse.leave.dto.LeaveResponse;
 import com.oman.EmpPulse.leave.dto.LeaveResponseRequest;
-import com.oman.EmpPulse.leave.internal.Leave;
 import com.oman.EmpPulse.leave.internal.LeaveRepository;
 import com.oman.EmpPulse.leave.internal.LeaveService;
-import com.oman.EmpPulse.leave.internal.LeaveStatus;
-import com.oman.EmpPulse.leave.internal.LeaveType;
 import com.oman.EmpPulse.loggedhours.api.LoggedHoursApi;
 import com.oman.EmpPulse.notification.api.NotificationApi;
 import com.oman.EmpPulse.user.api.AdminApi;

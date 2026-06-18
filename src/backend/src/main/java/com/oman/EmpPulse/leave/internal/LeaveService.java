@@ -1,7 +1,10 @@
 package com.oman.EmpPulse.leave.internal;
 
 import com.oman.EmpPulse.leave.api.ActiveLeaveResponse;
+import com.oman.EmpPulse.leave.api.Leave;
 import com.oman.EmpPulse.leave.api.LeaveApi;
+import com.oman.EmpPulse.leave.api.LeaveStatus;
+import com.oman.EmpPulse.leave.api.LeaveType;
 import com.oman.EmpPulse.leave.dto.LeaveCreateRequest;
 import com.oman.EmpPulse.leave.dto.LeaveListResponse;
 import com.oman.EmpPulse.leave.dto.LeaveModificationRequest;

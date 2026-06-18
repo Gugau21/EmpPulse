@@ -1,6 +1,5 @@
 package com.oman.EmpPulse.loggedhours.api;
 
-import com.oman.EmpPulse.loggedhours.internal.LoggedHours;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;

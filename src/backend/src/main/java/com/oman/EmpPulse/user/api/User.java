@@ -1,7 +1,9 @@
-package com.oman.EmpPulse.user.internal;
+package com.oman.EmpPulse.user.api;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.ColumnTransformer;
+import com.oman.EmpPulse.user.internal.UserLanguage;
+import com.oman.EmpPulse.user.internal.UserTheme;
 
 @Entity
 @Table(name = "app_user")

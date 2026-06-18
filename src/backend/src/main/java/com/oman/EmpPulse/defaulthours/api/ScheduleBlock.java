@@ -1,4 +1,4 @@
-package com.oman.EmpPulse.defaulthours.internal;
+package com.oman.EmpPulse.defaulthours.api;
 
 import jakarta.persistence.*;
 import java.time.LocalTime;

@@ -1,12 +1,12 @@
 package com.oman.EmpPulse.support;
 
 import com.oman.EmpPulse.department.api.Department;
-import com.oman.EmpPulse.leave.internal.Leave;
-import com.oman.EmpPulse.leave.internal.LeaveStatus;
-import com.oman.EmpPulse.leave.internal.LeaveType;
+import com.oman.EmpPulse.leave.api.Leave;
+import com.oman.EmpPulse.leave.api.LeaveStatus;
+import com.oman.EmpPulse.leave.api.LeaveType;
 import com.oman.EmpPulse.user.api.Admin;
-import com.oman.EmpPulse.user.internal.Employee;
-import com.oman.EmpPulse.user.internal.User;
+import com.oman.EmpPulse.user.api.Employee;
+import com.oman.EmpPulse.user.api.User;
 import com.oman.EmpPulse.user.internal.UserLanguage;
 import com.oman.EmpPulse.user.internal.UserTheme;
 import java.time.LocalDate;

@@ -1,4 +1,4 @@
-package com.oman.EmpPulse.loggedhours.internal;
+package com.oman.EmpPulse.loggedhours.api;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;

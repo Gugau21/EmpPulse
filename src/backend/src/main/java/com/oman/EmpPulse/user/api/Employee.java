@@ -1,4 +1,4 @@
-package com.oman.EmpPulse.user.internal;
+package com.oman.EmpPulse.user.api;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.Generated;
