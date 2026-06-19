@@ -1,8 +1,0 @@
-{
-  "threshold": 0,
-  "mode": "weak",
-  "reporters": ["consoleFull"],
-  "absolute": true,
-  "gitignore": true,
-  "ignore": ["**/node_modules/**", "**/dist/**", "**/*.test.*"]
-}

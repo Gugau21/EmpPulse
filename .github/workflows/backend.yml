@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "*" ]
     paths:
-      - "backend/**"
+      - "src/backend/**"
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -38,16 +38,16 @@ jobs:
 
       - name: Check formatting (google-java-format)
         run: |
-          mapfile -d '' files < <(find backend -name "*.java" -print0)
+          mapfile -d '' files < <(find src/backend -name "*.java" -print0)
           if [ "${#files[@]}" -eq 0 ]; then echo "No .java files found."; exit 0; fi
           java -jar /tmp/gjf.jar --dry-run --set-exit-if-changed "${files[@]}"
 
       - name: Lint (Checkstyle — Google rules)
         run: |
-          files=$(find backend -name "*.java")
+          files=$(find src/backend -name "*.java")
           if [ -z "$files" ]; then echo "No .java files found."; exit 0; fi
           echo "$files" | xargs java \
-            -Dconfig_loc=$GITHUB_WORKSPACE/backend \
+            -Dconfig_loc=$GITHUB_WORKSPACE/src/backend \
             -jar /tmp/checkstyle.jar \
             -c /tmp/google_checks.xml
 
@@ -58,4 +58,4 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Build the Docker image
-        run: docker build backend --file backend/Dockerfile
+        run: docker build src/backend --file src/backend/Dockerfile

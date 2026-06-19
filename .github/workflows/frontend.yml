@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "*" ]
     paths:
-      - "frontend/**"
+      - "src/frontend/**"
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -45,5 +45,5 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Build the Docker image
-      run: docker build frontend --file frontend/Dockerfile
+      run: docker build src/frontend --file src/frontend/Dockerfile
 

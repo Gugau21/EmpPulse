@@ -38,13 +38,11 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Authenticated session
+          description: Authenticated session; returns the caller's profile
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -74,7 +72,7 @@ paths:
         - Auth
       summary: Request a password reset email
       description: >-
-        Sends a password reset email to the given address. Returns an error if the address does not
+        Sends a password reset email to the given address. Returns 404 if the address does not
         belong to a registered user.
       security: []
       requestBody:
@@ -110,8 +108,6 @@ paths:
           description: Password reset
         '400':
           $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -182,7 +178,7 @@ paths:
     post:
       tags:
         - Users
-      summary: Create a user
+      summary: Create a user (admin only)
       description: >
         Creates a user. Admins can only create users as employees.
         Owner can additionally create users as administrators.
@@ -193,16 +189,20 @@ paths:
             schema:
               $ref: '#/components/schemas/UserCreate'
       responses:
-        '204':
-          description: User created
+        '201':
+          description: User created; returns the new user id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserCreated'
         '400':
           $ref: '#/components/responses/BadRequest'
-        '409':
-          $ref: '#/components/responses/Conflict'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -210,8 +210,8 @@ paths:
     get:
       tags:
         - Users
-      summary: Get user details (to see user profile)
-      description: Owner can view all users. Admins can view employees who they oversee.
+      summary: Get user details (admin only)
+      description: Owner can view all users. Admins can view employees they oversee.
       parameters:
         - in: path
           name: userId
@@ -236,8 +236,8 @@ paths:
     patch:
       tags:
         - Users
-      summary: Update user (edit profile)
-      description: Owner can update all fields. Admins can update employees department and premium vacation days.
+      summary: Update user (admin only)
+      description: Owner can update all fields. Admins can update an employee's department and vacation balance.
       parameters:
         - in: path
           name: userId
@@ -252,7 +252,7 @@ paths:
               $ref: '#/components/schemas/UserUpdate'
       responses:
         '204':
-          description: Updated user
+          description: User updated
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -285,6 +285,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -305,7 +307,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PremiumVacationDay'
+                $ref: '#/components/schemas/BonusVacationDays'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -329,7 +331,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PremiumVacationDay'
+              $ref: '#/components/schemas/BonusVacationDayRequest'
       responses:
         '204':
           description: Bonus vacation days updated
@@ -348,7 +350,7 @@ paths:
     get:
       tags:
         - Admins
-      summary: List admins
+      summary: List admins (owner only)
       description: Returns all non-deleted users who have admin profiles.
       responses:
         '200':
@@ -368,6 +370,8 @@ paths:
     get:
       tags:
         - Departments
+      summary: List departments
+      description: Owner sees all departments; an admin sees only the ones they oversee.
       responses:
         '200':
           description: Departments list
@@ -434,8 +438,8 @@ paths:
     patch:
       tags:
         - Departments
-      summary: Update department
-      description: Owner can rename and assign admins. Admins can update default hours.
+      summary: Update department (owner only)
+      description: Rename the department and/or reassign its admins.
       parameters:
         - in: path
           name: departmentId
@@ -450,7 +454,7 @@ paths:
               $ref: '#/components/schemas/DepartmentUpdate'
       responses:
         '204':
-          description: Updated department
+          description: Department updated
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -467,7 +471,7 @@ paths:
       tags:
         - Departments
       summary: Delete department (owner only)
-      description: Only possible if no Employees/Administrators are assigned to given Department.
+      description: Only possible if no Employees/Administrators are assigned to the department, and it is not the default department.
       parameters:
         - in: path
           name: departmentId
@@ -483,6 +487,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -490,7 +496,7 @@ paths:
     get:
       tags:
         - DefaultHours
-      summary: Get department default week hours
+      summary: Get department default week hours (admin only)
       parameters:
         - in: path
           name: departmentId
@@ -515,7 +521,7 @@ paths:
     put:
       tags:
         - DefaultHours
-      summary: Set department default week hours
+      summary: Set department default week hours (admin only)
       parameters:
         - in: path
           name: departmentId
@@ -550,15 +556,8 @@ paths:
     get:
       tags:
         - Employees
-      summary: List employees
-      description: Default sort is by surname ascending.
-      parameters:
-        - in: query
-          name: departmentIds
-          schema:
-            type: array
-            items:
-              type: integer
+      summary: List employees (admin only)
+      description: Returns employees in the departments the caller oversees (the owner gets all).
       responses:
         '200':
           description: Employees list
@@ -577,7 +576,7 @@ paths:
     get:
       tags:
         - DefaultHours
-      summary: Get employee default week hours
+      summary: Get employee default week hours (admin only)
       parameters:
         - in: path
           name: employeeId
@@ -602,7 +601,7 @@ paths:
     put:
       tags:
         - DefaultHours
-      summary: Set employee default week hours
+      summary: Set employee default week hours (admin only)
       parameters:
         - in: path
           name: employeeId
@@ -638,26 +637,13 @@ paths:
       tags:
         - LoggedHours
       summary: List logged work hours
+      description: An admin reads any overseen employee's hours; an employee reads only their own.
       parameters:
         - in: path
           name: employeeId
           required: true
           schema:
             type: integer
-        - in: query
-          name: departmentId
-          schema:
-            type: integer
-        - in: query
-          name: fromDate
-          schema:
-            type: string
-            format: date
-        - in: query
-          name: toDate
-          schema:
-            type: string
-            format: date
       responses:
         '200':
           description: Logged hours list
@@ -779,10 +765,10 @@ paths:
         - LeaveRequests
       summary: List leave requests
       description: >
-        Returns leave requests. 
-        - Owners see all requests. 
-        - Admins see only requests from departments they manage. 
-        - Workers see only their own requests.
+        Returns leave requests.
+        - Owners see all requests.
+        - Admins see only requests from departments they manage.
+        - Employees see only their own requests.
       responses:
         '200':
           description: Leave requests list
@@ -856,8 +842,8 @@ paths:
         - LeaveRequests
       summary: Update a leave request
       description: >
-        Updates an existing leave request. 
-        For employees, this can be used to edit a PENDING request. 
+        Updates an existing leave request.
+        For employees, this edits a PENDING request.
         For admins, this updates the request in-place.
       parameters:
         - in: path
@@ -909,6 +895,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -916,7 +904,7 @@ paths:
     patch:
       tags:
         - LeaveRequests
-      summary: Cancel a leave request (employee only)
+      summary: Cancel an approved leave request (employee only)
       parameters:
         - in: path
           name: leaveRequestId
@@ -930,14 +918,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LeaveRequest'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -957,7 +945,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LeaveRequestAction'
+              $ref: '#/components/schemas/LeaveResponseRequest'
       responses:
         '200':
           description: Leave request reviewed
@@ -982,7 +970,7 @@ paths:
     post:
       tags:
         - LeaveRequests
-      summary: Request a modification to a leave request (employee only)
+      summary: Request a modification to an approved leave request (employee only)
       parameters:
         - in: path
           name: leaveRequestId
@@ -994,7 +982,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LeaveRequestUpdate'
+              $ref: '#/components/schemas/LeaveModificationRequest'
       responses:
         '201':
           description: Leave request modification created
@@ -1012,6 +1000,31 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/export:
+    get:
+      tags:
+        - Exports
+      summary: Export organizational data (owner/admin only)
+      description: >
+        Returns a ZIP archive of CSV files for the caller's in-scope departments
+        (an admin's overseen departments; all departments for the owner). The archive
+        contains departments.csv, employees.csv, users.csv, leaves.csv, logged_hours.csv,
+        monthly_work_hours.csv, bonus_vacation_days.csv, week_schedules.csv and schedule_blocks.csv.
+      responses:
+        '200':
+          description: ZIP archive of CSV files
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -1063,37 +1076,43 @@ components:
   schemas:
     Error:
       type: object
-      required:
-        - code
-        - message
+      description: >
+        Shape returned by the auth/access-control handlers (a machine-readable code plus
+        message). Domain/business-rule errors are emitted by Spring's default /error handler
+        and carry only timestamp/status/error/path (no message body).
       properties:
         code:
           type: string
         message:
           type: string
-        details:
-          type: object
-          additionalProperties: true
-          nullable: true
 
     Theme:
       type: string
       enum:
-        - DARK
-        - LIGHT
+        - light
+        - dark
+        - system
 
     Language:
       type: string
       enum:
-        - ENG
-        - UKR
+        - en
+        - ukr
 
-    UserRole:
+    LeaveType:
       type: string
       enum:
-        - OWNER
-        - ADMIN
-        - WORKER
+        - vacation
+        - sick
+        - personal
+
+    LeaveStatus:
+      type: string
+      enum:
+        - pending
+        - approved
+        - rejected
+        - cancelled
 
     LoginRequest:
       type: object
@@ -1176,7 +1195,7 @@ components:
         - name
         - surname
         - email
-        - isOwner
+        - owner
         - preferences
       properties:
         id:
@@ -1188,14 +1207,73 @@ components:
         email:
           type: string
           format: email
-        isOwner:
+        owner:
           type: boolean
         preferences:
           $ref: '#/components/schemas/UserPreferences'
         employeeProfile:
-          $ref: '#/components/schemas/EmployeeProfile'
+          allOf:
+            - $ref: '#/components/schemas/EmployeeProfile'
+          nullable: true
         adminProfile:
-          $ref: '#/components/schemas/AdminProfile'
+          allOf:
+            - $ref: '#/components/schemas/AdminProfile'
+          nullable: true
+
+    EmployeeProfile:
+      type: object
+      required:
+        - employeeId
+        - yearlyVacationBalance
+        - vacationBalance
+      properties:
+        employeeId:
+          type: integer
+        departmentId:
+          type: integer
+          nullable: true
+        departmentName:
+          type: string
+          nullable: true
+        yearlyVacationBalance:
+          type: integer
+          description: The base annual allowance configured on the employee.
+        vacationBalance:
+          type: integer
+          description: Days left, computed as yearlyVacationBalance + bonus days − used vacation days.
+        activeLeave:
+          allOf:
+            - $ref: '#/components/schemas/ActiveLeave'
+          nullable: true
+
+    AdminProfile:
+      type: object
+      required:
+        - adminId
+        - departmentIds
+      properties:
+        adminId:
+          type: integer
+        departmentIds:
+          type: array
+          items:
+            type: integer
+
+    ActiveLeave:
+      type: object
+      required:
+        - type
+        - startDate
+        - endDate
+      properties:
+        type:
+          $ref: '#/components/schemas/LeaveType'
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
 
     UserSummary:
       type: object
@@ -1239,21 +1317,21 @@ components:
         yearlyVacationBalance:
           type: integer
           minimum: 0
-        premiumVacationDays:
-          type: array
-          items:
-            $ref: '#/components/schemas/PremiumVacationDay'
-        employeeActive:
-          type: boolean
         adminDepartmentIds:
           type: array
           items:
             type: integer
-        adminActive:
-          type: boolean
       description: >
-        To create a worker, provide yearlyVacationBalance and employeeDepartmentId.
-        To create an admin, provide adminDepartmentIds. A user can be both admin and employee in the same department.
+        To create an employee, provide employeeDepartmentId (and optionally yearlyVacationBalance).
+        To create an admin, provide adminDepartmentIds. A user can be both an admin and an employee.
+
+    UserCreated:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
 
     UserUpdate:
       type: object
@@ -1268,54 +1346,23 @@ components:
         password:
           type: string
           format: password
-        preferences:
-          $ref: '#/components/schemas/UserPreferencesUpdate'
         employeeDepartmentId:
           type: integer
           nullable: true
+        changeEmployeeDepartment:
+          type: boolean
+          description: >
+            When true, employeeDepartmentId is applied (a null value detaches the employee from
+            their department). When false/omitted, the employee's department is left unchanged.
         yearlyVacationBalance:
           type: integer
           minimum: 0
-        premiumVacationDays:
-          type: array
-          items:
-            $ref: '#/components/schemas/PremiumVacationDay'
-        employeeActive:
-          type: boolean
         adminDepartmentIds:
           type: array
           items:
             type: integer
-        adminActive:
-          type: boolean
 
-    UserListResponse:
-      type: object
-      required:
-        - items
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserSummary'
-
-    AdminProfile:
-      type: object
-      required:
-        - adminId
-        - departmentIds
-        - active
-      properties:
-        adminId:
-          type: integer
-        departmentIds:
-          type: array
-          items:
-            type: integer
-        active:
-          type: boolean
-
-    PremiumVacationDay:
+    BonusVacationDayRequest:
       type: object
       required:
         - year
@@ -1327,37 +1374,23 @@ components:
           type: integer
           minimum: 0
 
-    EmployeeProfile:
+    BonusVacationDays:
       type: object
       required:
-        - employeeId
-        - yearlyVacationBalance
-        - active
+        - year
+        - days
       properties:
-        employeeId:
+        year:
           type: integer
-        departmentId:
+        days:
           type: integer
-          nullable: true
-        departmentName:
-          type: string
-          nullable: true
-        yearlyVacationBalance:
-          type: integer
-          minimum: 0
-        premiumVacationDays:
-          type: array
-          items:
-            $ref: '#/components/schemas/PremiumVacationDay'
-        active:
-          type: boolean
 
     AdminSummary:
       type: object
       required:
         - id
         - user
-        - active
+        - departmentIds
       properties:
         id:
           type: integer
@@ -1367,8 +1400,6 @@ components:
           type: array
           items:
             type: integer
-        active:
-          type: boolean
 
     AdminListResponse:
       type: object
@@ -1395,8 +1426,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminSummary'
-        defaultWeekHours:
-          $ref: '#/components/schemas/DefaultWeekHours'
 
     DepartmentCreate:
       type: object
@@ -1409,8 +1438,6 @@ components:
           type: array
           items:
             type: integer
-        defaultWeekHours:
-          $ref: '#/components/schemas/DefaultWeekHours'
 
     DepartmentUpdate:
       type: object
@@ -1421,8 +1448,6 @@ components:
           type: array
           items:
             type: integer
-        defaultWeekHours:
-          $ref: '#/components/schemas/DefaultWeekHours'
 
     DepartmentListResponse:
       type: object
@@ -1433,34 +1458,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Department'
-
-    Employee:
-      type: object
-      required:
-        - id
-        - user
-        - yearlyVacationBalance
-        - active
-      properties:
-        id:
-          type: integer
-        user:
-          $ref: '#/components/schemas/UserSummary'
-        departmentId:
-          type: integer
-          nullable: true
-        departmentName:
-          type: string
-          nullable: true
-        yearlyVacationBalance:
-          type: integer
-          minimum: 0
-        premiumVacationDays:
-          type: array
-          items:
-            $ref: '#/components/schemas/PremiumVacationDay'
-        active:
-          type: boolean
 
     EmployeeSummary:
       type: object
@@ -1485,53 +1482,32 @@ components:
         active:
           type: boolean
 
-    EmployeeCreate:
+    EmployeeListItem:
       type: object
       required:
+        - id
         - name
         - surname
-        - email
-        - password
-        - yearlyVacationBalance
+        - active
       properties:
+        id:
+          type: integer
         name:
           type: string
         surname:
           type: string
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
         departmentId:
           type: integer
           nullable: true
-        yearlyVacationBalance:
-          type: integer
-          minimum: 0
-        premiumVacationDays:
-          type: array
-          items:
-            $ref: '#/components/schemas/PremiumVacationDay'
-        active:
-          type: boolean
-
-    EmployeeUpdate:
-      type: object
-      properties:
-        departmentId:
-          type: integer
+        departmentName:
+          type: string
           nullable: true
-        yearlyVacationBalance:
-          type: integer
-          minimum: 0
-        premiumVacationDays:
-          type: array
-          items:
-            $ref: '#/components/schemas/PremiumVacationDay'
         active:
           type: boolean
+        activeLeave:
+          allOf:
+            - $ref: '#/components/schemas/ActiveLeave'
+          nullable: true
 
     EmployeeListResponse:
       type: object
@@ -1541,22 +1517,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/EmployeeSummary'
-
-    LeaveType:
-      type: string
-      enum:
-        - SICK
-        - VACATION
-        - PERSONAL
-
-    LeaveStatus:
-      type: string
-      enum:
-        - PENDING
-        - REJECTED
-        - APPROVED
-        - CANCELED
+            $ref: '#/components/schemas/EmployeeListItem'
 
     LeaveRequest:
       type: object
@@ -1568,15 +1529,13 @@ components:
         - startDate
         - endDate
         - status
-        - creationTime
-        - editTime
+        - createdAt
+        - updatedAt
       properties:
         id:
           type: integer
         employee:
           $ref: '#/components/schemas/EmployeeSummary'
-        departmentId:
-          type: integer
         type:
           $ref: '#/components/schemas/LeaveType'
         paid:
@@ -1587,7 +1546,7 @@ components:
         endDate:
           type: string
           format: date
-        description:
+        reason:
           type: string
           nullable: true
         status:
@@ -1598,10 +1557,10 @@ components:
         adminComment:
           type: string
           nullable: true
-        creationTime:
+        createdAt:
           type: string
           format: date-time
-        editTime:
+        updatedAt:
           type: string
           format: date-time
 
@@ -1629,9 +1588,12 @@ components:
         reason:
           type: string
           nullable: true
+        adminComment:
+          type: string
+          nullable: true
       description: >
-        reason is required when type=PERSONAL. employeeId is required when an admin
-        creates a request on behalf of an employee.
+        reason is required when type=personal. employeeId is required (and adminComment is allowed)
+        only when an admin creates a request on behalf of an employee.
 
     LeaveRequestUpdate:
       type: object
@@ -1653,9 +1615,34 @@ components:
           type: string
           nullable: true
 
-    LeaveRequestAction:
+    LeaveModificationRequest:
       type: object
       properties:
+        type:
+          $ref: '#/components/schemas/LeaveType'
+        paid:
+          type: boolean
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        reason:
+          type: string
+          nullable: true
+
+    LeaveResponseRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - approved
+            - rejected
+          description: The admin's decision on the pending request.
         adminComment:
           type: string
           nullable: true
@@ -1699,13 +1686,10 @@ components:
     LoggedHoursCreate:
       type: object
       required:
-        - employeeId
         - date
         - startTime
         - endTime
       properties:
-        employeeId:
-          type: integer
         date:
           type: string
           format: date

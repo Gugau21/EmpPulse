@@ -1,0 +1,172 @@
+Ticket No.,Priority,WHO?,WHAT?,WHY?,DONE?,,Acceptance Criteria
+1,1: must-be,Owner,Create accounts for all user types,To setup the system,TRUE,TRUE,"The system provides an ""Add User"" form accessible to Owner role"
+,,,,,,TRUE,"The form includes fields for: first name, surname, email, password, department, role (Admin/Employee)."
+,,,,,,TRUE,"If ""Employee"" is selected a yearly vacation balance field appears, which is required."
+,,,,,,TRUE,Yearly vacation balance must be greater or equal to 0
+,,,,,,TRUE,The system validates that the email is unique in the system and abides by email format convention.
+,,,,,,TRUE,"The system sends an email to the registered User, providing them with their password."
+2,1: must-be,Owner,View Departments List,To track Employees distribution,TRUE,TRUE,There exists a Departments List to see all created departments.
+,,,,,,TRUE,Each Department includes a list of admins which oversee the given department.
+,,,,,,TRUE,Department list can be searched by name.
+,,,,,,TRUE,Departments are sorted alphabetically by names by default.
+,,,,,,TRUE,"There exists 'Default Department', created by the system."
+3,1: must-be,Owner,Manage Departments,To organize company structure,TRUE,TRUE,"System provides an ""Add Department"" form to create and name new departments."
+,,,,,,TRUE,The Owner can assign multiple Administrators to specific Department.
+,,,,,,TRUE,Each Department includes a list of Administrators which oversee the given department.
+,,,,,,TRUE,The 'Default Department' cannot be deleted.
+,,,,,,TRUE,"The Owner can modify departments (Name, assigned Administrators and Employees)"
+,,,,,,TRUE,The Owner can detach an Admin from a Department only if that Admin currently oversees more than 2 Departments.
+,,,,,,TRUE,The Owner can delete a Department only if it currently has no Employees and no Admins assigned to it.
+4,1: must-be,Administrator,Create account for Employees,To setup the system,TRUE,TRUE,"The system provides an ""Add Employee"" form accessible to Administrator role."
+,,,,,,TRUE,"Form includes only first name, surname, email, password, department, yearly vacation balance."
+,,,,,,TRUE,Yearly vacation balance must be greater or equal to 0
+,,,,,,TRUE,The system validates that the email is unique in the system and abides by email format convention.
+,,,,,,TRUE,The Employee is assigned to the Department which the Administrator is overseeing.
+,,,,,,TRUE,Administrators cannot create other Administrator accounts.
+,,,,,,TRUE,"The system sends an email to the registered Employee, providing them with their password."
+5,1: must-be,All,Sign in to the system,To load user preferences and data,TRUE,TRUE,There exists a Login Page where a user can enter email and password.
+,,,,,,TRUE,"If an incorrect password/email is entered, the system displays an error and does not grant access."
+,,,,,,TRUE,"As an Administrator/Owner after I log in I am redirected to ""Request Manager"" page."
+,,,,,,TRUE,"As an Employee after I log in I am redirected to ""My Leaves"" page."
+,,,,,,TRUE,"If a User is both an Administrator and Employee they are redirected to ""Request Manager"" page."
+6,1: must-be,All,View personal profile,To verify personal data,TRUE,TRUE,"Profile page contains full name, surname and email for every User."
+,,,,,,TRUE,Administrator's profile page additionally contains the Department they oversee.
+,,,,,,TRUE,"Employee's profile page can additionally contain the status of their active leave: Vacation, Sick Leave, Personal Leave."
+,,,,,,TRUE,Employee's profile page additionally contains their vacation balance.
+7,1: must-be,Employee,Create request ,To inform Administrators of the absence,TRUE,TRUE,"The ""My Leaves"" page includes a button that opens a form to create a request."
+,,,,,,TRUE,"The form includes fields for: leave type (Vacation, Sick, Personal), Paid/Unpaid leave, start date, end date, 
+and ""Reason"" section is displayed where the User can input text."
+,,,,,,TRUE,"If ""Personal"" is selected as a leave type then it is mandatory to fill ""Reason"" section.
+For other leave types the ""Reason"" section is optional."
+,,,,,,TRUE,"If ""Vacation"" is selected as the leave type, the system will show a 
+warning message if the requested number of days exceeds the remaining vacation balance."
+,,,,,,TRUE,The system prevents submission if the start date is after the end date.
+,,,,,,TRUE,The system prevents an Employee from creating a request if its date range overlaps with one of their existing non-rejected/cancelled requests.
+,,,,,,TRUE,"If a ""Vacation"" leave was created it updates vacation balance of the given Employee."
+,,,,,,TRUE,"Upon submission, the request appears in the ""My Leaves"" list with a ""Pending"" status."
+,,,,,,TRUE,"The request triggers an entry in the Admin’s ""Request Manager"" for approval."
+8,1: must-be,Employee,Manage requests,"To change dates, type or details of the leave",TRUE,TRUE,"There exists a ""My Leaves"" page which displays an Employees requests with their status (pending, accepted, cancelled, rejected)."
+,,,,,,TRUE,List of requests can be filtered by leave type using tags.
+,,,,,,TRUE,"List of requests can be sorted by date of last change, start date."
+,,,,,,TRUE,"Upon entrance ""My Leaves"" page is sorted by date of last change."
+,,,,,,TRUE,Clicking on a created request opens a pop-up to see or change details.
+,,,,,,TRUE,"Employee can modify all fields their own accepted requests. This triggers a modification request entry in the Administrator's ""Request Manager"" for approval."
+,,,,,,TRUE,"Employee can modify their ""pending"" requests. In such cases the request is updated without creation of a modification request."
+,,,,,,TRUE,"Employee can cancel their own accepted requests, then they are given ""Cancelled"" status.
+If a ""Vacation"" request was cancelled vacation balance is replenished."
+,,,,,,TRUE,Only Employee is allowed to cancel his own request.
+,,,,,,TRUE,"Employee cannot edit a ""Rejected"" or a ""Cancelled"" request."
+,,,,,,TRUE,"Employee can only delete (hard delete) a ""Pending"" request. Other requests cannot be deleted at all."
+,,,,,,TRUE,The system prevents applying changes if the start date is after the end date.
+,,,,,,TRUE,The system prevents an Employee from editing a request if its date range overlaps with their other existing non-rejected/cancelled requests.
+,,,,,,TRUE,"When editing a ""Vacation"" leave, if the requested number of days exceeds the remaining vacation balance the system will show a 
+warning message."
+,,,,,,TRUE,"If a ""Vacation"" requests' start/end time was edited, the given Employees vacation balance is updated accordingly. "
+,,,,,,TRUE,"If a requests' leave type was changed to/from ""Vacation"", the given Employees vacation balance is updated accordingly. "
+,,,,,,TRUE,"If start date of pending request has passed, its status does not automatically change."
+9,1: must-be,Administrator,View Employees requests,To make data-informed decisions,TRUE,TRUE,"There exists ""Request Manager"" page which displays Employees requests."
+,,,,,,TRUE,"Each request displays Employees name, surname, type of leave, request status and requested dates."
+,,,,,,TRUE,The list only shows requests from the department which the Admin oversees.
+,,,,,,TRUE,The list updates when a new request is submitted by an Employee. Update is triggered after a refresh.
+,,,,,,TRUE,"By default the list is filtered by ""Pending"" request status."
+,,,,,,TRUE,The Administrator can filter the list by leave type and request status using tags.
+10,1: must-be,Administrator,Create request for an Employee,To lower Employee dependency,TRUE,TRUE,"""Request Manager"" screen includes a button that opens a form to create a request."
+,,,,,,TRUE,"The form includes fields for: Employee, leave type (Vacation, Sick, Personal), Paid/Unpaid leave, start date, end date, 
+and ""Reason"" section is displayed where the Administrator can input text."
+,,,,,,TRUE,Administrator can assign any Employee from his Department to the request.
+,,,,,,TRUE,"The system prevents an Administrator from creating a request for an Employee if the request's date range
+overlaps with one of the Employees existing non-rejected/cancelled requests."
+,,,,,,TRUE,"If ""Vacation"" is selected as the leave type, the system will show a 
+warning message if the requested number of days exceeds the remaining vacation balance."
+,,,,,,TRUE,"If a ""Vacation"" request was created on behalf of an Employee it updates vacation balance of the given Employee."
+,,,,,,TRUE,Creation of request by Administrator is auto-accepted.
+,,,,,,TRUE,"When a request is created on behalf of an Employee, that given Employee receives an email notification."
+11,1: must-be,Administrator,Manage employee requests,To update request status,TRUE,TRUE,Clicking on a created request opens a pop-up which provides all details with an option to edit them.
+,,,,,,TRUE,"The pop-up additionally provides an option to accept/reject the request. 
+Closing the pop-up without accepting/rejecting the request discards any modifications to the request which the Administrator may have made."
+,,,,,,TRUE,"The system prevents an Administrator from editing a request for an Employee if the request's date range
+overlaps with one of the Employees existing non-rejected/cancelled requests."
+,,,,,,TRUE,Admin can only edit an active Leave request if it has no pending modification request attached to it.
+,,,,,,TRUE,"When Admin accepts a modification request, the proposed changes overwrite the original Leave request's fields and the modification request is deleted."
+,,,,,,TRUE,"When Admin rejects a modification request, it is unlinked from the original and becomes a standalone Leave request with Rejected status."
+,,,,,,TRUE,"When a request is rejected/accepted, the status is updated."
+,,,,,,TRUE,"When a ""Vacation"" request is rejected the Employees vacation balance is replenished."
+,,,,,,TRUE,"Administrator cannot edit a ""Rejected"" or a ""Cancelled"" request."
+,,,,,,TRUE,The system sends an automated email to the Employee whenever an Administrator approves or rejects request.
+12,1: must-be,Administrator,Manage Employees data,To make data-informed decisions,TRUE,TRUE,"The ""Employee List"" screen displays only users belonging to the department which the Administrator oversees."
+,,,,,,TRUE,"The list includes the Employee's name, surname."
+,,,,,,TRUE,By default list is sorted alphabetically by surname.
+,,,,,,TRUE,The list displays the current leave type next to any Employee who is currently on approved leave
+,,,,,,TRUE,Clicking on an Employees name opens their profile.
+,,,,,,TRUE,Deactivated Employees do not appear in the Employee List.
+,,,,,,TRUE,The list must be searchable by name.
+13,1: must-be,Owner,Have full Administrator permissions across all departments,To oversee entire process,TRUE,TRUE,"The Owner has the same authority as an Administrator to approve, reject, or modify requests."
+,,,,,,TRUE,"""Employees List"" for the Owner shows all Employees across all departments, sorted by department."
+,,,,,,TRUE,The Owner has the same authority as an Administrator to modify Employees.
+14,2: should-be,Administrator,Log working hours,To accurately track Employee performance,TRUE,TRUE,"The Administrator can log working intervals for any Employee within the Department, which they oversee."
+,,,,,,TRUE,"The form includes fields for: date, start time and end time of the working interval."
+,,,,,,TRUE,System does not allow end time to be before start time.
+,,,,,,TRUE,"Collisions of hours are allowed, logs are merged together."
+,,,,,,TRUE,"Work hour logs created adjacent to existing entries are automatically merged, with the exception of those meeting at midnight."
+,,,,,,TRUE,The form does not allow to log hours for future dates.
+,,,,,,TRUE,"If an Unpaid leave is accepted for a given day, it removes any work hour logs from that day."
+15,2: should-be,Administrator and Employee,View logged working hours,To stay informed about recorded working time,TRUE,TRUE,Employees Profile Page is extended with list of logged hours (list of paid intervals)
+,,,,,,TRUE,"Each row contains: Date, Time Interval(s), Duration."
+,,,,,,TRUE,The list is sorted by date and time.
+16,2: should-be,Administrator,Have same permissions as an Employee,To manage an Administrator like an Employee,TRUE,TRUE,"User can function as both an Employee and an Administrator entity simultaneously. 
+A User may be considered an Employee in one Department while serving as the Administrator of another."
+,,,,,,TRUE,When Owner is creating a User he can assign their role as both an Administrator and an Employee
+,,,,,,TRUE,User can be an Employee in a Department that they oversee as an Administrator.
+17,2: should-be,Administrator,Extract data into sheet,To enable further data processing using external tools,TRUE,TRUE,There exists a page that allows Administrator to download formated data.
+,,,,,,TRUE,The data is presented as .csv files and archived into .zip file
+,,,,,,TRUE,The Administrator is allowed to download data only of departments they oversee.
+,,,,,,TRUE,The way the data is structured resembles data model of the system
+,,,,,,TRUE,"The data include information about users, leaves, logged hours, departments."
+18,2: should-be,All,Change account password when logged in,To increase account security ,TRUE,TRUE,"The profile screen provides a ""Change Password"" button."
+,,,,,,TRUE,"If clicked, it opens a pop-up with fields ""Current Password"", ""New Password"", ""Retype New Password""."
+,,,,,,TRUE,"If the input in ""Retype New Password"" is not the same as in ""New Password"" the system will display an error."
+,,,,,,TRUE,"If the entered ""Current password"" is incorrect the system displays an error."
+,,,,,,TRUE,Once password is changed User receives an email notification.
+,,,,,,TRUE,Once password is changed all other active sessions are invalidated (The user must re-login)
+19,2: should-be,Administrator,Be assigned to several departments,To oversee Multiple Departments,TRUE,TRUE,"When creating a department, the Owner assigns one or more Administrators to oversee it."
+,,,,,,TRUE,During Administrator creation Owner can assign multiple Departments.
+,,,,,,TRUE,"The ""Request Manager"" displays requests from all departments overseen by the Administrator."
+,,,,,,TRUE,"The Administrator can filter the ""Request Manager"" and ""Employees List"" by a specific department."
+,,,,,,TRUE,"In the ""Add Employee"" form, the Administrator selects which of their assigned departments the user belongs to."
+,,,,,,TRUE,The Administrator can log working intervals for any Employee across all their assigned departments.
+,,,,,,TRUE,Removing an Administrator from a department immediately revokes their access to that department’s data.
+,,,,,,TRUE,"When an Administrator creates a request for an Employee, the selection list is limited to their assigned departments."
+20,2: should-be,Administrator,Edit account for Employees,To make sure the system is up to date,TRUE,TRUE,"The system provides an ""Edit"" button on the Employee profile screen, accessible to Owner and Administrators."
+,,,,,,TRUE,Administrators can only edit the profiles of Employees who belong to department they oversee.
+,,,,,,TRUE,The edit form for Administrator allows for the modification of department assignment and vacation balance.
+,,,,,,TRUE,"The edit form for Owner additionally allows for the modification of first name, surname, role, email and password."
+,,,,,,TRUE,"If Owner edits a Users password, the User receives an email with new credentials."
+,,,,,,TRUE,"If Owner edits a Users email, the User receives an email notification (to the new email)."
+,,,,,,TRUE,The edit form for Administrator allows for the modification of department assignment.
+,,,,,,TRUE,The system prevents an Administrator from editing their own information in profile.
+21,3: could-be,All,Change language,To navigate the application in a preferred language,TRUE,TRUE,The sidebar provides buttons for language selection.
+,,,,,,TRUE,The available languages are English and Ukrainian.
+,,,,,,TRUE,"Upon selection, all labels, buttons, and system messages translate to the chosen language."
+,,,,,,TRUE,Language preference is saved after logouts.
+,,,,,,TRUE,The system defaults to English if no preference is set.
+22,3: could-be,All,Visibility settings (e.g. light/dark mode),To increase ease of use of website,TRUE,TRUE,"The sidebar includes a toggle for ""Dark Mode"" and ""Light Mode""."
+,,,,,,TRUE,The theme changes the background and text colors across all user screens.
+,,,,,,TRUE,User can set a preference for Light/Dark mode which persists after logouts.
+,,,,,,TRUE,"The system defaults to ""Light Mode"" if no preference has been set."
+23,3: could-be,Administrator,Automatically log working hours,To make Administrator work easier,TRUE,TRUE,There exists default working hours for Department and Employee.
+,,,,,,TRUE,Default working hours can be optionally set at registration of a Department/Employee.
+,,,,,,TRUE,A Department/Employee can be edited by Administrator to add default working hours.
+,,,,,,TRUE,"If no default hours are set for an Employee, Employee inherits Department working hours if they exist."
+,,,,,,TRUE,"At midnight, the system logs a full working day for the following day based on default hours."
+,,,,,,TRUE,"If Employee is on accepted unpaid leave, the system does not automatically add working hours."
+,,,,,,TRUE,The Profile page displays the default working hours interval.
+24,3: could-be,All,Change account password without being logged in,"To gain access to personal account in the case 
+where the password was forgotten",TRUE,TRUE,"The login screen provides a ""I forgot my password"" form."
+,,,,,,TRUE,"If clicked, it opens a pop-up where the User must input their email."
+,,,,,,TRUE,If the email does not belong to any registered User the system displays an error.
+,,,,,,TRUE,"The pop-up includes a button. If clicked, it sends a ""Password reset"" email."
+,,,,,,TRUE,"The ""Password reset"" email contains a link. If followed, it leads to a page with fields: ""New Password"", ""Retype New Password""."
+,,,,,,TRUE,"If the input in ""Retype New Password"" is not the same as in ""New Password"" the system will display an error."
+,,,,,,TRUE,"The ""Password reset"" email automatically becomes expired after 15 minutes."
+,,,,,,TRUE,"If User requests a new ""Password reset"" email the previous one automatically becomes expired."
+,,,,,,TRUE,After changing password all existing sessions are invalidated.
