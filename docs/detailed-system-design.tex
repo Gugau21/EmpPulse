@@ -667,85 +667,125 @@ The system has three roles with hierarchical permissions:
 
 \subsection{Error Response Format}
 
-All error responses follow a consistent JSON structure:
+The backend produces two distinct error shapes depending on where the error originates.
+
+\textbf{1. Authentication and access-control errors.} The login, password-forgot and
+password-reset endpoints (\texttt{AuthController}), together with the global
+authentication-entry-point and access-denied handlers (\texttt{SecurityConfig}), return a
+compact JSON object carrying a machine-readable \texttt{code} and a human-readable
+\texttt{message}:
 
 \begin{lstlisting}[style=json]
 {
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Start date must not be after end date.",
-  "timestamp": "2026-05-12T10:30:00Z",
+  "code": "INVALID_CREDENTIALS",
+  "message": "Invalid credentials"
+}
+\end{lstlisting}
+
+\textbf{2. Domain and business-rule errors.} Every service signals these by throwing
+\texttt{ResponseStatusException(status, reason)}, which Spring Boot serializes through its
+default error handler at \texttt{/error}. Because \texttt{server.error.include-message} is
+left at its default (\texttt{never}), the \texttt{reason} is logged and attached to the
+exception but is \emph{not} written to the response body; the body carries only the standard
+error attributes:
+
+\begin{lstlisting}[style=json]
+{
+  "timestamp": "2026-05-12T10:30:00.000+00:00",
+  "status": 409,
+  "error": "Conflict",
   "path": "/api/leave-requests"
 }
 \end{lstlisting}
 
-For validation errors with multiple fields:
+The React frontend therefore does not depend on the server-supplied message for these errors:
+it maps the HTTP status code to a localized, user-facing message (see \texttt{services/api.ts}),
+applying per-endpoint overrides where a more specific wording is warranted.
 
-\begin{lstlisting}[style=json]
-{
-  "fieldErrors": {
-    "email": "Email format is invalid.",
-    "yearlyVacationBalance": "Must be greater than or equal to 0."
-  }
-}
-\end{lstlisting}
+\textit{Note: input validation is performed imperatively inside the services (there is no
+Jakarta Bean Validation / \texttt{@Valid} on the controllers), so there is no multi-field
+\texttt{fieldErrors} response -- each invalid input yields a single \texttt{400 Bad Request}
+with the corresponding reason listed below.}
 
 \subsection{Error Catalog}
 
-\begin{longtable}{p{5.5cm} p{2cm} p{6cm}}
+The catalog below lists the error cases the implementation actually raises. For the
+authentication block the \textbf{Response} column gives the \texttt{code} and \texttt{message}
+returned in the JSON body; for every other block it gives the \texttt{reason} attached to the
+\texttt{ResponseStatusException} (carried by the exception, surfaced to the user by the
+frontend via the status code).
+
+\begin{longtable}{p{6cm} p{1.5cm} p{6cm}}
 \toprule
-\textbf{Situation} & \textbf{HTTP Code} & \textbf{System Behavior} \\
+\textbf{Situation} & \textbf{HTTP Code} & \textbf{Response (code / reason)} \\
 \midrule
-\multicolumn{3}{l}{\textit{Authentication Errors}} \\
+\endhead
+\multicolumn{3}{l}{\textit{Authentication and Password Reset (code/message JSON)}} \\
 \midrule
-Invalid email or password & 401 & Generic ``Invalid credentials'' message. No hint about which field is wrong. \\
-Session expired or missing & 401 & ``Session expired. Please log in again.'' Frontend redirects to login. \\
-Password reset token invalid & 400 & ``Invalid reset token.'' \\
-Incorrect current password (change) & 400 & ``Current password is incorrect.'' \\
+Invalid email or password on login & 401 & \texttt{INVALID\_CREDENTIALS} -- ``Invalid credentials'' (no hint about which field is wrong). \\
+Unauthenticated request to a protected endpoint & 401 & \texttt{UNAUTHORIZED} -- ``Unauthorized''. Frontend treats this as an expired session and redirects to login. \\
+Forgot password with a blank email & 400 & \texttt{EMAIL\_REQUIRED} -- ``Email is required''. \\
+Forgot password for an unknown account & 404 & \texttt{USER\_NOT\_FOUND} -- ``No account found for that email''. \\
+Reset password with blank password/confirmation & 400 & \texttt{PASSWORD\_REQUIRED} -- ``New password and confirmation are required''. \\
+Reset password confirmation mismatch & 400 & \texttt{PASSWORD\_MISMATCH} -- ``Passwords do not match''. \\
+Reset token invalid, expired or already used & 400 & \texttt{INVALID\_TOKEN} -- ``Reset link is invalid or expired''. \\
 \midrule
 \multicolumn{3}{l}{\textit{Authorization Errors}} \\
 \midrule
-User accesses resource outside their role & 403 & ``You do not have permission to perform this action.'' \\
-Admin accesses Employee not in their department & 403 & ``Access denied: Employee is not in your department.'' \\
-Employee tries to create/edit/delete logged hours & 403 & ``Only administrators can manage logged hours.'' \\
-Non-owner tries to create Admin & 403 & ``Only the Owner can create administrator accounts.'' \\
-Non-owner tries to delete department & 403 & ``Only the Owner can delete departments.'' \\
+Authenticated user lacks the role required by an endpoint & 403 & \texttt{FORBIDDEN} -- ``Forbidden'' (Spring Security access-denied handler). \\
+Admin accesses an employee / department / leave request outside their departments & 403 & ``No access to this employee'' / ``No access to this department'' / ``No access to this leave request''. \\
+Admin tries to create a non-employee account & 403 & ``Admins can only create employee accounts''. \\
+Admin edits owner-only user fields & 403 & ``Admins can only update employee department and vacation balance''. \\
+Non-owner detaches an employee from a department & 403 & ``Only the owner can detach an employee from a department''. \\
+Acting on a leave request the caller does not own (delete / cancel / modify) & 403 & ``Only the employee the request belongs to can delete / cancel / modify it''. \\
+Admin targets a department they do not oversee & 403 & ``Admin does not oversee target department''. \\
+Generic access fallback & 403 & ``Access denied'' / ``Not an admin''. \\
 \midrule
-\multicolumn{3}{l}{\textit{Validation Errors}} \\
+\multicolumn{3}{l}{\textit{Validation Errors (400 Bad Request)}} \\
 \midrule
-Required field missing & 400 & Field-specific error message (e.g., ``Reason is required for Personal leave type.''). \\
-Email not unique among active users & 400 & ``A user with this email already exists.'' \\
-Email format invalid & 400 & ``Email format is invalid.'' \\
-Start date after end date & 400 & ``Start date must not be after end date.'' \\
-Leave request date overlap & 409 & ``Leave request dates overlap with an existing active request.'' \\
-End time before start time (hours) & 400 & ``End time must be after start time.'' \\
-Future date for logged hours & 400 & ``Cannot log hours for future dates.'' \\
-Department name duplicate & 409 & ``A department with this name already exists.'' \\
+Create-user payload missing required fields & 400 & ``Name, surname, email and password are required''. \\
+Create user with no role & 400 & ``Cannot create an account with no role''. \\
+Invalid preference value & 400 & ``Invalid theme'' / ``Invalid language''. \\
+Change-password payload incomplete & 400 & ``Current password, new password and confirmation are required''. \\
+Current password wrong / new equals old / confirmation mismatch (self-service change) & 400 & ``Current password is incorrect'' / ``New password must differ from the current password'' / ``Passwords do not match''. \\
+Negative vacation balance / bonus days & 400 & ``Yearly vacation balance must be greater or equal to 0'' / ``Bonus vacation days must be greater or equal to 0''; ``Year and days are required''. \\
+Leave-create payload missing required fields & 400 & ``employeeId, type, paid, startDate and endDate are required''. \\
+Leave end date before start date & 400 & ``End date must not be before start date''. \\
+Reason missing for a personal leave & 400 & ``Reason is required for personal leave''. \\
+Non-admin supplies an admin comment & 400 & ``adminComment is allowed only for administrators''. \\
+Invalid decision on a leave response & 400 & ``Decision must be approved or rejected''. \\
+Modification changes nothing & 400 & ``A modification must change at least one field''. \\
+Logged-hours payload incomplete / inverted / in the future & 400 & ``date, startTime and endTime are required'' / ``Start time must be before end time'' / ``Cannot log hours for a future date''. \\
+Default-hours payload invalid & 400 & ``days is required''; ``dayOfWeek must be between 0 and 6''; ``Duplicate dayOfWeek: N''; ``intervals is required''; ``Only one interval per day is allowed''; ``startTime and endTime are required''; ``Start time must be before end time''. \\
 \midrule
-\multicolumn{3}{l}{\textit{Business Rule Violations}} \\
+\multicolumn{3}{l}{\textit{Conflict / Business Rule Violations (409 Conflict)}} \\
 \midrule
-Delete non-pending leave request & 400 & ``Only pending requests can be deleted.'' \\
-Cancel non-accepted leave request & 400 & ``Only accepted requests can be cancelled.'' \\
-Edit rejected/cancelled leave & 400 & ``Cannot modify a rejected or cancelled request.'' \\
-Edit active leave with pending modification & 400 & ``Cannot edit a leave request with a pending modification.'' \\
-Modify leave without changing fields & 400 & ``At least one field must be changed.'' \\
-Delete Default Department & 400 & ``The Default Department cannot be deleted.'' \\
-Delete department with employees/admins & 409 & ``Cannot delete department with assigned employees or admins.'' \\
-Detach Admin overseeing $\leq$ 2 departments & 400 & ``Cannot detach Admin who oversees fewer than 3 departments.'' \\
-Deactivate Employee as non-owner & 403 & ``Only the Owner can deactivate employees.'' \\
+Email already used by another account & 409 & ``Email already in use''. \\
+Attempt to delete the owner & 409 & ``Owner cannot be deleted''. \\
+Leave dates overlap an existing request & 409 & ``Overlapping leave request exists''. \\
+Delete a non-pending leave request & 409 & ``Only pending leave requests can be deleted''. \\
+Approve/reject a non-pending request & 409 & ``Only pending leave requests can be approved or rejected''. \\
+Cancel a non-approved request & 409 & ``Only approved leave requests can be cancelled''. \\
+Propose a modification on a non-approved request & 409 & ``Modifications can only be proposed for approved requests''. \\
+Second modification on a request that already has one pending & 409 & ``A pending modification already exists for this request'' / ``Request has a pending modification; resolve it first''. \\
+Edit a rejected/cancelled request & 409 & ``Rejected or cancelled requests cannot be edited''. \\
+Edit an approved request in place & 409 & ``Approved requests are edited via a modification request''. \\
+File leave for an inactive employee & 409 & ``Employee is not active''. \\
+Duplicate department name & 409 & ``Department name already in use''. \\
+Delete the default department & 409 & ``Cannot delete the default department''. \\
+Delete a department with employees/admins assigned & 409 & ``Cannot delete department: employees are assigned'' / ``Cannot delete department: administrators are assigned''. \\
+Reassignment would leave an admin with no department & 409 & ``Cannot remove admin N from their only department here; to deactivate this admin, edit their account instead''. \\
 \midrule
-\multicolumn{3}{l}{\textit{Resource Not Found}} \\
+\multicolumn{3}{l}{\textit{Resource Not Found (404)}} \\
 \midrule
-User/Employee/Leave/etc. not found & 404 & ``Resource not found.'' \\
+Referenced entity does not exist or is out of the caller's scope & 404 & ``User not found'' / ``Employee not found'' / ``Department not found'' / ``Leave request not found'' / ``Logged hours entry not found'' / ``Admin not found''. \\
 \midrule
-\multicolumn{3}{l}{\textit{External Service Errors}} \\
+\multicolumn{3}{l}{\textit{Internal Server Errors (500)}} \\
 \midrule
-SMTP service unavailable & 500 & Operation proceeds; email delivery is logged as failed. Frontend shows success for the primary action with a note that notification may be delayed. \\
-Database connection failure & 500 & ``Internal server error. Please try again later.'' Error logged server-side. \\
+A required entity referenced by an invariant cannot be resolved (e.g. owner, an authenticated user's department) & 500 & ``Data inconsistency''. Signals a broken invariant rather than user error; logged server-side. \\
+Unhandled failure (database connectivity, mail transport, etc.) & 500 & Falls through to Spring's default error response; logged server-side. Email sending is best-effort -- a failed send is logged and does not fail the primary operation. \\
 \bottomrule
 \end{longtable}
-
-\textit{Note: This catalog covers the primary error cases derived from the business logic specification. Additional error cases may be identified during implementation and should follow the same response format and patterns.}
 
 % ══════════════════════════════════════════════════════════════
 \section{Deployment and Runtime View}
