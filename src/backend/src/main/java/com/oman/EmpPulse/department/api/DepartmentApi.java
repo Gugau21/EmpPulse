@@ -1,9 +1,9 @@
 package com.oman.EmpPulse.department.api;
 
+import com.oman.EmpPulse.defaulthours.api.WeekSchedule;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import com.oman.EmpPulse.defaulthours.api.WeekSchedule;
 
 public interface DepartmentApi {
 

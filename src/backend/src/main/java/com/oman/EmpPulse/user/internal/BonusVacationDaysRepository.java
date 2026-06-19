@@ -1,10 +1,10 @@
 package com.oman.EmpPulse.user.internal;
 
+import com.oman.EmpPulse.user.api.BonusVacationDays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.oman.EmpPulse.user.api.BonusVacationDays;
 
 public interface BonusVacationDaysRepository extends JpaRepository<BonusVacationDays, Long> {
   List<BonusVacationDays> findByEmployeeId(Long employeeId);

@@ -1,10 +1,10 @@
 package com.oman.EmpPulse.loggedhours.internal;
 
+import com.oman.EmpPulse.loggedhours.api.LoggedHours;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.oman.EmpPulse.loggedhours.api.LoggedHours;
 
 public interface LoggedHoursRepository extends JpaRepository<LoggedHours, Long> {
 

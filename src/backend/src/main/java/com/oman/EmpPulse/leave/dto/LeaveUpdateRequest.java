@@ -1,7 +1,7 @@
 package com.oman.EmpPulse.leave.dto;
 
-import java.time.LocalDate;
 import com.oman.EmpPulse.leave.api.LeaveType;
+import java.time.LocalDate;
 
 public class LeaveUpdateRequest {
   private LeaveType type;
